@@ -18,6 +18,7 @@ const AccountInfo: React.FC = () => {
   const [editFields, setEditFields] = useState<UserInfo | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,6 +57,10 @@ const AccountInfo: React.FC = () => {
     };
     fetchUserInfo();
   }, [navigate]);
+
+  useEffect(() => {
+    setImgError(false); // Reset image error when profilePicture changes
+  }, [user?.profilePicture]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -155,12 +160,13 @@ const AccountInfo: React.FC = () => {
         <div className="d-flex justify-content-between align-items-center mb-4" style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: 24 }}>
           <div className="d-flex align-items-center gap-3">
             <div style={{ position: 'relative' }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: user.profilePicture ? 'none' : 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', overflow: 'hidden' }}>
-                {user.profilePicture ? (
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: user.profilePicture && !imgError ? 'none' : '#e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#adb5bd', overflow: 'hidden' }}>
+                {user.profilePicture && !imgError ? (
                   <img
                     src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
                     alt="Profile"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={() => setImgError(true)}
                   />
                 ) : (
                   <span><i className="bi bi-person" /></span>
