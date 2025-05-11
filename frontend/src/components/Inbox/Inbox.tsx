@@ -14,13 +14,23 @@ interface Message {
   userId: number;
   content: string;
   createdAt: string;
-  User?: { name: string; avatar?: string };
+  User?: { 
+    userFirstName: string;
+    userLastName: string;
+    profilePicture?: string;
+  };
 }
 
 // Helper to get the other user in a chat
 function getOtherUser(chat: any, userId: number) {
   const users = chat.ChatRoom.ChatRoomUsers || [];
   return users.map((cu: any) => cu.User).find((u: any) => u && u.userId !== userId);
+}
+
+// Helper to get profile picture URL
+function getProfilePictureUrl(profilePicture?: string) {
+  if (!profilePicture) return profileIcon;
+  return profilePicture.startsWith('http') ? profilePicture : `http://localhost:5000${profilePicture}`;
 }
 
 const Inbox: React.FC = () => {
@@ -177,7 +187,11 @@ const Inbox: React.FC = () => {
             className={`inbox-list-item${selectedChat?.ChatRoom.chatRoomId === chat.ChatRoom.chatRoomId ? ' selected' : ''}`}
             onClick={() => { setSelectedChat(chat); setPendingChat(null); }}
           >
-            <img src={profileIcon} alt="avatar" className="inbox-avatar" />
+            <img 
+              src={otherUser?.profilePicture ? getProfilePictureUrl(otherUser.profilePicture) : profileIcon} 
+              alt="avatar" 
+              className="inbox-avatar" 
+            />
             <div className="inbox-list-info">
               <div className="inbox-list-name">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${chat.ChatRoom.chatRoomId}`}</div>
               <div className="inbox-list-last">&nbsp;</div>
@@ -228,7 +242,11 @@ const Inbox: React.FC = () => {
       return (
         <div className="inbox-chat">
           <div className="inbox-chat-header">
-            <img src={profileIcon} alt="avatar" className="inbox-avatar-large" />
+            <img 
+              src={otherUser?.profilePicture ? getProfilePictureUrl(otherUser.profilePicture) : profileIcon} 
+              alt="avatar" 
+              className="inbox-avatar-large" 
+            />
             <span className="inbox-chat-username">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${selectedChat.ChatRoom.chatRoomId}`}</span>
           </div>
           <div className="inbox-chat-messages">
@@ -238,7 +256,11 @@ const Inbox: React.FC = () => {
                 className={`inbox-message${msg.userId === userId ? ' sent' : ' received'}`}
               >
                 {msg.userId !== userId && (
-                  <img src={profileIcon} alt="avatar" className="inbox-message-avatar" />
+                  <img 
+                    src={msg.User?.profilePicture ? getProfilePictureUrl(msg.User.profilePicture) : profileIcon} 
+                    alt="avatar" 
+                    className="inbox-message-avatar" 
+                  />
                 )}
                 <div className="inbox-message-content">{msg.content}</div>
               </div>

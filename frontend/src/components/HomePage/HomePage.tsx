@@ -58,7 +58,7 @@ const HomePage: React.FC = () => {
           <p className="text-muted text-center mt-5">No listings found.</p>
         </div>
       ) : (
-        <ListingsGrid listings={listings} />
+        <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
       )}
     </div>
   );

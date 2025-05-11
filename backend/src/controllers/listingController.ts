@@ -265,7 +265,7 @@ export const getListingById = async (req: Request, res: Response) => {
         },
         {
           model: User,
-          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber"],
+          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture"],
         },
       ],
     });
@@ -278,11 +278,18 @@ export const getListingById = async (req: Request, res: Response) => {
     // Use direct property access for associations
     const userInstance = (listing as any).User;
     const addressInstance = (listing as any).Address;
+
+    console.log('userInstance:', userInstance);
+    if (userInstance) {
+      console.log('userInstance.profilePicture:', userInstance.profilePicture);
+    }
+
     const user = (userInstance && typeof userInstance === 'object' && 'userFirstName' in userInstance && 'userLastName' in userInstance && 'phoneNumber' in userInstance)
       ? {
           name: `${userInstance.userFirstName} ${userInstance.userLastName}`,
           phone: userInstance.phoneNumber,
-          userId: userInstance.userId
+          userId: userInstance.userId,
+          profilePicture: userInstance.profilePicture || null
         }
       : undefined;
     let cityName: string | undefined = undefined;
