@@ -290,3 +290,29 @@ export const getListingById = async (req: Request, res: Response) => {
   }
 };
 
+export const getUserListings = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const listings = await Listing.findAll({
+      where: { userId },
+      include: [
+        {
+          model: Address,
+          include: [City],
+        },
+        RoomAmenity,
+        PropertyAmenity,
+        HouseRule,
+        Photo,
+      ],
+    });
+
+    res.status(200).json(listings);
+  } catch (error) {
+    console.error("Error fetching user listings:", error);
+    res.status(500).json({ error: "Failed to fetch user listings" });
+  }
+};
+

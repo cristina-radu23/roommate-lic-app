@@ -7,6 +7,8 @@ import PostListing from '../PostListing/PostListing';
 import HomePage from '../HomePage/HomePage';
 import ListingPage from '../ListingPage';
 import Inbox from '../Inbox/Inbox';
+import MyListings from '../MyListings/MyListings';
+import AccountInfo from '../AccountInfo/AccountInfo';
 
 function App() {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
@@ -62,6 +64,8 @@ function App() {
         <Route path="/postListing" element={<PostListing />} />
         <Route path="/listing/:id" element={<ListingPage />} />
         <Route path="/inbox" element={<Inbox />} />
+        <Route path="/mylistings" element={<MyListings />} />
+        <Route path="/account" element={<AccountInfo />} />
         <Route path="/" element={<HomePage />} />
       </Routes>
     </Router>

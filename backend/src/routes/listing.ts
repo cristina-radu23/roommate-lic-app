@@ -1,5 +1,5 @@
 import express from "express";
-import { createListing, getAllListings, getListingsByCity, getListingById } from "../controllers/listingController";
+import { createListing, getAllListings, getListingsByCity, getListingById, getUserListings } from "../controllers/listingController";
 import authenticateToken from "../middleware/authMiddleware";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import upload from '../middleware/upload';
@@ -16,6 +16,7 @@ router.post("/", authenticateToken, (req, res): void => {
 router.get("/", getAllListings);
 router.get("/by-city/:cityId", getListingsByCity);
 router.get("/:id", (req, res) => { void getListingById(req, res); });
+router.get("/user/listings", authenticateToken, (req, res) => { void getUserListings(req as AuthenticatedRequest, res); });
 
 // Add this endpoint for photo upload
 router.post('/upload-photo', upload.single('photo'), (req, res) => {

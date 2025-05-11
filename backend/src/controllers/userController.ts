@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 
 
 export const createAccount = async (req: Request, res: Response): Promise<void>=> {
@@ -68,4 +69,20 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   );
 
   res.json({ token, userId: user.userId });
+};
+
+export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const user = await User.findByPk(userId, {
+      attributes: ["userFirstName", "userLastName", "email", "phoneNumber"]
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user info" });
+  }
 };
