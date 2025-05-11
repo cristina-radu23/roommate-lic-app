@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10000 }}>
       <div className="container">
-        <Link className="navbar-brand" to="/">Roommate Finder</Link>
+        <Link className="navbar-brand" to="/">RoomBuddy</Link>
 
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span className="navbar-toggler-icon"></span>
@@ -98,9 +98,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   {showDropdown && (
                     <ul className="dropdown-menu dropdown-menu-end show" style={{ position: "absolute" }}>
                       <li><Link className="dropdown-item" to="/favourites">Favourites</Link></li>
-                      <li><Link className="dropdown-item" to="/account">Account Information</Link></li>
+                      <li><Link className="dropdown-item" to="/account">Account</Link></li>
                       <li><Link className="dropdown-item" to="/mylistings">My Listings</Link></li>
-                      <li><Link className="dropdown-item" to="/postListing">Create a Listing</Link></li>
+                      <li><Link className="dropdown-item" to="/postListing">Add listing</Link></li>
                       <li><button className="dropdown-item" onClick={onLogout}>Logout</button></li>
                     </ul>
                   )}

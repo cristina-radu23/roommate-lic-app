@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
 import profileIcon from '../assets/profileIcon.png';
-import { FaUserCircle } from 'react-icons/fa';
+import { FaUserCircle, FaHeart } from 'react-icons/fa';
 
 interface ListingData {
   listingId: number;
@@ -391,20 +391,22 @@ const ListingPage: React.FC = () => {
         <div className="col-lg-4">
           {/* Price and Add to favourites */}
           <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
-            <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
+            <div>
+              <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
+              <div className="d-flex align-items-center mt-2" style={{ gap: 6 }}>
+                <BsEye style={{ fontSize: 16, color: '#888' }} />
+                <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).views ?? 0} views</span>
+              </div>
+            </div>
             {!isOwnListing && (
-              <div className="d-flex align-items-center" style={{ gap: 16 }}>
-                {/* Views */}
-                <span style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.85)', borderRadius: 20, padding: '2px 12px', fontSize: 18, fontWeight: 500, color: '#333', gap: 6 }}>
-                  <span style={{ minWidth: 18, textAlign: 'center', marginRight: 4 }}>{(listing as any).views ?? 0}</span>
-                  <BsEye style={{ fontSize: 20, color: '#888' }} />
-                </span>
+              <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
                 {/* Add to favourites button */}
                 <button
                   className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
                   style={{ fontWeight: 500 }}
                   onClick={toggleLike}
                 >
+                  <FaHeart style={{ marginRight: 8 }} />
                   {isLiked ? 'Remove from favourites' : 'Add to favourites'}
                 </button>
               </div>
