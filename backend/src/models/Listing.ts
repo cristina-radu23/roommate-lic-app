@@ -36,6 +36,8 @@ interface ListingAttributes {
   title: string;
   description: string;
 
+  views?: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -80,6 +82,8 @@ class Listing extends Model<ListingAttributes, ListingCreationAttributes> implem
 
   public title!: string;
   public description!: string;
+
+  public views?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -176,6 +180,7 @@ Listing.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    views: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   },
   {
     sequelize,

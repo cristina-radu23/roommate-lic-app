@@ -11,6 +11,7 @@ import City from "../models/City";
 import { Op } from "sequelize";
 import Photo from "../models/Photo";
 import User from "../models/User";
+import Like from "../models/Like";
 
 export const createListing = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -198,7 +199,12 @@ export const getAllListings = async (req: Request, res: Response) => {
       include,
     });
 
-    res.status(200).json(listings);
+    // Add likesCount to each listing
+    const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
+      const likesCount = await Like.count({ where: { listingId: listing.listingId } });
+      return { ...listing.toJSON(), likesCount };
+    }));
+    res.status(200).json(listingsWithLikes);
   } catch (error) {
     console.error("Error fetching listings:", error);
     res.status(500).json({ error: "Failed to fetch listings" });
@@ -223,7 +229,12 @@ export const getListingsByCity = async (req: Request, res: Response) => {
       ],
     });
 
-    res.status(200).json(listings);
+    // Add likesCount to each listing
+    const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
+      const likesCount = await Like.count({ where: { listingId: listing.listingId } });
+      return { ...listing.toJSON(), likesCount };
+    }));
+    res.status(200).json(listingsWithLikes);
   } catch (error) {
     console.error("Error fetching listings by city:", error);
     res.status(500).json({ error: "Failed to fetch listings" });
@@ -260,13 +271,13 @@ export const getListingById = async (req: Request, res: Response) => {
     });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
+    // Increment views
+    await listing.increment('views');
+    await listing.reload();
+
     // Use direct property access for associations
     const userInstance = (listing as any).User;
     const addressInstance = (listing as any).Address;
-
-    console.log('userInstance:', userInstance);
-    console.log('listing.toJSON():', listing.toJSON());
-
     const user = (userInstance && typeof userInstance === 'object' && 'userFirstName' in userInstance && 'userLastName' in userInstance && 'phoneNumber' in userInstance)
       ? {
           name: `${userInstance.userFirstName} ${userInstance.userLastName}`,
@@ -274,7 +285,6 @@ export const getListingById = async (req: Request, res: Response) => {
           userId: userInstance.userId
         }
       : undefined;
-
     let cityName: string | undefined = undefined;
     if (addressInstance && typeof addressInstance === 'object' && 'City' in addressInstance) {
       const city = addressInstance.City;
@@ -282,11 +292,14 @@ export const getListingById = async (req: Request, res: Response) => {
         cityName = city.cityName;
       }
     }
-
+    // Add likesCount
+    const likesCount = await Like.count({ where: { listingId: listing.listingId } });
     res.json({
       ...listing.toJSON(),
       user,
       cityName,
+      likesCount,
+      views: listing.views,
     });
   } catch (error) {
     console.error("Error fetching listing by id:", error);
@@ -313,7 +326,12 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
       ],
     });
 
-    res.status(200).json(listings);
+    // Add likesCount to each listing
+    const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
+      const likesCount = await Like.count({ where: { listingId: listing.listingId } });
+      return { ...listing.toJSON(), likesCount };
+    }));
+    res.status(200).json(listingsWithLikes);
   } catch (error) {
     console.error("Error fetching user listings:", error);
     res.status(500).json({ error: "Failed to fetch user listings" });

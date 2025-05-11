@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
+import { BsEye } from 'react-icons/bs';
 
 interface ListingData {
   listingId: number;
@@ -51,8 +52,11 @@ const ListingPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const navigate = useNavigate();
   const userId = Number(localStorage.getItem('userId'));
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     const fetchListing = async () => {
       setLoading(true);
       try {
@@ -117,9 +121,9 @@ const ListingPage: React.FC = () => {
   } else if (listing.photos && listing.photos.length > 0) {
     allPics = listing.photos;
   } else {
-    allPics = ["/default-image.jpg"];
+    allPics = ["https://placehold.co/300x200?text=No+Image&font=roboto"];
   }
-  const mainPic = allPics[currentPhotoIdx] || "/default-image.jpg";
+  const mainPic = allPics[currentPhotoIdx] || "https://placehold.co/300x200?text=No+Image&font=roboto";
   const otherPics = allPics.filter((_, i) => i !== currentPhotoIdx);
 
   // Carousel navigation
@@ -190,7 +194,7 @@ const ListingPage: React.FC = () => {
               )}
               {/* Main photo */}
               <img
-                src={mainPic}
+                src={mainPic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
                 alt="main"
                 style={{ width: "100%", height: "100%", objectFit: "contain", cursor: "pointer" }}
                 onClick={() => openModal(currentPhotoIdx)}
@@ -232,7 +236,7 @@ const ListingPage: React.FC = () => {
                 return (
                   <img
                     key={i}
-                    src={pic}
+                    src={pic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
                     alt={`preview-${i}`}
                     style={{
                       borderRadius: "1rem",
@@ -383,13 +387,21 @@ const ListingPage: React.FC = () => {
           {/* Price and Add to favourites */}
           <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
             <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
-            <button 
-              className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`} 
-              style={{ borderRadius: "1rem" }}
-              onClick={toggleLike}
-            >
-              {isLiked ? 'Remove from favourites' : 'Add to favourites'} <span className="ms-2" style={{ fontSize: 22 }}>&#9825;</span>
-            </button>
+            <div className="d-flex align-items-center mb-3" style={{ gap: 16 }}>
+              {/* Views */}
+              <span style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.85)', borderRadius: 20, padding: '2px 12px', fontSize: 18, fontWeight: 500, color: '#333', gap: 6 }}>
+                <span style={{ minWidth: 18, textAlign: 'center', marginRight: 4 }}>{(listing as any).views ?? 0}</span>
+                <BsEye style={{ fontSize: 20, color: '#888' }} />
+              </span>
+              {/* Add to favourites button */}
+              <button
+                className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
+                style={{ fontWeight: 500 }}
+                onClick={toggleLike}
+              >
+                {isLiked ? 'Remove from favourites' : 'Add to favourites'}
+              </button>
+            </div>
           </div>
           {/* User details card */}
           <div className="card p-4" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>

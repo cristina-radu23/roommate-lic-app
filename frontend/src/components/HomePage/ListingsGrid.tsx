@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { PostListingFormData } from "../PostListing/types";
 import { FaHeart } from 'react-icons/fa';
+import { BsEye } from 'react-icons/bs';
 
 type ListingsGridProps = {
   listings: PostListingFormData[];
@@ -48,11 +49,9 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
         {listings.map((listing, index) => {
           // Try to get the first photo from the Photo table (listing.Photos)
           // Fallback to listing.photos or default image
-          let imageUrl = "/default-image.jpg";
-          // If backend returns Photos as an array
+          let imageUrl = "https://placehold.co/300x200?text=No+Image&font=roboto";
           if ((listing as any).Photos && Array.isArray((listing as any).Photos) && (listing as any).Photos.length > 0) {
             imageUrl = (listing as any).Photos[0].url;
-            // If the url does not start with http, add backend host
             if (imageUrl && !imageUrl.startsWith("http")) {
               imageUrl = `http://localhost:5000${imageUrl}`;
             }
@@ -63,7 +62,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
             <div key={index} className="col-12 col-sm-6 col-md-4 col-lg-3">
               <div className="card h-100 shadow-sm" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
                 <img
-                  src={imageUrl}
+                  src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}
                   className="card-img-top"
                   alt={listing.title || "Listing"}
                   style={{ height: "200px", objectFit: "cover" }}
@@ -78,7 +77,14 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
                     cursor: 'pointer',
                     fontSize: 24,
                     color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
-                    filter: likedIds.includes(listing.listingId!) ? '' : 'drop-shadow(0 0 2px #fff)'
+                    filter: likedIds.includes(listing.listingId!) ? '' : 'drop-shadow(0 0 2px #fff)',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    background: 'rgba(255,255,255,0.85)',
+                    borderRadius: 20,
+                    padding: '2px 12px',
+                    gap: 10,
                   }}
                   onClick={e => {
                     e.stopPropagation();
@@ -86,7 +92,16 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
                   }}
                   title={likedIds.includes(listing.listingId!) ? 'Remove from favourites' : 'Add to favourites'}
                 >
-                  <FaHeart style={{ marginRight: '10px', marginBottom: '10px' }} fill={likedIds.includes(listing.listingId!) ? 'red' : 'none'} stroke="#e74c3c" strokeWidth={9} />
+                  {/* Views */}
+                  <span style={{ display: 'flex', alignItems: 'center', marginRight: 10 }}>
+                    <span style={{ fontSize: 16, color: '#333', minWidth: 18, textAlign: 'center', fontWeight: 500, marginRight: 4 }}>{(listing as any).views ?? 0}</span>
+                    <BsEye style={{ fontSize: 18, color: '#888' }} />
+                  </span>
+                  {/* Likes */}
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 16, color: '#333', minWidth: 18, textAlign: 'center', fontWeight: 500, marginRight: 6 }}>{(listing as any).likesCount ?? 0}</span>
+                    <FaHeart style={{ marginRight: 0, marginBottom: 0 }} fill={likedIds.includes(listing.listingId!) ? 'red' : 'none'} stroke="#e74c3c" strokeWidth={9} />
+                  </span>
                 </span>
                 <div className="card-body d-flex flex-column justify-content-between">
                   <div>
