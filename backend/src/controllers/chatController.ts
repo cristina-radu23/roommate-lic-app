@@ -90,7 +90,10 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
           include: [
             {
               model: ChatRoomUser,
-              include: [User],
+              include: [{
+                model: User,
+                attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
+              }],
             },
           ],
         },
@@ -106,7 +109,14 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
 export const getChatRoomMessages = async (req: Request, res: Response) => {
   try {
     const { chatRoomId } = req.params;
-    const messages = await Message.findAll({ where: { chatRoomId }, order: [["createdAt", "ASC"]], include: [User] });
+    const messages = await Message.findAll({ 
+      where: { chatRoomId }, 
+      order: [["createdAt", "ASC"]], 
+      include: [{
+        model: User,
+        attributes: ['userFirstName', 'userLastName', 'profilePicture']
+      }] 
+    });
     res.json(messages);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch messages" });

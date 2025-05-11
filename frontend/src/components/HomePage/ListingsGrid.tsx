@@ -5,22 +5,26 @@ import { FaHeart } from 'react-icons/fa';
 
 type ListingsGridProps = {
   listings: PostListingFormData[];
+  isLoggedIn?: boolean;
 };
 
-const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
+const ListingsGrid: React.FC<ListingsGridProps> = ({ listings, isLoggedIn = false }) => {
   const navigate = useNavigate();
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const userId = Number(localStorage.getItem('userId'));
 
   React.useEffect(() => {
-    if (!userId) return;
+    if (!userId || !isLoggedIn) {
+      setLikedIds([]);
+      return;
+    }
     fetch(`http://localhost:5000/api/likes/${userId}`)
       .then(res => res.json())
       .then((likes) => setLikedIds(likes.map((like: any) => like.listingId)));
-  }, [userId]);
+  }, [userId, isLoggedIn]);
 
   const toggleLike = async (listingId: number, liked: boolean) => {
-    if (!userId) return;
+    if (!userId || !isLoggedIn) return;
     if (liked) {
       await fetch('http://localhost:5000/api/likes', {
         method: 'DELETE',
@@ -59,6 +63,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
           } else if (listing.photos && listing.photos.length > 0) {
             imageUrl = listing.photos[0];
           }
+          const isOwnListing = (listing as any).user?.userId === userId || (listing as any).userId === userId;
           return (
             <div key={index} className="col-12 col-sm-6 col-md-4 col-lg-3">
               <div className="card h-100 shadow-sm" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
@@ -69,25 +74,27 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings }) => {
                   style={{ height: "200px", objectFit: "cover" }}
                 />
                 {/* Heart icon at bottom right over image */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: 16,
-                    right: 16,
-                    zIndex: 2,
-                    cursor: 'pointer',
-                    fontSize: 24,
-                    color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
-                    filter: likedIds.includes(listing.listingId!) ? '' : 'drop-shadow(0 0 2px #fff)'
-                  }}
-                  onClick={e => {
-                    e.stopPropagation();
-                    toggleLike(listing.listingId!, likedIds.includes(listing.listingId!));
-                  }}
-                  title={likedIds.includes(listing.listingId!) ? 'Remove from favourites' : 'Add to favourites'}
-                >
-                  <FaHeart style={{ marginRight: '10px', marginBottom: '10px' }} fill={likedIds.includes(listing.listingId!) ? 'red' : 'none'} stroke="#e74c3c" strokeWidth={9} />
-                </span>
+                {!isOwnListing && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: 16,
+                      right: 16,
+                      zIndex: 2,
+                      cursor: 'pointer',
+                      fontSize: 24,
+                      color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
+                      filter: likedIds.includes(listing.listingId!) ? '' : 'drop-shadow(0 0 2px #fff)'
+                    }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      toggleLike(listing.listingId!, likedIds.includes(listing.listingId!));
+                    }}
+                    title={likedIds.includes(listing.listingId!) ? 'Remove from favourites' : 'Add to favourites'}
+                  >
+                    <FaHeart style={{ marginRight: '10px', marginBottom: '10px' }} fill={likedIds.includes(listing.listingId!) ? 'red' : 'none'} stroke="#e74c3c" strokeWidth={9} />
+                  </span>
+                )}
                 <div className="card-body d-flex flex-column justify-content-between">
                   <div>
                     <h5 className="card-title">{listing.title}</h5>

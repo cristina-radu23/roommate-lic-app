@@ -79,7 +79,7 @@ const MyListings: React.FC = () => {
           You haven't created any listings yet. <a href="/postListing" className="alert-link">Create your first listing</a>
         </div>
       ) : (
-        <ListingsGrid listings={listings} />
+        <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
       )}
     </div>
   );

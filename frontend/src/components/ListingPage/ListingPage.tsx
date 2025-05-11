@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
+import profileIcon from '../assets/profileIcon.png';
+import { FaUserCircle } from 'react-icons/fa';
 
 interface ListingData {
   listingId: number;
@@ -15,6 +17,7 @@ interface ListingData {
     name: string;
     phone: string;
     userId: number;
+    profilePicture?: string;
   };
   userRole?: string;
   description?: string;
@@ -51,6 +54,7 @@ const ListingPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const navigate = useNavigate();
   const userId = Number(localStorage.getItem('userId'));
+  const [showPhone, setShowPhone] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -149,6 +153,8 @@ const ListingPage: React.FC = () => {
   const totalRoommates =
     (listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) +
     (listing.flatmatesMale ?? listing.maleFlatmates ?? 0);
+
+  const isOwnListing = listing.user && listing.user.userId === userId;
 
   return (
     <div className="container-fluid" style={{ minHeight: "100vh", background: "#fff", marginTop: "56px",
@@ -383,37 +389,69 @@ const ListingPage: React.FC = () => {
           {/* Price and Add to favourites */}
           <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
             <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
-            <button 
-              className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`} 
-              style={{ borderRadius: "1rem" }}
-              onClick={toggleLike}
-            >
-              {isLiked ? 'Remove from favourites' : 'Add to favourites'} <span className="ms-2" style={{ fontSize: 22 }}>&#9825;</span>
-            </button>
+            {!isOwnListing && (
+              <button 
+                className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`} 
+                style={{ borderRadius: "1rem" }}
+                onClick={toggleLike}
+              >
+                {isLiked ? 'Remove from favourites' : 'Add to favourites'} <span className="ms-2" style={{ fontSize: 22 }}>&#9825;</span>
+              </button>
+            )}
           </div>
           {/* User details card */}
-          <div className="card p-4" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>
-            <div className="fw-bold mb-2">User details</div>
-            <div>Name: {listing.user?.name || "[user name]"}</div>
-            <div>Phone: {listing.user?.phone || "[revealable phone number]"}</div>
-            <div className="text-muted" style={{ fontSize: 12 }}>*Profile picture to be implemented in the future*</div>
+          <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>
+            <div className="d-flex align-items-center mb-3 w-100" style={{ gap: 16 }}>
+              {listing.user?.profilePicture ? (
+                <img
+                  src={listing.user.profilePicture.startsWith('http') ? listing.user.profilePicture : `http://localhost:5000${listing.user.profilePicture}`}
+                  alt="Profile"
+                  style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd' }}
+                />
+              ) : (
+                <FaUserCircle size={56} color="#bbb" style={{ background: '#eee', borderRadius: '50%' }} />
+              )}
+              <span style={{ fontWeight: 600, fontSize: 20 }}>{listing.user?.name || '[user name]'}</span>
+            </div>
             <button
-              className="btn btn-primary mt-3"
-              onClick={() => {
-                console.log('[ListingPage] listing.user:', listing.user, 'userId:', listing.user?.userId);
-                if (listing.user && listing.user.userId) {
-                  navigate('/inbox', {
-                    state: {
-                      receiverId: listing.user.userId,
-                      receiverName: listing.user.name,
-                      listingId: listing.listingId
-                    }
-                  });
-                }
+              className="d-flex align-items-center justify-content-center mb-3"
+              style={{
+                background: '#e91e63', color: '#fff', border: 'none', borderRadius: 18, padding: '12px 24px', fontSize: 18, width: '100%', fontWeight: 500, cursor: 'pointer', position: 'relative', minHeight: 56
               }}
+              onClick={() => setShowPhone(true)}
+              disabled={showPhone || !listing.user?.phone}
             >
-              Send Message
+              <span style={{ display: 'flex', alignItems: 'center', marginRight: 12, fontSize: 24 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
+              </span>
+              {showPhone && listing.user?.phone
+                ? listing.user.phone
+                : `${(listing.user?.phone || '0000.....').slice(0, 4)} .....`}
+              {!showPhone && listing.user?.phone && (
+                <span style={{ fontSize: 13, display: 'block', marginLeft: 12, color: '#fff', opacity: 0.8 }}>
+                  Click to reveal phone number
+                </span>
+              )}
             </button>
+            {!isOwnListing && (
+              <button
+                className="btn btn-primary mt-2 w-100"
+                style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
+                onClick={() => {
+                  if (listing.user && listing.user.userId) {
+                    navigate('/inbox', {
+                      state: {
+                        receiverId: listing.user.userId,
+                        receiverName: listing.user.name,
+                        listingId: listing.listingId
+                      }
+                    });
+                  }
+                }}
+              >
+                Send message
+              </button>
+            )}
           </div>
           {/* Map card */}
           <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0 }}>

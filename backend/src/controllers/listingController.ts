@@ -254,7 +254,7 @@ export const getListingById = async (req: Request, res: Response) => {
         },
         {
           model: User,
-          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber"],
+          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture"],
         },
       ],
     });
@@ -265,15 +265,20 @@ export const getListingById = async (req: Request, res: Response) => {
     const addressInstance = (listing as any).Address;
 
     console.log('userInstance:', userInstance);
-    console.log('listing.toJSON():', listing.toJSON());
+    if (userInstance) {
+      console.log('userInstance.profilePicture:', userInstance.profilePicture);
+    }
 
     const user = (userInstance && typeof userInstance === 'object' && 'userFirstName' in userInstance && 'userLastName' in userInstance && 'phoneNumber' in userInstance)
       ? {
           name: `${userInstance.userFirstName} ${userInstance.userLastName}`,
           phone: userInstance.phoneNumber,
-          userId: userInstance.userId
+          userId: userInstance.userId,
+          profilePicture: userInstance.profilePicture || null
         }
       : undefined;
+
+    console.log('user object sent to frontend:', user);
 
     let cityName: string | undefined = undefined;
     if (addressInstance && typeof addressInstance === 'object' && 'City' in addressInstance) {

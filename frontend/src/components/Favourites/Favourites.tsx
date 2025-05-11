@@ -70,7 +70,7 @@ const Favourites: React.FC = () => {
           You haven't added any listings to your favourites yet.
         </div>
       ) : (
-        <ListingsGrid listings={listings} />
+        <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
       )}
     </div>
   );
