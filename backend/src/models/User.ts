@@ -11,6 +11,7 @@ interface UserAttributes {
   gender: "male" | "female" | "not specified";
   occupation: "student" | "employeed" | "not specified";
   passwordHash: string;
+  profilePicture?: string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "userId"> {}
@@ -25,6 +26,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public gender!: "male" | "female" | "not specified";
   public occupation!: "student" | "employeed" | "not specified";
   public passwordHash!: string;
+  public profilePicture?: string;
 }
 
 User.init(
@@ -44,6 +46,7 @@ User.init(
       defaultValue: "not specified",
     },
     passwordHash: { type: DataTypes.STRING, allowNull: false },
+    profilePicture: { type: DataTypes.STRING, allowNull: true },
   },
   {
     sequelize,
