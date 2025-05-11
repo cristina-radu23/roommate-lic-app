@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 interface UserInfo {
   userFirstName: string;
@@ -28,23 +28,42 @@ const AccountInfo: React.FC = () => {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const navigate = useNavigate();
+  const { userId } = useParams();
+  const location = useLocation();
+  const isViewingOtherProfile = userId !== undefined && userId !== localStorage.getItem('userId');
+
+  useEffect(() => {
+    // Set the active submenu from navigation state if available
+    if (location.state?.activeSubmenu) {
+      setSelectedMenu(location.state.activeSubmenu);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
+        if (!token && !isViewingOtherProfile) {
           navigate('/');
           return;
         }
-        const response = await fetch('http://localhost:5000/api/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+
+        const url = isViewingOtherProfile 
+          ? `http://localhost:5000/api/users/${userId}`
+          : 'http://localhost:5000/api/users/me';
+
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (!isViewingOtherProfile) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { headers });
+        
         if (!response.ok) {
-          if (response.status === 401) {
+          if (response.status === 401 && !isViewingOtherProfile) {
             localStorage.removeItem('token');
             navigate('/');
             return;
@@ -52,6 +71,7 @@ const AccountInfo: React.FC = () => {
           const errorData = await response.json().catch(() => null);
           throw new Error(errorData?.error || `Failed to fetch user info: ${response.status}`);
         }
+        
         const data = await response.json();
         console.log('Fetched user data:', data);
         setUser(data);
@@ -64,7 +84,7 @@ const AccountInfo: React.FC = () => {
       }
     };
     fetchUserInfo();
-  }, [navigate]);
+  }, [navigate, userId, isViewingOtherProfile]);
 
   useEffect(() => {
     setImgError(false); // Reset image error when profilePicture changes
@@ -180,71 +200,79 @@ const AccountInfo: React.FC = () => {
                   <span><i className="bi bi-person" /></span>
                 )}
               </div>
-              <label
-                htmlFor="profilePictureUpload"
-                className="btn position-absolute bottom-0 end-0"
-                style={{
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: '50%',
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transform: 'translate(25%, 25%)',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  backgroundColor: '#f8f9fa',
-                  border: '1px solid #dee2e6',
-                  color: '#6c757d'
-                }}
-              >
-                <i className="bi bi-pencil" style={{ fontSize: '14px' }} />
-              </label>
-              <input
-                type="file"
-                id="profilePictureUpload"
-                accept="image/*"
-                onChange={handleProfilePictureUpload}
-                style={{ display: 'none' }}
-              />
+              {!isViewingOtherProfile && (
+                <>
+                  <label
+                    htmlFor="profilePictureUpload"
+                    className="btn position-absolute bottom-0 end-0"
+                    style={{
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: 'translate(25%, 25%)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      backgroundColor: '#f8f9fa',
+                      border: '1px solid #dee2e6',
+                      color: '#6c757d'
+                    }}
+                  >
+                    <i className="bi bi-pencil" style={{ fontSize: '14px' }} />
+                  </label>
+                  <input
+                    type="file"
+                    id="profilePictureUpload"
+                    accept="image/*"
+                    onChange={handleProfilePictureUpload}
+                    style={{ display: 'none' }}
+                  />
+                </>
+              )}
             </div>
             <div>
               <h3 className="mb-1">Hi {user.userFirstName} {user.userLastName}</h3>
               <div className="text-muted">{user.email}</div>
             </div>
           </div>
-          <button className="btn btn-outline-secondary d-flex align-items-center" onClick={handleLogout}>
-            <span className="me-2"><i className="bi bi-box-arrow-right" /></span> Log out
-          </button>
+          {!isViewingOtherProfile && (
+            <button className="btn btn-outline-secondary d-flex align-items-center" onClick={handleLogout}>
+              <span className="me-2"><i className="bi bi-box-arrow-right" /></span> Log out
+            </button>
+          )}
         </div>
         {/* Main content with side menu */}
-        <div className="d-flex" style={{ marginTop: 32 }}>
+        <div className="d-flex" style={{ gap: 32 }}>
           {/* Side menu */}
-          <div style={{ minWidth: 180, borderRight: '1px solid #e0e0e0', paddingRight: 0 }}>
-            <ul className="nav flex-column" style={{ gap: 4 }}>
-              <li className="nav-item">
-                <button
-                  className={`nav-link w-100 text-start${selectedMenu === 'profile' ? ' active fw-bold' : ''}`}
-                  style={{ background: 'none', border: 'none', color: selectedMenu === 'profile' ? '#212529' : '#6c757d', cursor: 'pointer', padding: '10px 16px', borderRadius: 6 }}
-                  onClick={() => setSelectedMenu('profile')}
-                >
-                  Profile
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link w-100 text-start${selectedMenu === 'settings' ? ' active fw-bold' : ''}`}
-                  style={{ background: 'none', border: 'none', color: selectedMenu === 'settings' ? '#212529' : '#6c757d', cursor: 'pointer', padding: '10px 16px', borderRadius: 6 }}
-                  onClick={() => setSelectedMenu('settings')}
-                >
-                  Settings
-                </button>
-              </li>
-            </ul>
-          </div>
+          {!isViewingOtherProfile && (
+            <div style={{ minWidth: 180, borderRight: '1px solid #e0e0e0', paddingRight: 0 }}>
+              <ul className="nav flex-column" style={{ gap: 4 }}>
+                <li className="nav-item">
+                  <button
+                    className={`nav-link w-100 text-start${selectedMenu === 'profile' ? ' active fw-bold' : ''}`}
+                    style={{ background: 'none', border: 'none', color: selectedMenu === 'profile' ? '#212529' : '#6c757d', cursor: 'pointer', padding: '10px 16px', borderRadius: 6 }}
+                    onClick={() => setSelectedMenu('profile')}
+                  >
+                    Profile
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button
+                    className={`nav-link w-100 text-start${selectedMenu === 'settings' ? ' active fw-bold' : ''}`}
+                    style={{ background: 'none', border: 'none', color: selectedMenu === 'settings' ? '#212529' : '#6c757d', cursor: 'pointer', padding: '10px 16px', borderRadius: 6 }}
+                    onClick={() => setSelectedMenu('settings')}
+                  >
+                    Settings
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
           {/* Main content area */}
-          <div style={{ flex: 1, paddingLeft: 48 }}>
+          <div style={{ flex: 1 }}>
             {selectedMenu === 'profile' && (
               <form onSubmit={e => { e.preventDefault(); handleSave(); }}>
                 <h4 className="mb-4">Profile</h4>
@@ -255,6 +283,7 @@ const AccountInfo: React.FC = () => {
                     value={typeof editFields.bio === 'string' ? editFields.bio : ''}
                     onChange={e => handleFieldChange('bio', e.target.value)}
                     rows={3}
+                    disabled={isViewingOtherProfile}
                   />
                 </div>
                 <div className="mb-3">
@@ -263,6 +292,7 @@ const AccountInfo: React.FC = () => {
                     className="form-control"
                     value={editFields.userFirstName}
                     onChange={e => handleFieldChange('userFirstName', e.target.value)}
+                    disabled={isViewingOtherProfile}
                   />
                 </div>
                 <div className="mb-3">
@@ -271,6 +301,7 @@ const AccountInfo: React.FC = () => {
                     className="form-control"
                     value={editFields.userLastName}
                     onChange={e => handleFieldChange('userLastName', e.target.value)}
+                    disabled={isViewingOtherProfile}
                   />
                 </div>
                 <div className="mb-3">
@@ -283,18 +314,21 @@ const AccountInfo: React.FC = () => {
                     className="form-control"
                     value={editFields.phoneNumber}
                     onChange={e => handleFieldChange('phoneNumber', e.target.value)}
+                    disabled={isViewingOtherProfile}
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary mt-3"
-                  disabled={!isDirty || saving}
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
+                {!isViewingOtherProfile && (
+                  <button
+                    type="submit"
+                    className="btn btn-primary mt-3"
+                    disabled={!isDirty || saving}
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                )}
               </form>
             )}
-            {selectedMenu === 'settings' && (
+            {selectedMenu === 'settings' && !isViewingOtherProfile && (
               <div>
                 <h4 className="mb-4">Settings</h4>
                 <div className="mb-4" style={{ maxWidth: 400 }}>

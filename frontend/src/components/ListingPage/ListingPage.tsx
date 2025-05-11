@@ -419,10 +419,16 @@ const ListingPage: React.FC = () => {
                 <img
                   src={listing.user.profilePicture.startsWith('http') ? listing.user.profilePicture : `http://localhost:5000${listing.user.profilePicture}`}
                   alt="Profile"
-                  style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd' }}
+                  style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd', cursor: 'pointer' }}
+                  onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
                 />
               ) : (
-                <FaUserCircle size={56} color="#bbb" style={{ background: '#eee', borderRadius: '50%' }} />
+                <FaUserCircle 
+                  size={56} 
+                  color="#bbb" 
+                  style={{ background: '#eee', borderRadius: '50%', cursor: 'pointer' }} 
+                  onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
+                />
               )}
               <span style={{ fontWeight: 600, fontSize: 20 }}>{listing.user?.name || '[user name]'}</span>
             </div>

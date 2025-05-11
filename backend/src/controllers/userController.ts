@@ -93,3 +93,26 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) =
     res.status(500).json({ error: "Failed to fetch user info" });
   }
 };
+
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "User ID is required" });
+
+    const user = await User.findByPk(userId, {
+      attributes: [
+        "userFirstName",
+        "userLastName",
+        "email",
+        "phoneNumber",
+        "profilePicture",
+        "bio"
+      ]
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user info" });
+  }
+};
