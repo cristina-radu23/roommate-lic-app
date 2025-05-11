@@ -18,6 +18,15 @@ const AccountInfo: React.FC = () => {
   const [editFields, setEditFields] = useState<UserInfo | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [passwordFields, setPasswordFields] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,6 +65,10 @@ const AccountInfo: React.FC = () => {
     };
     fetchUserInfo();
   }, [navigate]);
+
+  useEffect(() => {
+    setImgError(false); // Reset image error when profilePicture changes
+  }, [user?.profilePicture]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -155,12 +168,13 @@ const AccountInfo: React.FC = () => {
         <div className="d-flex justify-content-between align-items-center mb-4" style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: 24 }}>
           <div className="d-flex align-items-center gap-3">
             <div style={{ position: 'relative' }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: user.profilePicture ? 'none' : 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#fff', overflow: 'hidden' }}>
-                {user.profilePicture ? (
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: user.profilePicture && !imgError ? 'none' : '#e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: '#adb5bd', overflow: 'hidden' }}>
+                {user.profilePicture && !imgError ? (
                   <img
                     src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
                     alt="Profile"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={() => setImgError(true)}
                   />
                 ) : (
                   <span><i className="bi bi-person" /></span>
@@ -283,7 +297,93 @@ const AccountInfo: React.FC = () => {
             {selectedMenu === 'settings' && (
               <div>
                 <h4 className="mb-4">Settings</h4>
-                <div className="text-muted">Settings content coming soon...</div>
+                <div className="mb-4" style={{ maxWidth: 400 }}>
+                  <h5 className="mb-3">Change Password</h5>
+                  <form onSubmit={async e => {
+                    e.preventDefault();
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                    if (!passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword) {
+                      setPasswordError('All fields are required.');
+                      return;
+                    }
+                    if (passwordFields.newPassword !== passwordFields.confirmNewPassword) {
+                      setPasswordError('New passwords do not match.');
+                      return;
+                    }
+                    setPasswordSaving(true);
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) {
+                        navigate('/');
+                        return;
+                      }
+                      const response = await fetch('http://localhost:5000/api/users/change-password', {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          currentPassword: passwordFields.currentPassword,
+                          newPassword: passwordFields.newPassword
+                        })
+                      });
+                      const data = await response.json();
+                      if (!response.ok) {
+                        setPasswordError(data.error || 'Failed to change password');
+                      } else {
+                        setPasswordSuccess('Password changed successfully!');
+                        setPasswordFields({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+                      }
+                    } catch (err) {
+                      setPasswordError('Failed to change password');
+                    } finally {
+                      setPasswordSaving(false);
+                    }
+                  }}>
+                    <div className="mb-3">
+                      <label className="form-label">Current password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={passwordFields.currentPassword}
+                        onChange={e => setPasswordFields(f => ({ ...f, currentPassword: e.target.value }))}
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">New password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={passwordFields.newPassword}
+                        onChange={e => setPasswordFields(f => ({ ...f, newPassword: e.target.value }))}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Confirm new password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={passwordFields.confirmNewPassword}
+                        onChange={e => setPasswordFields(f => ({ ...f, confirmNewPassword: e.target.value }))}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    {passwordError && <div className="text-danger mb-2">{passwordError}</div>}
+                    {passwordSuccess && <div className="text-success mb-2">{passwordSuccess}</div>}
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={passwordSaving || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword || passwordFields.newPassword !== passwordFields.confirmNewPassword}
+                    >
+                      {passwordSaving ? 'Saving...' : 'Change Password'}
+                    </button>
+                  </form>
+                </div>
+                <div className="text-muted">Other settings coming soon...</div>
               </div>
             )}
           </div>

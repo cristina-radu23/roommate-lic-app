@@ -48,7 +48,11 @@ User.init(
       defaultValue: "not specified",
     },
     passwordHash: { type: DataTypes.STRING, allowNull: false },
-    profilePicture: { type: DataTypes.STRING, allowNull: true },
+    profilePicture: { 
+      type: DataTypes.STRING, 
+      allowNull: true,
+      field: 'profilePicture'
+    },
     bio: { type: DataTypes.TEXT, allowNull: true },
   },
   {

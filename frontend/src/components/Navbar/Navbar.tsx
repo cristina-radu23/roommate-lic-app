@@ -19,6 +19,7 @@ interface UserInfo {
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,8 +44,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
     fetchUser();
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    setImgError(false); // Reset image error when user/profilePicture changes
+  }, [user?.profilePicture, isLoggedIn]);
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10 }}>
+    <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10000 }}>
       <div className="container">
         <Link className="navbar-brand" to="/">Roommate Finder</Link>
 
@@ -79,11 +83,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   onMouseLeave={() => setShowDropdown(false)}
                 >
                   <span className="nav-link dropdown-toggle d-flex align-items-center" role="button">
-                    {user && user.profilePicture ? (
+                    {user && user.profilePicture && !imgError ? (
                       <img
                         src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
                         alt="Profile"
                         style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', marginRight: 8, border: '1px solid #ddd' }}
+                        onError={() => setImgError(true)}
                       />
                     ) : (
                       <FaUserCircle size={24} className="me-1" />
@@ -92,7 +97,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   </span>
                   {showDropdown && (
                     <ul className="dropdown-menu dropdown-menu-end show" style={{ position: "absolute" }}>
-                      <li><Link className="dropdown-item" to="/wishlist">My Wishlist</Link></li>
+                      <li><Link className="dropdown-item" to="/favourites">Favourites</Link></li>
                       <li><Link className="dropdown-item" to="/account">Account Information</Link></li>
                       <li><Link className="dropdown-item" to="/mylistings">My Listings</Link></li>
                       <li><Link className="dropdown-item" to="/postListing">Create a Listing</Link></li>

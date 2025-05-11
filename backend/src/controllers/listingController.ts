@@ -254,7 +254,7 @@ export const getListingById = async (req: Request, res: Response) => {
         },
         {
           model: User,
-          attributes: ["userFirstName", "userLastName", "phoneNumber"],
+          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber"],
         },
       ],
     });
@@ -264,10 +264,14 @@ export const getListingById = async (req: Request, res: Response) => {
     const userInstance = (listing as any).User;
     const addressInstance = (listing as any).Address;
 
+    console.log('userInstance:', userInstance);
+    console.log('listing.toJSON():', listing.toJSON());
+
     const user = (userInstance && typeof userInstance === 'object' && 'userFirstName' in userInstance && 'userLastName' in userInstance && 'phoneNumber' in userInstance)
       ? {
           name: `${userInstance.userFirstName} ${userInstance.userLastName}`,
           phone: userInstance.phoneNumber,
+          userId: userInstance.userId
         }
       : undefined;
 
@@ -315,4 +319,3 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
     res.status(500).json({ error: "Failed to fetch user listings" });
   }
 };
-

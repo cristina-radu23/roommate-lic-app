@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
-const CreateAccount = () => {
+const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
   const [formData, setFormData] = useState({
     userFirstName: "",
     userLastName: "",
@@ -11,6 +12,8 @@ const CreateAccount = () => {
     password: "",
     phoneNumber: ""
   });
+  const [showSuccess, setShowSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -35,7 +38,7 @@ const CreateAccount = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Account created successfully!");
+        setShowSuccess(true);
         // optionally clear form or redirect
       } else {
         alert("Error: " + data.error);
@@ -45,6 +48,23 @@ const CreateAccount = () => {
       alert("Something went wrong.");
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="container d-flex flex-column align-items-center justify-content-center vh-100" style={{ marginTop: "80px" }}>
+        <div className="card p-5" style={{ maxWidth: 400 }}>
+          <h2 className="mb-4">Account created successfully!</h2>
+          <div className="d-flex flex-column gap-3">
+            <button className="btn btn-outline-primary" onClick={() => navigate('/')}>Go to Homepage</button>
+            <button className="btn btn-primary" onClick={() => {
+              if (onLoginClick) onLoginClick();
+              else window.dispatchEvent(new CustomEvent('open-login-modal'));
+            }}>Login</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container d-flex justify-content-center vh-100" style={{ marginTop: "80px" }}>

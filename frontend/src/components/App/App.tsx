@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import Navbar from '../Navbar/Navbar';
 import LoginModal from '../LoginModal/LoginModal';
 import CreateAccount from '../CreateAccount/CreateAccount';
@@ -9,8 +9,9 @@ import ListingPage from '../ListingPage';
 import Inbox from '../Inbox/Inbox';
 import MyListings from '../MyListings/MyListings';
 import AccountInfo from '../AccountInfo/AccountInfo';
+import Favourites from '../Favourites';
 
-function App() {
+function App({ navigate }: { navigate: (path: string) => void }) {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -18,6 +19,12 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setLoginModalOpen(true);
+    window.addEventListener('open-login-modal', handler);
+    return () => window.removeEventListener('open-login-modal', handler);
   }, []);
 
   const handleLogin = async (email: string, password: string) => {
@@ -45,10 +52,11 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
+    navigate('/');
   };
 
   return (
-    <Router>
+    <>
       <Navbar
         onLoginClick={() => setLoginModalOpen(true)}
         isLoggedIn={isLoggedIn}
@@ -64,12 +72,24 @@ function App() {
         <Route path="/postListing" element={<PostListing />} />
         <Route path="/listing/:id" element={<ListingPage />} />
         <Route path="/inbox" element={<Inbox />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/mylistings" element={<MyListings />} />
         <Route path="/account" element={<AccountInfo />} />
-        <Route path="/" element={<HomePage />} />
+        <Route path="/favourites" element={<Favourites />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 
-export default App;
+function AppWithRouter() {
+  const navigate = useNavigate();
+  return <App navigate={navigate} />;
+}
+
+export default function AppRoot() {
+  return (
+    <Router>
+      <AppWithRouter />
+    </Router>
+  );
+}

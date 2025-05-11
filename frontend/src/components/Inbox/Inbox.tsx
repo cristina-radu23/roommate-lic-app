@@ -84,6 +84,20 @@ const Inbox: React.FC = () => {
     }
   }, [pendingChat]);
 
+  // Auto-select existing chat if navigating with a receiver
+  useEffect(() => {
+    if (pendingChat && chats.length > 0) {
+      const existing = chats.find(chat => {
+        const other = getOtherUser(chat, userId);
+        return other && other.userId === pendingChat.receiverId;
+      });
+      if (existing) {
+        setSelectedChat(existing);
+        setPendingChat(null);
+      }
+    }
+  }, [pendingChat, chats, userId]);
+
   const handleSend = async () => {
     if (!message.trim()) return;
     setSending(true);
@@ -106,10 +120,29 @@ const Inbox: React.FC = () => {
         const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
         const chatList = await chatListRes.json();
         setChats(chatList);
-        // Select the new chat
+        // If chat already existed, select it; otherwise select the new chat
         const newChat = chatList.find((c: any) => c.ChatRoom.chatRoomId === chatRoomId);
         setSelectedChat(newChat);
         setPendingChat(null);
+        if (createData.existing) {
+          // Now send the message to the existing chat
+          await fetch('http://localhost:5000/api/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              chatRoomId,
+              userId,
+              content: message
+            })
+          });
+          setMessage('');
+          if (chatRoomId) {
+            const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
+            setMessages(await msgRes.json());
+          }
+          setSending(false);
+          return;
+        }
       }
       // Send the message
       await fetch('http://localhost:5000/api/chat/message', {

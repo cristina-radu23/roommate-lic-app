@@ -48,7 +48,9 @@ const ListingPage: React.FC = () => {
   const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalPhotoIdx, setModalPhotoIdx] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
   const navigate = useNavigate();
+  const userId = Number(localStorage.getItem('userId'));
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -68,6 +70,42 @@ const ListingPage: React.FC = () => {
     };
     fetchListing();
   }, [id]);
+
+  useEffect(() => {
+    const checkIfLiked = async () => {
+      if (!userId || !id) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/likes/${userId}`);
+        const likes = await res.json();
+        setIsLiked(likes.some((like: any) => like.listingId === Number(id)));
+      } catch (err) {
+        console.error('[ListingPage] Error checking like status:', err);
+      }
+    };
+    checkIfLiked();
+  }, [userId, id]);
+
+  const toggleLike = async () => {
+    if (!userId || !id) return;
+    try {
+      if (isLiked) {
+        await fetch('http://localhost:5000/api/likes', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, listingId: Number(id) })
+        });
+      } else {
+        await fetch('http://localhost:5000/api/likes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, listingId: Number(id) })
+        });
+      }
+      setIsLiked(!isLiked);
+    } catch (err) {
+      console.error('[ListingPage] Error toggling like:', err);
+    }
+  };
 
   if (loading) return <div className="container mt-5">Loading...</div>;
   if (!listing) return <div className="container mt-5">Listing not found.</div>;
@@ -345,8 +383,12 @@ const ListingPage: React.FC = () => {
           {/* Price and Add to favourites */}
           <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
             <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
-            <button className="btn btn-outline-danger d-flex align-items-center" style={{ borderRadius: "1rem" }}>
-              Add to favourites <span className="ms-2" style={{ fontSize: 22 }}>&#9825;</span>
+            <button 
+              className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`} 
+              style={{ borderRadius: "1rem" }}
+              onClick={toggleLike}
+            >
+              {isLiked ? 'Remove from favourites' : 'Add to favourites'} <span className="ms-2" style={{ fontSize: 22 }}>&#9825;</span>
             </button>
           </div>
           {/* User details card */}
@@ -358,7 +400,7 @@ const ListingPage: React.FC = () => {
             <button
               className="btn btn-primary mt-3"
               onClick={() => {
-                console.log('[ListingPage] listing.user:', listing.user);
+                console.log('[ListingPage] listing.user:', listing.user, 'userId:', listing.user?.userId);
                 if (listing.user && listing.user.userId) {
                   navigate('/inbox', {
                     state: {
