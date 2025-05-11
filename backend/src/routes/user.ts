@@ -3,6 +3,7 @@ import { createAccount, loginUser, getCurrentUser } from "../controllers/userCon
 import authenticateToken, { AuthenticatedRequest } from "../middleware/authMiddleware";
 import upload from '../middleware/upload';
 import User from '../models/User';
+import bcrypt from 'bcrypt';
 
 const router = express.Router();
 
@@ -63,6 +64,39 @@ router.put("/me", authenticateToken, async (req: AuthenticatedRequest, res: Resp
   } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Change password endpoint
+router.post("/change-password", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'Missing fields' });
+      return;
+    }
+    const user = await User.findByPk(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      res.status(400).json({ error: 'Current password is incorrect' });
+      return;
+    }
+    const newHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = newHash;
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 

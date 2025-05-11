@@ -46,8 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
 
   useEffect(() => {
     setImgError(false); // Reset image error when user/profilePicture changes
-  }, [user?.profilePicture]);
-
+  }, [user?.profilePicture, isLoggedIn]);
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10 }}>
       <div className="container">
