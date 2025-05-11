@@ -12,6 +12,7 @@ interface UserAttributes {
   occupation: "student" | "employeed" | "not specified";
   passwordHash: string;
   profilePicture?: string;
+  bio?: string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "userId"> {}
@@ -27,6 +28,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public occupation!: "student" | "employeed" | "not specified";
   public passwordHash!: string;
   public profilePicture?: string;
+  public bio?: string;
 }
 
 User.init(
@@ -47,6 +49,7 @@ User.init(
     },
     passwordHash: { type: DataTypes.STRING, allowNull: false },
     profilePicture: { type: DataTypes.STRING, allowNull: true },
+    bio: { type: DataTypes.TEXT, allowNull: true },
   },
   {
     sequelize,

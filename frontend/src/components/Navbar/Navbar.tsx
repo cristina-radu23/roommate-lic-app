@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { FaUserCircle, FaEnvelope } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -8,8 +8,40 @@ interface NavbarProps {
   onLogout: () => void;
 }
 
+interface UserInfo {
+  userFirstName: string;
+  userLastName: string;
+  email: string;
+  phoneNumber: string;
+  profilePicture?: string;
+}
+
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [user, setUser] = useState<UserInfo | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!isLoggedIn) {
+        setUser(null);
+        return;
+      }
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch("http://localhost:5000/api/users/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, [isLoggedIn]);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10 }}>
@@ -47,7 +79,15 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   onMouseLeave={() => setShowDropdown(false)}
                 >
                   <span className="nav-link dropdown-toggle d-flex align-items-center" role="button">
-                    <FaUserCircle size={24} className="me-1" />
+                    {user && user.profilePicture ? (
+                      <img
+                        src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
+                        alt="Profile"
+                        style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', marginRight: 8, border: '1px solid #ddd' }}
+                      />
+                    ) : (
+                      <FaUserCircle size={24} className="me-1" />
+                    )}
                     Profile
                   </span>
                   {showDropdown && (

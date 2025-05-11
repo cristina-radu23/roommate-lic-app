@@ -39,4 +39,31 @@ router.post("/upload-profile-picture", authenticateToken, upload.single('profile
   }
 });
 
+// Update current user profile
+router.put("/me", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { userFirstName, userLastName, phoneNumber, bio } = req.body;
+    const [updated] = await User.update(
+      { userFirstName, userLastName, phoneNumber, bio },
+      { where: { userId } }
+    );
+    if (updated) {
+      const updatedUser = await User.findByPk(userId, {
+        attributes: ["userFirstName", "userLastName", "email", "phoneNumber", "profilePicture", "bio"]
+      });
+      res.json(updatedUser);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 export default router;

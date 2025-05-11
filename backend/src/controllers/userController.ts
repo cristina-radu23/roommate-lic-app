@@ -77,7 +77,14 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) =
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const user = await User.findByPk(userId, {
-      attributes: ["userFirstName", "userLastName", "email", "phoneNumber", "profilePicture"]
+      attributes: [
+        "userFirstName",
+        "userLastName",
+        "email",
+        "phoneNumber",
+        "profilePicture",
+        "bio"
+      ]
     });
     if (!user) return res.status(404).json({ error: "User not found" });
 
