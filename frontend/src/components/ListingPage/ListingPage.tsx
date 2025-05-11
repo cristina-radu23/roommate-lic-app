@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
-import { FaUserCircle } from 'react-icons/fa';
 import { BsEye } from 'react-icons/bs';
+import profileIcon from '../assets/profileIcon.png';
+import { FaUserCircle } from 'react-icons/fa';
 
 interface ListingData {
   listingId: number;

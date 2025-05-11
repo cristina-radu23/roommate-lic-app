@@ -292,6 +292,9 @@ export const getListingById = async (req: Request, res: Response) => {
           profilePicture: userInstance.profilePicture || null
         }
       : undefined;
+
+    console.log('user object sent to frontend:', user);
+
     let cityName: string | undefined = undefined;
     if (addressInstance && typeof addressInstance === 'object' && 'City' in addressInstance) {
       const city = addressInstance.City;
