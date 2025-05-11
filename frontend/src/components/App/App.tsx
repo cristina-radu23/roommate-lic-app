@@ -75,6 +75,7 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/" element={<HomePage />} />
         <Route path="/mylistings" element={<MyListings />} />
         <Route path="/account" element={<AccountInfo />} />
+        <Route path="/account/:userId" element={<AccountInfo />} />
         <Route path="/favourites" element={<Favourites />} />
       </Routes>
     </>

@@ -1,5 +1,5 @@
-import express, { Response } from "express";
-import { createAccount, loginUser, getCurrentUser } from "../controllers/userController";
+import express, { Response, Request } from "express";
+import { createAccount, loginUser, getCurrentUser, getUserById } from "../controllers/userController";
 import authenticateToken, { AuthenticatedRequest } from "../middleware/authMiddleware";
 import upload from '../middleware/upload';
 import User from '../models/User';
@@ -10,6 +10,7 @@ const router = express.Router();
 router.post("/register", createAccount);
 router.post("/login", loginUser);
 router.get("/me", authenticateToken, (req, res) => { getCurrentUser(req as AuthenticatedRequest, res); });
+router.get("/:userId", (req: Request, res: Response) => { getUserById(req, res); });
 
 // Add profile picture upload endpoint
 router.post("/upload-profile-picture", authenticateToken, upload.single('profilePicture'), async (req: AuthenticatedRequest, res: Response): Promise<void> => {
