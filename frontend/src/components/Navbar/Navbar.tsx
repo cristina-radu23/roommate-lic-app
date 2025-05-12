@@ -50,7 +50,16 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10000 }}>
       <div className="container">
-        <Link className="navbar-brand" to="/">RoomBuddy</Link>
+        <Link 
+          className="navbar-brand" 
+          to="/"
+          onClick={() => {
+            // Dispatch event to reset filters
+            window.dispatchEvent(new CustomEvent('reset-filters'));
+          }}
+        >
+          RoomBuddy
+        </Link>
 
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span className="navbar-toggler-icon"></span>

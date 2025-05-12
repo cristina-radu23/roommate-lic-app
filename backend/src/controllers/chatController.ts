@@ -99,7 +99,28 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
         },
       ],
     });
-    res.json(chatRoomUsers);
+
+    // For each chat, fetch the last message and attach as lastMessage
+    const chatRoomUsersWithLastMessage = await Promise.all(chatRoomUsers.map(async (chatRoomUser: any) => {
+      const chatRoomId = chatRoomUser.ChatRoom?.chatRoomId;
+      let lastMessage = null;
+      if (chatRoomId) {
+        lastMessage = await Message.findOne({
+          where: { chatRoomId },
+          order: [['createdAt', 'DESC']],
+          include: [{
+            model: User,
+            attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
+          }]
+        });
+      }
+      return {
+        ...chatRoomUser.toJSON(),
+        lastMessage: lastMessage ? lastMessage.toJSON() : null
+      };
+    }));
+
+    res.json(chatRoomUsersWithLastMessage);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch chat rooms" });
   }

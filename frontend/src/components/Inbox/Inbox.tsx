@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import profileIcon from '../../assets/profileIcon.png';
 import './Inbox.css';
 import { useLocation } from 'react-router-dom';
@@ -41,6 +41,7 @@ const Inbox: React.FC = () => {
   const [loadingChats, setLoadingChats] = useState(true);
   const [sending, setSending] = useState(false);
   const location = useLocation();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   console.log('[Inbox] location.state:', location.state);
 
@@ -108,6 +109,13 @@ const Inbox: React.FC = () => {
     }
   }, [pendingChat, chats, userId]);
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
   const handleSend = async () => {
     if (!message.trim()) return;
     setSending(true);
@@ -150,6 +158,9 @@ const Inbox: React.FC = () => {
             const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
             setMessages(await msgRes.json());
           }
+          // Refetch chat list to update preview
+          const chatListRes2 = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+          setChats(await chatListRes2.json());
           setSending(false);
           return;
         }
@@ -170,6 +181,9 @@ const Inbox: React.FC = () => {
         const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
         setMessages(await msgRes.json());
       }
+      // Refetch chat list to update preview
+      const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+      setChats(await chatListRes.json());
     } finally {
       setSending(false);
     }
@@ -181,6 +195,15 @@ const Inbox: React.FC = () => {
       {loadingChats ? <div style={{ padding: 16 }}>Loading...</div> : null}
       {chats.map((chat) => {
         const otherUser = getOtherUser(chat, userId);
+        // Use only lastMessage property from backend
+        const lastMsg = (chat as any).lastMessage;
+        let lastMsgContent = '';
+        if (lastMsg) {
+          lastMsgContent = lastMsg.content;
+          if (lastMsg.userId === userId) {
+            lastMsgContent = `you: ${lastMsgContent}`;
+          }
+        }
         return (
           <div
             key={chat.ChatRoom.chatRoomId}
@@ -194,7 +217,7 @@ const Inbox: React.FC = () => {
             />
             <div className="inbox-list-info">
               <div className="inbox-list-name">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${chat.ChatRoom.chatRoomId}`}</div>
-              <div className="inbox-list-last">&nbsp;</div>
+              <div className="inbox-list-last" style={{ color: '#888' }}>{lastMsgContent}</div>
             </div>
             <div className="inbox-list-time">&nbsp;</div>
           </div>
@@ -205,7 +228,7 @@ const Inbox: React.FC = () => {
           <img src={profileIcon} alt="avatar" className="inbox-avatar" />
           <div className="inbox-list-info">
             <div className="inbox-list-name">{pendingChat.receiverName}</div>
-            <div className="inbox-list-last">(new message)</div>
+            <div className="inbox-list-last" style={{ color: '#888' }}>(new message)</div>
           </div>
         </div>
       )}
@@ -230,6 +253,12 @@ const Inbox: React.FC = () => {
               value={message}
               onChange={e => setMessage(e.target.value)}
               disabled={sending}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
             />
             <button onClick={handleSend} disabled={sending || !message.trim()}>Send</button>
           </div>
@@ -249,7 +278,7 @@ const Inbox: React.FC = () => {
             />
             <span className="inbox-chat-username">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${selectedChat.ChatRoom.chatRoomId}`}</span>
           </div>
-          <div className="inbox-chat-messages">
+          <div className="inbox-chat-messages" style={{ overflowY: 'auto' }}>
             {messages.map((msg, idx) => (
               <div
                 key={msg.messageId}
@@ -265,6 +294,7 @@ const Inbox: React.FC = () => {
                 <div className="inbox-message-content">{msg.content}</div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
           <div className="inbox-chat-input">
             <input
@@ -273,6 +303,12 @@ const Inbox: React.FC = () => {
               value={message}
               onChange={e => setMessage(e.target.value)}
               disabled={sending}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
             />
             <button onClick={handleSend} disabled={sending || !message.trim()}>Send</button>
           </div>

@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
+import User from "./User";
 
 interface LikeAttributes {
   likeId: number;
@@ -7,9 +8,10 @@ interface LikeAttributes {
   listingId: number;
   createdAt?: Date;
   updatedAt?: Date;
+  User?: User;
 }
 
-interface LikeCreationAttributes extends Optional<LikeAttributes, "likeId" | "createdAt" | "updatedAt"> {}
+interface LikeCreationAttributes extends Optional<LikeAttributes, "likeId" | "createdAt" | "updatedAt" | "User"> {}
 
 class Like extends Model<LikeAttributes, LikeCreationAttributes> implements LikeAttributes {
   public likeId!: number;
@@ -17,6 +19,7 @@ class Like extends Model<LikeAttributes, LikeCreationAttributes> implements Like
   public listingId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  public User?: User;
 }
 
 Like.init(

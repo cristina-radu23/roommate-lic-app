@@ -8,6 +8,8 @@ interface UserInfo {
   phoneNumber: string;
   profilePicture?: string;
   bio?: string;
+  dateOfBirth: string;
+  gender: string;
 }
 
 const AccountInfo: React.FC = () => {
@@ -235,7 +237,7 @@ const AccountInfo: React.FC = () => {
             </div>
             <div>
               <h3 className="mb-1">Hi {user.userFirstName} {user.userLastName}</h3>
-              <div className="text-muted">{user.email}</div>
+              {!isViewingOtherProfile && <div className="text-muted">{user.email}</div>}
             </div>
           </div>
           {!isViewingOtherProfile && (
@@ -305,18 +307,41 @@ const AccountInfo: React.FC = () => {
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Email</label>
-                  <input className="form-control" value={editFields.email} disabled />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Phone number</label>
+                  <label className="form-label">Date of Birth</label>
                   <input
+                    type="date"
                     className="form-control"
-                    value={editFields.phoneNumber}
-                    onChange={e => handleFieldChange('phoneNumber', e.target.value)}
+                    value={editFields.dateOfBirth}
+                    onChange={e => handleFieldChange('dateOfBirth', e.target.value)}
                     disabled={isViewingOtherProfile}
                   />
                 </div>
+                <div className="mb-3">
+                  <label className="form-label">Gender</label>
+                  <input
+                    className="form-control"
+                    value={editFields.gender}
+                    onChange={e => handleFieldChange('gender', e.target.value)}
+                    disabled={isViewingOtherProfile}
+                  />
+                </div>
+                {!isViewingOtherProfile && (
+                  <>
+                    <div className="mb-3">
+                      <label className="form-label">Email</label>
+                      <input className="form-control" value={editFields.email} disabled />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Phone number</label>
+                      <input
+                        className="form-control"
+                        value={editFields.phoneNumber}
+                        onChange={e => handleFieldChange('phoneNumber', e.target.value)}
+                        disabled={isViewingOtherProfile}
+                      />
+                    </div>
+                  </>
+                )}
                 {!isViewingOtherProfile && (
                   <button
                     type="submit"

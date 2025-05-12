@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 
 const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
@@ -14,6 +14,14 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -51,15 +59,17 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
 
   if (showSuccess) {
     return (
-      <div className="container d-flex flex-column align-items-center justify-content-center vh-100" style={{ marginTop: "80px" }}>
+      <div className="container d-flex flex-column align-items-center justify-content-center vh-100" style={{ marginTop: "0px" }}>
         <div className="card p-5" style={{ maxWidth: 400 }}>
           <h2 className="mb-4">Account created successfully!</h2>
           <div className="d-flex flex-column gap-3">
             <button className="btn btn-outline-primary" onClick={() => navigate('/')}>Go to Homepage</button>
-            <button className="btn btn-primary" onClick={() => {
-              if (onLoginClick) onLoginClick();
-              else window.dispatchEvent(new CustomEvent('open-login-modal'));
-            }}>Login</button>
+            {!localStorage.getItem('token') && (
+              <button className="btn btn-primary" onClick={() => {
+                if (onLoginClick) onLoginClick();
+                else window.dispatchEvent(new CustomEvent('open-login-modal'));
+              }}>Login</button>
+            )}
           </div>
         </div>
       </div>
@@ -67,8 +77,8 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
   }
 
   return (
-    <div className="container d-flex justify-content-center vh-100" style={{ marginTop: "80px" }}>
-      <div className="w-50">
+    <div className="container d-flex justify-content-center vh-100" style={{ marginTop: "0px" }}>
+      <div className="w-50" style={{ marginTop: "200px", width: "650px", height: "650px" }}>
         <h1 className="mb-4">Create Account</h1>
         <form onSubmit={handleSubmit}>
           <div className="row">

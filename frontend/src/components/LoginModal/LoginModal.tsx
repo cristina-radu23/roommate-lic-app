@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 interface Props {
   show: boolean;
@@ -52,6 +53,12 @@ const LoginModal: React.FC<Props> = ({ show, onClose, onSubmit }) => {
           <Button type="submit" className="w-100" variant="primary">
             Log in
           </Button>
+          <div className="text-center mt-3">
+            <span className="text-muted">Don't have an account? </span>
+            <Link to="/createaccount" onClick={onClose} style={{ color: '#0d6efd', textDecoration: 'none' }}>
+              Sign Up
+            </Link>
+          </div>
         </Form>
       </Modal.Body>
     </Modal>

@@ -21,6 +21,7 @@ import listingRoutes from "./routes/listing";
 import userRoutes from "./routes/user"
 import chatRoutes from "./routes/chat";
 import likeRoutes from './routes/likes';
+import matchRoutes from './routes/match';
 
 
 // Only a few cities shown for brevity — add the full list
@@ -110,6 +111,7 @@ app.use("/api/users", userRoutes); // and userRoutes defines POST /register
 
 app.use("/api/chat", chatRoutes);
 app.use("/api/likes", likeRoutes);
+app.use("/api/match", matchRoutes);
 
 
 // ✅ County seeding function

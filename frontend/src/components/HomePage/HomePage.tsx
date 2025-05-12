@@ -44,6 +44,15 @@ const HomePage: React.FC = () => {
     fetchListings();
   }, [fetchListings]);
 
+  // Add event listener for reset-filters
+  useEffect(() => {
+    const handleResetFilters = () => {
+      setFilters({});
+    };
+    window.addEventListener('reset-filters', handleResetFilters);
+    return () => window.removeEventListener('reset-filters', handleResetFilters);
+  }, []);
+
   const applyFilters = (criteria: FilterCriteria) => {
     setFilters(criteria);
   };

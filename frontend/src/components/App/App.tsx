@@ -51,7 +51,10 @@ function App({ navigate }: { navigate: (path: string) => void }) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     setIsLoggedIn(false);
+    // Dispatch a custom event to notify components about the logout
+    window.dispatchEvent(new CustomEvent('user-logout'));
     navigate('/');
   };
 

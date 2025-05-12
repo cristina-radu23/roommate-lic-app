@@ -5,6 +5,7 @@ import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
 import profileIcon from '../assets/profileIcon.png';
 import { FaUserCircle, FaHeart } from 'react-icons/fa';
+import LikesList from '../LikesList/LikesList';
 
 interface ListingData {
   listingId: number;
@@ -52,6 +53,8 @@ const ListingPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalPhotoIdx, setModalPhotoIdx] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [showLikesList, setShowLikesList] = useState(false);
+  const [likedUsers, setLikedUsers] = useState<Array<{ userId: number; userFirstName: string; userLastName: string; profilePicture?: string }>>([]);
   const navigate = useNavigate();
   const userId = Number(localStorage.getItem('userId'));
   const [showPhone, setShowPhone] = useState(false);
@@ -93,7 +96,11 @@ const ListingPage: React.FC = () => {
   }, [userId, id]);
 
   const toggleLike = async () => {
-    if (!userId || !id) return;
+    if (!userId || !id) {
+      // Show login modal for unauthenticated users
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+      return;
+    }
     try {
       if (isLiked) {
         await fetch('http://localhost:5000/api/likes', {
@@ -101,16 +108,63 @@ const ListingPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, listingId: Number(id) })
         });
+        setIsLiked(false);
+        // Update likes count
+        setListing(prev => prev ? {
+          ...prev,
+          likesCount: ((prev as any).likesCount ?? 1) - 1
+        } : null);
       } else {
         await fetch('http://localhost:5000/api/likes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, listingId: Number(id) })
         });
+        setIsLiked(true);
+        // Update likes count
+        setListing(prev => prev ? {
+          ...prev,
+          likesCount: ((prev as any).likesCount ?? 0) + 1
+        } : null);
       }
-      setIsLiked(!isLiked);
     } catch (err) {
       console.error('[ListingPage] Error toggling like:', err);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (!userId) {
+      // Show login modal for unauthenticated users
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+      return;
+    }
+    // Navigate to inbox with the receiver's information
+    if (listing?.user) {
+      navigate('/inbox', {
+        state: {
+          receiverId: listing.user.userId,
+          receiverName: listing.user.name,
+          listingId: listing.listingId
+        }
+      });
+    }
+  };
+
+  const fetchLikedUsers = async () => {
+    if (!id) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/likes/listing/${id}/users`);
+      const users = await res.json();
+      setLikedUsers(users);
+    } catch (err) {
+      console.error('[ListingPage] Error fetching liked users:', err);
+    }
+  };
+
+  const handleLikesClick = () => {
+    if (listing?.listingType === "entire_property") {
+      fetchLikedUsers();
+      setShowLikesList(true);
     }
   };
 
@@ -386,6 +440,7 @@ const ListingPage: React.FC = () => {
 </div>
             </div>
           </div>
+          
         </div>
         {/* Sidebar */}
         <div className="col-lg-4">
@@ -393,9 +448,22 @@ const ListingPage: React.FC = () => {
           <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
             <div>
               <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
-              <div className="d-flex align-items-center mt-2" style={{ gap: 6 }}>
-                <BsEye style={{ fontSize: 16, color: '#888' }} />
-                <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).views ?? 0} views</span>
+              <div className="d-flex align-items-center mt-2" style={{ gap: 16 }}>
+                <div className="d-flex align-items-center" style={{ gap: 6 }}>
+                  <BsEye style={{ fontSize: 16, color: '#888' }} />
+                  <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).views ?? 0} views</span>
+                </div>
+                <div 
+                  className="d-flex align-items-center" 
+                  style={{ 
+                    gap: 6,
+                    cursor: listing.listingType === "entire_property" ? 'pointer' : 'default'
+                  }}
+                  onClick={handleLikesClick}
+                >
+                  <FaHeart style={{ fontSize: 16, color: '#e74c3c' }} />
+                  <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).likesCount ?? 0} likes</span>
+                </div>
               </div>
             </div>
             {!isOwnListing && (
@@ -456,17 +524,7 @@ const ListingPage: React.FC = () => {
               <button
                 className="btn btn-primary mt-2 w-100"
                 style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
-                onClick={() => {
-                  if (listing.user && listing.user.userId) {
-                    navigate('/inbox', {
-                      state: {
-                        receiverId: listing.user.userId,
-                        receiverName: listing.user.name,
-                        listingId: listing.listingId
-                      }
-                    });
-                  }
-                }}
+                onClick={handleSendMessage}
               >
                 Send message
               </button>
@@ -586,6 +644,13 @@ const ListingPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Add LikesList modal */}
+      <LikesList
+        show={showLikesList}
+        onHide={() => setShowLikesList(false)}
+        users={likedUsers}
+        listingId={listing?.listingId}
+      />
     </div>
   );
 };

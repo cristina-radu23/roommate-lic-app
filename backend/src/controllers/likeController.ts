@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Like from "../models/Like";
+import User from "../models/User";
 
 export const addLike = async (req: Request, res: Response) => {
   try {
@@ -45,6 +46,45 @@ export const getUserLikes = async (req: Request, res: Response) => {
     return;
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch likes" });
+    return;
+  }
+};
+
+export const getListingLikes = async (req: Request, res: Response) => {
+  try {
+    const { listingId } = req.params;
+    if (!listingId) {
+      res.status(400).json({ error: "listingId required" });
+      return;
+    }
+
+    const likes = await Like.findAll({
+      where: { listingId },
+      include: [{
+        model: User,
+        attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
+      }]
+    });
+
+    const users = likes.map(like => {
+      if (!like.User) {
+        console.error(`[getListingLikes] User not found for like ${like.likeId}`);
+        return null;
+      }
+      console.log(`[getListingLikes] User: ${like.User.userFirstName} ${like.User.userLastName}, profilePicture: ${like.User.profilePicture}`);
+      return {
+        userId: like.User.userId,
+        userFirstName: like.User.userFirstName,
+        userLastName: like.User.userLastName,
+        profilePicture: like.User.profilePicture
+      };
+    }).filter(user => user !== null);
+
+    res.json(users);
+    return;
+  } catch (err) {
+    console.error('[getListingLikes] Error:', err);
+    res.status(500).json({ error: "Failed to fetch listing likes" });
     return;
   }
 }; 
