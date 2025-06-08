@@ -13,7 +13,10 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
     phoneNumber: "",
     confirmPassword: ""
   });
+  const [error, setError] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const navigate = useNavigate();
 
   // Check if user is already logged in
@@ -36,6 +39,7 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     
     // Validate age (must be at least 18 years old)
     const birthDate = new Date(formData.dateOfBirth);
@@ -44,12 +48,12 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
     const monthDiff = today.getMonth() - birthDate.getMonth();
     
     if (age < 18 || (age === 18 && monthDiff < 0) || (age === 18 && monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      alert("You must be at least 18 years old to create an account.");
+      setError("You must be at least 18 years old to create an account.");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
 
@@ -68,11 +72,11 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
       if (response.ok) {
         setShowSuccess(true);
       } else {
-        alert(data.error || "Failed to create account");
+        setError(data.error || "Failed to create account");
       }
     } catch (error) {
       console.error("Error creating account:", error);
-      alert("Something went wrong.");
+      setError("Something went wrong.");
     }
   };
 
@@ -147,12 +151,15 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
         <div className="container d-flex justify-content-center" style={{ marginTop: "80px" }}>
           <div className="card shadow-sm" style={{ 
             width: "650px", 
-            height: "650px",
+            height: "750px",
             borderRadius: "15px", 
             backgroundColor: "white",
-            padding: "2rem"
+            padding: "2rem",
+            marginBottom: "20px"
           }}>
             <h1 className="mb-4">Create Account</h1>
+            {error && <div className="alert alert-danger">{error}</div>}
+            {showSuccess && <div className="alert alert-success">Account created successfully!</div>}
             <form onSubmit={handleSubmit}>
               <div className="row">
                 <div className="col-8 mb-3 d-flex align-items-center">

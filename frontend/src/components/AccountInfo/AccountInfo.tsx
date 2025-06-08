@@ -379,15 +379,22 @@ const AccountInfo: React.FC = () => {
                     </div>
                   </>
                 )}
-                {!isViewingOtherProfile && (
-                  <button
-                    type="submit"
-                    className="btn btn-primary mt-3"
-                    disabled={!isDirty || saving}
+                <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "40px" }}>
+                  <button 
+                    type="submit" 
+                    className="btn" 
+                    style={{ 
+                      backgroundColor: "#a1cca7", 
+                      borderColor: "#a1cca7", 
+                      color: "white",
+                      width: "25%",
+                      borderRadius: "8px",
+                      padding: "0.375rem 1rem"
+                    }}
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    Save
                   </button>
-                )}
+                </div>
               </form>
             )}
             {selectedMenu === 'settings' && !isViewingOtherProfile && (
