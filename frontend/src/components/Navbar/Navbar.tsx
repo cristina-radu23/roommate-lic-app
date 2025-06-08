@@ -55,6 +55,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
     setImgError(false); // Reset image error when user/profilePicture changes
   }, [user?.profilePicture, isLoggedIn]);
 
+  // Reset dropdown state when login state changes
+  useEffect(() => {
+    setShowDropdown(false);
+  }, [isLoggedIn]);
+
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setHasUnread(false);

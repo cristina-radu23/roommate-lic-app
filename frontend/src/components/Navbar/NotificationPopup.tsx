@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Notification {
@@ -22,6 +22,24 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks outside the popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open, onClose]);
 
   // Fetch notifications from backend
   useEffect(() => {
@@ -61,18 +79,21 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
   if (!open) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: 50,
-      right: 0,
-      width: 350,
-      background: '#fff',
-      border: '1px solid #ddd',
-      borderRadius: 8,
-      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-      zIndex: 2000,
-      padding: 0,
-    }}>
+    <div 
+      ref={popupRef}
+      style={{
+        position: 'absolute',
+        top: 50,
+        right: 0,
+        width: 350,
+        background: '#fff',
+        border: '1px solid #ddd',
+        borderRadius: 8,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+        zIndex: 2000,
+        padding: 0,
+      }}
+    >
       <div style={{ display: 'flex', borderBottom: '1px solid #eee' }}>
         <button
           className={`btn btn-link flex-fill${tab === 'all' ? ' fw-bold' : ''}`}

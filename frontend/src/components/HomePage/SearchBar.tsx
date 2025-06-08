@@ -90,10 +90,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             padding: "10px 20px",
             width: "90%",
             maxWidth: "900px",
-            zIndex: 10,
+            zIndex: 9999,
           }}
         >
-          <div style={{ flex: 2, minWidth: 0 }}>
+          <div style={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 9999 }}>
             <Select
                options={cities}
                value={selectedCity}
@@ -106,7 +106,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                   borderRadius: "50px",
                   height: "42px",
                 }),
+                menu: (provided) => ({
+                  ...provided,
+                  zIndex: 9999
+                }),
+                menuPortal: (provided) => ({
+                  ...provided,
+                  zIndex: 9999
+                })
               }}
+              menuPortalTarget={document.body}
             />
           </div>
           <button
