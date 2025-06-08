@@ -11,6 +11,7 @@ interface UserInfo {
   bio?: string;
   dateOfBirth: string;
   gender: string;
+  occupation?: string;
 }
 
 const AccountInfo: React.FC = () => {
@@ -33,6 +34,7 @@ const AccountInfo: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const { userId } = useParams();
   const location = useLocation();
@@ -80,8 +82,13 @@ const AccountInfo: React.FC = () => {
         
         const data = await response.json();
         console.log('Fetched user data:', data);
-        setUser(data);
-        setEditFields(data);
+        // Ensure gender has a default value if not set
+        const userData = {
+          ...data,
+          gender: data.gender || 'not specified'
+        };
+        setUser(userData);
+        setEditFields(userData);
         setIsDirty(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching user info');
@@ -145,10 +152,11 @@ const AccountInfo: React.FC = () => {
     if (!editFields) return;
     setSaving(true);
     setError(null);
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/');
+        setError('Not authenticated');
         return;
       }
       const response = await fetch('http://localhost:5000/api/users/me', {
@@ -162,8 +170,12 @@ const AccountInfo: React.FC = () => {
           userLastName: editFields.userLastName,
           phoneNumber: editFields.phoneNumber,
           bio: editFields.bio,
+          gender: editFields.gender,
+          dateOfBirth: editFields.dateOfBirth,
+          occupation: editFields.occupation
         }),
       });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error || 'Failed to update profile');
@@ -313,7 +325,7 @@ const AccountInfo: React.FC = () => {
           {/* Main content area */}
           <div style={{ flex: 1 }}>
             {selectedMenu === 'profile' && (
-              <form onSubmit={e => { e.preventDefault(); handleSave(); }}>
+              <form onSubmit={handleSave}>
                 <h4 className="mb-4">Profile</h4>
                 <div className="mb-3">
                   <label className="form-label">About me</label>
@@ -348,19 +360,22 @@ const AccountInfo: React.FC = () => {
                   <input
                     type="date"
                     className="form-control"
-                    value={editFields.dateOfBirth}
-                    onChange={e => handleFieldChange('dateOfBirth', e.target.value)}
-                    disabled={isViewingOtherProfile}
+                    value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
+                    disabled={true}
                   />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Gender</label>
-                  <input
+                  <select
                     className="form-control"
-                    value={editFields.gender}
-                    onChange={e => handleFieldChange('gender', e.target.value)}
-                    disabled={isViewingOtherProfile}
-                  />
+                    name="gender"
+                    value={editFields.gender || "not specified"}
+                    disabled={true}
+                  >
+                    <option value="not specified">Select your gender</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
                 </div>
                 {!isViewingOtherProfile && (
                   <>
@@ -380,9 +395,9 @@ const AccountInfo: React.FC = () => {
                   </>
                 )}
                 <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "40px" }}>
-                  <button 
-                    type="submit" 
-                    className="btn" 
+                  <button
+                    type="submit"
+                    className="btn"
                     style={{ 
                       backgroundColor: "#a1cca7", 
                       borderColor: "#a1cca7", 
@@ -391,9 +406,23 @@ const AccountInfo: React.FC = () => {
                       borderRadius: "8px",
                       padding: "0.375rem 1rem"
                     }}
+                    disabled={!isDirty || saving}
                   >
-                    Save
+                    {saving ? 'Saving...' : 'Save'}
                   </button>
+                  {isDirty && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary ms-2"
+                      onClick={() => {
+                        setEditFields(user);
+                        setIsDirty(false);
+                      }}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </form>
             )}

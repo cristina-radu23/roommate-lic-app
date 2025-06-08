@@ -89,7 +89,10 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) =
         "email",
         "phoneNumber",
         "profilePicture",
-        "bio"
+        "bio",
+        "gender",
+        "dateOfBirth",
+        "occupation"
       ]
     });
     if (!user) return res.status(404).json({ error: "User not found" });
