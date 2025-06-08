@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { FilterCriteria } from "./HomePage";
 import HomePageFilterPanel from "./HomePageFilterPanel";
+import homeBackground from "../../assets/Home.png";
 
 interface SearchBarProps {
   onSearch: (criteria: FilterCriteria) => void;
@@ -47,18 +48,38 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   const hasActiveFilters = Object.keys(selectedFilters).length > 0;
 
   return (
-    <div className="container-fluid d-flex justify-content-center align-items-center " style={{ backgroundColor: "#f0d4f3",
-      width: "100%", height:"300px", padding:"0px",}}>
-
+    <div className="container-fluid d-flex justify-content-center align-items-center" 
+      style={{ 
+        position: 'relative',
+        width: "100%", 
+        height:"350px",
+        padding:"0px",
+        backgroundColor: "#f0d4f3",
+      }}
+    >
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${homeBackground})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        zIndex: 0,
+        opacity: 0.8
+      }} />
       <div className="position-relative w-100" 
         style={{ 
-            borderLeft:"0px",
-            paddingLeft: "0px",
-            marginLeft:"0px",
-            height: "100%",
-          backgroundColor: "#f0f4f8",
-            width: "100vw",
-          }}
+          borderLeft:"0px",
+          paddingLeft: "0px",
+          marginLeft:"0px",
+          height: "100%",
+          backgroundColor: "transparent",
+          width: "100vw",
+          zIndex: 1
+        }}
       >
    {/* Search bar container */}
    <div
@@ -95,8 +116,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             Filters {hasActiveFilters && '✓'}
           </button>
           <button
-            className="btn btn-success ms-2"
-            style={{ minWidth: "100px", borderRadius: "50px" }}
+            className="btn ms-2"
+            style={{ 
+              minWidth: "100px", 
+              borderRadius: "50px",
+              backgroundColor: "#a1cca6",
+              borderColor: "#a1cca6",
+              color: "white"
+            }}
             onClick={handleSearch}
           >
             Search

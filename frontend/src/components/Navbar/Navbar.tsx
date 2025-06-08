@@ -76,41 +76,45 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   }, [isLoggedIn, userId, location.pathname]);
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10000 }}>
+    <nav className="navbar navbar-expand-lg fixed-top" style={{ 
+      zIndex: 10000,
+      backgroundColor: "#097C87",
+      color: "white"
+    }}>
       <div className="container">
         <Link 
           className="navbar-brand" 
           to="/"
+          style={{ color: "white" }}
           onClick={() => {
             // Dispatch event to reset filters
             window.dispatchEvent(new CustomEvent('reset-filters'));
           }}
         >
-          RoomBuddy
+          Room<span style={{ color: "#f92c85", fontWeight: "bold" }}>BUDDY</span>
         </Link>
 
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style={{ borderColor: "white" }}>
           <span className="navbar-toggler-icon"></span>
         </button>
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-
             {!isLoggedIn ? (
               <>
                 <li className="nav-item">
-                  <button className="nav-link btn btn-link" onClick={onLoginClick}>
+                  <button className="nav-link btn btn-link" onClick={onLoginClick} style={{ color: "white" }}>
                     Login
                   </button>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/createaccount">Sign Up</Link>
+                  <Link className="nav-link" to="/createaccount" style={{ color: "white" }}>Sign Up</Link>
                 </li>
               </>
             ) : (
               <>
                 <li className="nav-item me-2" style={{ position: 'relative' }}>
-                  <span className="nav-link position-relative" style={{ cursor: 'pointer' }} onClick={() => setShowNotifications((v) => !v)}>
+                  <span className="nav-link position-relative" style={{ cursor: 'pointer', color: "white" }} onClick={() => setShowNotifications((v) => !v)}>
                     <FaBell size={22} />
                     {hasNotifications && (
                       <span style={{
@@ -137,7 +141,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   )}
                 </li>
                 <li className="nav-item me-2">
-                  <Link className="nav-link position-relative" to="/inbox">
+                  <Link className="nav-link position-relative" to="/inbox" style={{ color: "white" }}>
                     <FaEnvelope size={22} />
                     {hasUnread && (
                       <span style={{
@@ -160,12 +164,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   onMouseEnter={() => setShowDropdown(true)}
                   onMouseLeave={() => setShowDropdown(false)}
                 >
-                  <span className="nav-link dropdown-toggle d-flex align-items-center" role="button">
+                  <span className="nav-link dropdown-toggle d-flex align-items-center" role="button" style={{ color: "white" }}>
                     {user && user.profilePicture && !imgError ? (
                       <img
                         src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`}
                         alt="Profile"
-                        style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', marginRight: 8, border: '1px solid #ddd' }}
+                        style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', marginRight: 8, border: '1px solid white' }}
                         onError={() => setImgError(true)}
                       />
                     ) : (

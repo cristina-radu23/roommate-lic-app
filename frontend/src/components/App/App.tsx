@@ -59,7 +59,11 @@ function App({ navigate }: { navigate: (path: string) => void }) {
   };
 
   return (
-    <>
+    <div style={{ 
+      backgroundColor: "#fcfaf8",
+      minHeight: "100vh",
+      width: "100%"
+    }}>
       <Navbar
         onLoginClick={() => setLoginModalOpen(true)}
         isLoggedIn={isLoggedIn}
@@ -81,7 +85,7 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/account/:userId" element={<AccountInfo />} />
         <Route path="/favourites" element={<Favourites />} />
       </Routes>
-    </>
+    </div>
   );
 }
 

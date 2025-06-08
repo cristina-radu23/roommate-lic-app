@@ -102,9 +102,11 @@ const PostListing = () => {
   
 
 
-  return <div className="container mt-4">{
-    getCurrentStepComponent()
-    }</div>;
+  return (
+    <div className="container" style={{ paddingTop: "56px" }}>
+      {getCurrentStepComponent()}
+    </div>
+  );
 
   
 };

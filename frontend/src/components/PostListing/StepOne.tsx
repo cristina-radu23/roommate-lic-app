@@ -80,9 +80,15 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
   
 
   return (
-    <div className="container-fluid mt-4" style={{ maxWidth: "800px", marginTop: "0 auto", minWidth:"900px" }} >
-      <div className="row" style={{marginBottom:"90px", marginTop:"90px"}}>
-          <div className="col-md-6">
+    <div className="container-fluid" style={{ maxWidth: "800px", margin: "0 auto", paddingTop: "28px" }}>
+      <div className="row">
+        <div className="col-md-12">
+          <div className="card shadow-sm" style={{ 
+            borderRadius: "15px", 
+            backgroundColor: "white",
+            padding: "2rem",
+            marginBottom: "2rem"
+          }}>
             <h3 className="mb-4 text-start">Step 1: Getting Started</h3>
 
             {/* What are you listing? */}
@@ -111,7 +117,6 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
                 <label className="form-check-label">The entire property</label>
               </div>
             </div>
-
 
             {/* Property type */}
             <div className="mb-4 text-start">
@@ -186,6 +191,13 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
                 onChange={handleCityChange}
                 placeholder="Select or type a city..."
                 isSearchable
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    borderRadius: "8px",
+                    border: "1px solid #ced4da"
+                  })
+                }}
               />
             </div>
 
@@ -197,6 +209,7 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
                 className="form-control mb-2"
                 value={formData.streetName || ""}
                 onChange={handleChange}
+                style={{ borderRadius: "8px" }}
               />
               <label className="form-label fw-bold">Street Number *</label>
               <input
@@ -205,28 +218,39 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
                 className="form-control"
                 value={formData.streetNo || ""}
                 onChange={handleChange}
+                style={{ borderRadius: "8px" }}
               />
             </div>
 
-
+            {/* Map Preview */}
+            <div className="mb-4">
+              {formData.cityName && formData.streetName && formData.streetNo && (
+                <MapPreview address={`${formData.streetName} ${formData.streetNo}, ${formData.cityName}`} />
+              )}
+            </div>
 
             {/* Error */}
             {error && <div className="text-danger mb-2">{error}</div>}
 
             {/* Continue Button */}
-            <button className="btn btn-primary" onClick={handleNext}>
-              Continue
-            </button>
-
-
-
+            <div className="d-flex justify-content-end">
+              <button 
+                className="btn" 
+                onClick={handleNext}
+                style={{ 
+                  borderRadius: "8px",
+                  padding: "0.5rem 2rem",
+                  backgroundColor: "#a1cca7",
+                  borderColor: "#a1cca7",
+                  color: "white",
+                  width: "25%"
+                }}
+              >
+                Continue
+              </button>
+            </div>
           </div>
-
-          <div className="col-md-6">
-          {formData.cityId && formData.streetName && formData.streetNo && (
-            <MapPreview address={`${formData.streetName} ${formData.streetNo}, ${formData.cityName}`} />
-          )}
-          </div>
+        </div>
       </div>
     </div>
   );

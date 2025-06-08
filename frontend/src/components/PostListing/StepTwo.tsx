@@ -18,9 +18,14 @@ const rulesList = ["Smoker friendly", "Pet friendly"];
 const StepTwo = ({ formData, setFormData, onNext, onBack }: StepTwoProps) => {
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const newValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+
+    setFormData({
+      ...formData,
+      [name]: newValue,
+    });
   };
 
   const handleIncrement = (field: keyof PostListingFormData) => {
@@ -52,134 +57,204 @@ const StepTwo = ({ formData, setFormData, onNext, onBack }: StepTwoProps) => {
   };
 
   return (
-    <div className="container-fluid mt-4"style={{ maxWidth: "800px", margin: "0 auto", minWidth:"800px" }}>
-      <div className="row" style={{marginBottom:"90px", marginTop:"90px"}}>
-        <div className="col-12 col-md-12">
-          <h3 className="mb-4 text-start">Step 2: Property</h3>
+    <div className="container-fluid" style={{ maxWidth: "800px", margin: "0 auto", paddingTop: "28px" }}>
+      <div className="row">
+        <div className="col-md-12">
+          <div className="card shadow-sm" style={{ 
+            borderRadius: "15px", 
+            backgroundColor: "white",
+            padding: "2rem",
+            marginBottom: "2rem"
+          }}>
+            <h3 className="mb-4 text-start">Step 2: Basic Information</h3>
 
-          {/* Size */}
-          <div className="mb-4 text-start">
-            <label className="form-label fw-bold">What is the size of the property? *</label>
-            <div className="d-flex align-items-center gap-2">
+            {/* Form content */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">Title *</label>
+              <input
+                type="text"
+                name="title"
+                className="form-control"
+                value={formData.title || ""}
+                onChange={handleChange}
+                style={{ borderRadius: "8px" }}
+              />
+            </div>
+
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">Description *</label>
+              <textarea
+                name="description"
+                className="form-control"
+                value={formData.description || ""}
+                onChange={handleChange}
+                rows={4}
+                style={{ borderRadius: "8px" }}
+              />
+            </div>
+
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">Rent (€) *</label>
               <input
                 type="number"
-                name="size"
+                name="rent"
                 className="form-control"
-                placeholder="e.g. 85"
-                value={formData.size || ""}
+                value={formData.rent || ""}
                 onChange={handleChange}
+                style={{ borderRadius: "8px" }}
               />
-              <span>m²</span>
             </div>
-          </div>
 
-          {/* Bedrooms */}
-          <div className="mb-4 text-start">
-            <label className="form-label fw-bold">How many bedrooms?</label>
-            <div className="d-flex gap-4">
-              <div>
-                <div>Single</div>
-                <div className="d-flex align-items-center gap-2">
-                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleDecrement("singleBedrooms")}>-</button>
-                  <span>{formData.singleBedrooms || 0}</span>
-                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleIncrement("singleBedrooms")}>+</button>
-                </div>
-              </div>
-              <div>
-                <div>Double</div>
-                <div className="d-flex align-items-center gap-2">
-                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleDecrement("doubleBedrooms")}>-</button>
-                  <span>{formData.doubleBedrooms || 0}</span>
-                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleIncrement("doubleBedrooms")}>+</button>
-                </div>
+            {/* Size */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">What is the size of the property? *</label>
+              <div className="d-flex align-items-center gap-2">
+                <input
+                  type="number"
+                  name="size"
+                  className="form-control"
+                  placeholder="e.g. 85"
+                  value={formData.size || ""}
+                  onChange={handleChange}
+                  style={{ borderRadius: "8px" }}
+                />
+                <span>m²</span>
               </div>
             </div>
-          </div>
 
-          {/* Flatmates */}
-          <div className="mb-4 text-start">
-            <label className="form-label fw-bold">Do you have any flatmates?</label>
-            <div className="d-flex gap-4">
-              {(
-                ["femaleFlatmates", "maleFlatmates"] as (keyof PostListingFormData)[]
-              ).map((field, i) => {
-                const label = ["Female", "Male"][i];
-
-                return (
-                  <div key={field}>
-                    <div>{label}</div>
-                    <div className="d-flex align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => handleDecrement(field)}
-                      >
-                        -
-                      </button>
-                      <span>{formData[field] || 0}</span>
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => handleIncrement(field)}
-                      >
-                        +
-                      </button>
-                    </div>
+            {/* Bedrooms */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">How many bedrooms?</label>
+              <div className="d-flex gap-4">
+                <div>
+                  <div>Single</div>
+                  <div className="d-flex align-items-center gap-2">
+                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleDecrement("singleBedrooms")}>-</button>
+                    <span>{formData.singleBedrooms || 0}</span>
+                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleIncrement("singleBedrooms")}>+</button>
                   </div>
-                );
-              })}
+                </div>
+                <div>
+                  <div>Double</div>
+                  <div className="d-flex align-items-center gap-2">
+                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleDecrement("doubleBedrooms")}>-</button>
+                    <span>{formData.doubleBedrooms || 0}</span>
+                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => handleIncrement("doubleBedrooms")}>+</button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Amenities */}
-          <div className="mb-4 text-start">
-            <label className="form-label fw-bold">Property amenities:</label>
-            <div className="mb-2">
-              {formData.amenities?.join(", ") || "None selected"}
+            {/* Flatmates */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">Do you have any flatmates?</label>
+              <div className="d-flex gap-4">
+                {(
+                  ["femaleFlatmates", "maleFlatmates"] as (keyof PostListingFormData)[]
+                ).map((field, i) => {
+                  const label = ["Female", "Male"][i];
+
+                  return (
+                    <div key={field}>
+                      <div>{label}</div>
+                      <div className="d-flex align-items-center gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => handleDecrement(field)}
+                        >
+                          -
+                        </button>
+                        <span>{formData[field] || 0}</span>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => handleIncrement(field)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="d-flex flex-wrap gap-2">
-              {amenitiesList.map((item) => (
-                <button
-                  type="button"
-                  key={item}
-                  className={`btn btn-sm ${formData.amenities?.includes(item) ? "btn-primary" : "btn-outline-primary"}`}
-                  onClick={() => toggleItem("amenities", item)}
-                >
-                  {formData.amenities?.includes(item) ? `-${item}` : `+${item}`}
 
-                </button>
-              ))}
+            {/* Amenities */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">Amenities</label>
+              <div className="d-flex flex-wrap gap-2">
+                {amenitiesList.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`btn btn-sm ${
+                      formData.amenities?.includes(item)
+                        ? "btn-primary"
+                        : "btn-outline-primary"
+                    }`}
+                    onClick={() => toggleItem("amenities", item)}
+                  >
+                    {formData.amenities?.includes(item) ? `-${item}` : `+${item}`}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* House Rules */}
-          <div className="mb-4 text-start">
-            <label className="form-label fw-bold">House rules:</label>
-            <div className="mb-2">
-              {formData.rules?.join(", ") || "None selected"}
+            {/* Rules */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">House Rules</label>
+              <div className="d-flex flex-wrap gap-2">
+                {rulesList.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`btn btn-sm ${
+                      formData.rules?.includes(item)
+                        ? "btn-primary"
+                        : "btn-outline-primary"
+                    }`}
+                    onClick={() => toggleItem("rules", item)}
+                  >
+                    {formData.rules?.includes(item) ? `-${item}` : `+${item}`}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="d-flex flex-wrap gap-2">
-              {rulesList.map((item) => (
-                <button
-                  type="button"
-                  key={item}
-                  className={`btn btn-sm ${formData.rules?.includes(item) ? "btn-success" : "btn-outline-success"}`}
-                  onClick={() => toggleItem("rules", item)}
-                >
-                  {formData.rules?.includes(item) ? `-${item}` : `+${item}`}
 
-                </button>
-              ))}
+            {error && <div className="text-danger mb-2">{error}</div>}
+
+            {/* Navigation Buttons */}
+            <div className="d-flex justify-content-between">
+              <button 
+                className="btn" 
+                onClick={onBack}
+                style={{ 
+                  borderRadius: "8px",
+                  padding: "0.5rem 2rem",
+                  backgroundColor: "#f8f9fa",
+                  borderColor: "#dee2e6",
+                  color: "#212529",
+                  width: "25%"
+                }}
+              >
+                Back
+              </button>
+              <button 
+                className="btn" 
+                onClick={handleNext}
+                style={{ 
+                  borderRadius: "8px",
+                  padding: "0.5rem 2rem",
+                  backgroundColor: "#a1cca7",
+                  borderColor: "#a1cca7",
+                  color: "white",
+                  width: "25%"
+                }}
+              >
+                Continue
+              </button>
             </div>
-          </div>
-
-          {/* Error */}
-          {error && <div className="text-danger mb-2">{error}</div>}
-
-          {/* Navigation */}
-          <div className="d-flex justify-content-between">
-            <button className="btn btn-secondary" onClick={onBack}>Back</button>
-            <button className="btn btn-primary" onClick={handleNext}>Continue</button>
           </div>
         </div>
       </div>

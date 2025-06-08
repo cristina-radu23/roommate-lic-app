@@ -72,15 +72,17 @@ const MyListings: React.FC = () => {
   }
 
   return (
-    <div className="container mt-5" >
-      <h2 className="mb-4" style={{ marginTop: "95px" }}>My Listings</h2>
-      {listings.length === 0 ? (
-        <div className="alert alert-info" role="alert">
-          You haven't created any listings yet. <a href="/postListing" className="alert-link">Create your first listing</a>
-        </div>
-      ) : (
-        <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} showDeleteButton={true} />
-      )}
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", paddingTop: "80px" }}>
+      <div className="container-fluid" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <h2 className="mb-4">My Listings</h2>
+        {listings.length === 0 ? (
+          <div className="alert alert-info" role="alert">
+            You haven't created any listings yet. <a href="/postListing" className="alert-link">Create your first listing</a>
+          </div>
+        ) : (
+          <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} showDeleteButton={true} />
+        )}
+      </div>
     </div>
   );
 };

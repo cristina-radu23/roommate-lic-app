@@ -233,9 +233,14 @@ const ListingPage: React.FC = () => {
   const isOwner = userId && (listing.user?.userId === userId);
 
   return (
-    <div className="container-fluid" style={{ minHeight: "100vh", background: "#fff", marginTop: "56px",
-     paddingTop: "7px", paddingLeft: "30px", paddingRight: "30px" }}>
-      <div className="row justify-content-center mt-4">
+    <div className="container-fluid" style={{ 
+      minHeight: "100vh", 
+      background: "#fff", 
+      paddingTop: "56px",
+      paddingLeft: "30px", 
+      paddingRight: "30px" 
+    }}>
+      <div className="row justify-content-center">
         {/* Main content */}
         <div className="col-lg-8">
           <h2 className="fw-bold">{listing.title}</h2>

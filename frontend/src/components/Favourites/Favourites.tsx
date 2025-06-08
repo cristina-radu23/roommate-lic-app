@@ -63,15 +63,17 @@ const Favourites: React.FC = () => {
   }
 
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4" style={{ marginTop: "95px" }}>Favourites</h2>
-      {listings.length === 0 ? (
-        <div className="alert alert-info" role="alert">
-          You haven't added any listings to your favourites yet.
-        </div>
-      ) : (
-        <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
-      )}
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", paddingTop: "80px" }}>
+      <div className="container-fluid" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <h2 className="mb-4">Favourites</h2>
+        {listings.length === 0 ? (
+          <div className="alert alert-info" role="alert">
+            You haven't added any listings to your favourites yet.
+          </div>
+        ) : (
+          <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} showDeleteButton={false} />
+        )}
+      </div>
     </div>
   );
 };
