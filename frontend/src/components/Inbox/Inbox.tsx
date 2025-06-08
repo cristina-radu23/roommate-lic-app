@@ -361,9 +361,11 @@ const Inbox: React.FC = () => {
   };
 
   return (
-    <div className="inbox-container">
-      {renderChatList()}
-      {renderChatWindow()}
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", paddingTop: "48px" }}>
+      <div className="inbox-container">
+        {renderChatList()}
+        {renderChatWindow()}
+      </div>
     </div>
   );
 };

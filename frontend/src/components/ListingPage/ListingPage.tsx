@@ -58,6 +58,7 @@ const ListingPage: React.FC = () => {
   const userId = Number(localStorage.getItem('userId'));
   const [showPhone, setShowPhone] = useState(false);
   const hasFetched = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -72,6 +73,7 @@ const ListingPage: React.FC = () => {
         setListing(data);
       } catch (err) {
         console.error('[ListingPage] Error fetching listing:', err);
+        setError('Error fetching listing');
         setListing(null);
       } finally {
         setLoading(false);
@@ -233,346 +235,354 @@ const ListingPage: React.FC = () => {
   const isOwner = userId && (listing.user?.userId === userId);
 
   return (
-    <div className="container-fluid" style={{ 
-      minHeight: "100vh", 
-      background: "#fff", 
-      paddingTop: "56px",
-      paddingLeft: "30px", 
-      paddingRight: "30px" 
-    }}>
-      <div className="row justify-content-center">
-        {/* Main content */}
-        <div className="col-lg-8">
-          <h2 className="fw-bold">{listing.title}</h2>
-          <div className="text-muted mb-2">{listing.cityName}</div>
-           <div className="card p-4 mb-4" style={{ borderRadius: "2rem", backgroundColor: "#f8f9fa",border: "0px" }}>
-            {/* Main picture with carousel controls */}
-            <div style={{ position: "relative", borderRadius: "2rem", overflow: "hidden", border: "2px solid #ccc", height: 450, display: "flex", alignItems: "center", justifyContent: "center", background: "#eee" }}>
-              {/* Left arrow */}
-              {allPics.length > 1 && (
-                <button
-                  onClick={goToPrev}
-                  style={{
-                    position: "absolute",
-                    left: 20,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 2,
-                    width: 10,
-                    height: 55,
-                    borderRadius: "50%",
-                    border: "none",
-                    background: "rgba(255,255,255,0.8)",
-                    fontSize: 24,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    cursor: "pointer"
-                  }}
-                  aria-label="Previous photo"
-                >
-                  &#60;
-                </button>
-              )}
-              {/* Main photo */}
-              <img
-                src={mainPic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
-                alt="main"
-                style={{ width: "100%", height: "100%", objectFit: "contain", cursor: "pointer" }}
-                onClick={() => openModal(currentPhotoIdx)}
-              />
-              {/* Right arrow */}
-              {allPics.length > 1 && (
-                <button
-                  onClick={goToNext}
-                  style={{
-                    position: "absolute",
-                    right: 20,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 2,
-                    width: 10,
-                    height: 55,
-                    borderRadius: "50%",
-                    border: "none",
-                    background: "rgba(255,255,255,0.8)",
-                    fontSize: 24,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    cursor: "pointer"
-                  }}
-                  aria-label="Next photo"
-                >
-                  &#62;
-                </button>
-              )}
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", paddingTop: "80px" }}>
+      <div className="container-fluid" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {loading ? (
+          <div className="d-flex justify-content-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
-            {/* Previews: main + others */}
-            <div className="d-flex gap-3 mt-3">
-              {previews.map((pic, i) => {
-                // Find the real index in allPics
-                const realIdx = allPics.findIndex((p) => p === pic);
-                const isMain = i === 0;
-                return (
+          </div>
+        ) : error ? (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        ) : (
+          <div className="row">
+            {/* Left column - Photos */}
+            <div className="col-md-8">
+              <h2 className="fw-bold">{listing.title}</h2>
+              <div className="text-muted mb-2">{listing.cityName}</div>
+               <div className="card p-4 mb-4" style={{ borderRadius: "2rem", backgroundColor: "#f8f9fa",border: "0px" }}>
+                {/* Main picture with carousel controls */}
+                <div style={{ position: "relative", borderRadius: "2rem", overflow: "hidden", border: "2px solid #ccc", height: 450, display: "flex", alignItems: "center", justifyContent: "center", background: "#eee" }}>
+                  {/* Left arrow */}
+                  {allPics.length > 1 && (
+                    <button
+                      onClick={goToPrev}
+                      style={{
+                        position: "absolute",
+                        left: 20,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        zIndex: 2,
+                        width: 10,
+                        height: 55,
+                        borderRadius: "50%",
+                        border: "none",
+                        background: "rgba(255,255,255,0.8)",
+                        fontSize: 24,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        cursor: "pointer"
+                      }}
+                      aria-label="Previous photo"
+                    >
+                      &#60;
+                    </button>
+                  )}
+                  {/* Main photo */}
                   <img
-                    key={i}
-                    src={pic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
-                    alt={`preview-${i}`}
-                    style={{
-                      borderRadius: "1rem",
-                      border: isMain ? "3px solid #007bff" : "2px solid #ccc",
-                      width: 120,
-                      height: 80,
-                      objectFit: "cover",
-                      background: "#f5f5f5",
-                      cursor: isMain ? "default" : "pointer",
-                      opacity: isMain ? 1 : 0.8
-                    }}
-                    onClick={() => {
-                      if (!isMain) setCurrentPhotoIdx(realIdx);
-                    }}
+                    src={mainPic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
+                    alt="main"
+                    style={{ width: "100%", height: "100%", objectFit: "contain", cursor: "pointer" }}
+                    onClick={() => openModal(currentPhotoIdx)}
                   />
-                );
-              })}
-            </div>
-          </div>
-          {/* Description and all data */}
-          <div className="card p-4 mb-4" style={{ borderRadius: "2rem" }}>
-            <h5 className="fw-bold mb-3">Description</h5>
-            <div style={{ marginBottom: 16 }}>
-              {listing.description || <span className="text-muted">No description provided.</span>}
-              <p style={{ marginTop: 12 }}>
-              {listing.userRole === "tenant" && (
-                  <span>{listing.user?.name} is a tenant in the property.</span>
-                )}
-                {listing.userRole === "owner" && (
-                  <span>{listing.user?.name} is the owner of the property.</span>
-                )}
-              </p>
-            </div>
-            <h6 className="fw-bold mb-2">Details</h6>
-            {/* User/role phrase above the subtitle */}
-            
-            <div style={{ marginBottom: 16, marginTop: 16 }}>
-              {/*aici*/}
-              <div style={{
-  display: "grid",
-  gridTemplateColumns: "max-content 1fr",
-  gap: "8px 24px",
-  alignItems: "center",
-  background: "#f8f9fa",
-  borderRadius: 12,
-  padding: 20,
-  marginBottom: 24
-}}>
-  {/* Move-in date */}
-  <div>You can move in starting from</div>
-  <div>{listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"}</div>
-
-  {/* Last day of stay */}
-  {listing.availableTo && (
-    <>
-      <div>The last day of stay is</div>
-      <div>{new Date(listing.availableTo).toLocaleDateString()}</div>
-    </>
-  )}
-
-  {/* Deposit */}
-  {listing.noDeposit !== true && listing.deposit && (
-    <>
-      <div>The deposit required</div>
-      <div>{listing.deposit} EUR</div>
-    </>
-  )}
-
-  {/* Type of property offered */}
-  <div>Type of property offered</div>
-  <div>
-    {listing.listingType === "room"
-      ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-      : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-    }
-  </div>
-
-  {/* Property size */}
-  <div>Property size</div>
-  <div>{listing.sizeM2 || listing.size || "-"} m²</div>
-
-  {/* Room size */}
-  {listing.listingType === "room" && (listing.roomSizeM2 || listing.roomSize) && (
-    <>
-      <div>Room size</div>
-      <div>{listing.roomSizeM2 || listing.roomSize} m²</div>
-    </>
-  )}
-
-  {/* Roommates */}
-  {((listing.flatmatesFemale ?? 0) > 0 || (listing.flatmatesMale ?? 0) > 0 || (listing.femaleFlatmates ?? 0) > 0 || (listing.maleFlatmates ?? 0) > 0) && (
-    <>
-      <div>Roommates</div>
-      <div>
-        On the property already {totalRoommates === 1 ? "lives" : "live"} 
-        {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
-          <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
-        )}
-        {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0 && (listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && " and"}
-        {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
-          <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
-        )}
-      </div>
-    </>
-  )}
-
-  {/* Property amenities */}
-  {listing.PropertyAmenities && listing.PropertyAmenities.length > 0 && (
-    <>
-      <div>Property amenities</div>
-      <div>{listing.PropertyAmenities.map((a: any) => a.name).join(", ")}</div>
-    </>
-  )}
-  {listing.amenities && listing.amenities.length > 0 && (
-    <>
-      <div>Property amenities</div>
-      <div>{listing.amenities.join(", ")}</div>
-    </>
-  )}
-
-  {/* Room amenities */}
-  {listing.listingType === "room" && listing.RoomAmenities && listing.RoomAmenities.length > 0 && (
-    <>
-      <div>Room amenities</div>
-      <div>{listing.RoomAmenities.map((a: any) => a.name).join(", ")}</div>
-    </>
-  )}
-  {listing.listingType === "room" && listing.roomAmenities && listing.roomAmenities.length > 0 && (
-    <>
-      <div>Room amenities</div>
-      <div>{listing.roomAmenities.join(", ")}</div>
-    </>
-  )}
-
-  {/* Bed type */}
-  {listing.listingType === "room" && listing.hasBed && listing.bedType && (
-    <>
-      <div>The room has a</div>
-      <div>{listing.bedType.replace('_', ' ')} bed</div>
-    </>
-  )}
-</div>
-            </div>
-          </div>
-          
-        </div>
-        {/* Sidebar */}
-        <div className="col-lg-4">
-          {/* Price and Add to favourites */}
-          <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem', position: 'relative' }}>
-            <div>
-              <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
-              <div className="d-flex align-items-center mt-2" style={{ gap: 16 }}>
-                <div className="d-flex align-items-center" style={{ gap: 6 }}>
-                  <BsEye style={{ fontSize: 16, color: '#888' }} />
-                  <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).views ?? 0} views</span>
+                  {/* Right arrow */}
+                  {allPics.length > 1 && (
+                    <button
+                      onClick={goToNext}
+                      style={{
+                        position: "absolute",
+                        right: 20,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        zIndex: 2,
+                        width: 10,
+                        height: 55,
+                        borderRadius: "50%",
+                        border: "none",
+                        background: "rgba(255,255,255,0.8)",
+                        fontSize: 24,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        cursor: "pointer"
+                      }}
+                      aria-label="Next photo"
+                    >
+                      &#62;
+                    </button>
+                  )}
                 </div>
-                <div 
-                  className="d-flex align-items-center" 
-                  style={{ 
-                    gap: 6,
-                    cursor: listing.listingType === "entire_property" ? 'pointer' : 'default'
-                  }}
-                  onClick={handleLikesClick}
-                >
-                  <FaHeart style={{ fontSize: 16, color: '#e74c3c' }} />
-                  <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).likesCount ?? 0} likes</span>
+                {/* Previews: main + others */}
+                <div className="d-flex gap-3 mt-3">
+                  {previews.map((pic, i) => {
+                    // Find the real index in allPics
+                    const realIdx = allPics.findIndex((p) => p === pic);
+                    const isMain = i === 0;
+                    return (
+                      <img
+                        key={i}
+                        src={pic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
+                        alt={`preview-${i}`}
+                        style={{
+                          borderRadius: "1rem",
+                          border: isMain ? "3px solid #007bff" : "2px solid #ccc",
+                          width: 120,
+                          height: 80,
+                          objectFit: "cover",
+                          background: "#f5f5f5",
+                          cursor: isMain ? "default" : "pointer",
+                          opacity: isMain ? 1 : 0.8
+                        }}
+                        onClick={() => {
+                          if (!isMain) setCurrentPhotoIdx(realIdx);
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-            <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
-              {/* Add to favourites button */}
-              {!isOwnListing && (
-                <button
-                  className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
-                  style={{ fontWeight: 500 }}
-                  onClick={toggleLike}
-                >
-                  <FaHeart style={{ marginRight: 8 }} />
-                  {isLiked ? 'Remove from favourites' : 'Add to favourites'}
-                </button>
-              )}
-              {/* Delete button for owner */}
-              {isOwner && (
-                <button
-                  className="btn btn-danger"
-                  onClick={handleDelete}
-                  style={{ marginLeft: 8 }}
-                >
-                  Delete Listing
-                </button>
-              )}
-            </div>
-          </div>
-          {/* User details card */}
-          <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>
-            <div className="d-flex align-items-center mb-3 w-100" style={{ gap: 16 }}>
-              {listing.user?.profilePicture ? (
-                <img
-                  src={listing.user.profilePicture.startsWith('http') ? listing.user.profilePicture : `http://localhost:5000${listing.user.profilePicture}`}
-                  alt="Profile"
-                  style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd', cursor: 'pointer' }}
-                  onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
-                />
-              ) : (
-                <FaUserCircle 
-                  size={56} 
-                  color="#bbb" 
-                  style={{ background: '#eee', borderRadius: '50%', cursor: 'pointer' }} 
-                  onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
-                />
-              )}
-              <span style={{ fontWeight: 600, fontSize: 20 }}>{listing.user?.name || '[user name]'}</span>
-            </div>
-            <button
-              className="d-flex align-items-center justify-content-center mb-3"
-              style={{
-                background: '#e91e63', color: '#fff', border: 'none', borderRadius: 18, padding: '12px 24px', fontSize: 18, width: '100%', fontWeight: 500, cursor: 'pointer', position: 'relative', minHeight: 56
-              }}
-              onClick={() => setShowPhone(true)}
-              disabled={showPhone || !listing.user?.phone}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', marginRight: 12, fontSize: 24 }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
-              </span>
-              {showPhone && listing.user?.phone
-                ? listing.user.phone
-                : `${(listing.user?.phone || '0000.....').slice(0, 4)} .....`}
-              {!showPhone && listing.user?.phone && (
-                <span style={{ fontSize: 13, display: 'block', marginLeft: 12, color: '#fff', opacity: 0.8 }}>
-                  Click to reveal phone number
-                </span>
-              )}
-            </button>
-            {!isOwnListing && (
-              <button
-                className="btn btn-primary mt-2 w-100"
-                style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
-                onClick={handleSendMessage}
-              >
-                Send message
-              </button>
-            )}
-          </div>
-          {/* Map card */}
-          <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0 }}>
-            <div className="fw-bold mb-2">Address</div>
-            <div style={{ marginBottom: 12 }}>
-              Str {streetName} No. {streetNo}
-            </div>
-            <MapPreview address={fullAddress} />
-          </div>
+              {/* Description and all data */}
+              <div className="card p-4 mb-4" style={{ borderRadius: "2rem" }}>
+                <h5 className="fw-bold mb-3">Description</h5>
+                <div style={{ marginBottom: 16 }}>
+                  {listing.description || <span className="text-muted">No description provided.</span>}
+                  <p style={{ marginTop: 12 }}>
+                  {listing.userRole === "tenant" && (
+                      <span>{listing.user?.name} is a tenant in the property.</span>
+                    )}
+                    {listing.userRole === "owner" && (
+                      <span>{listing.user?.name} is the owner of the property.</span>
+                    )}
+                  </p>
+                </div>
+                <h6 className="fw-bold mb-2">Details</h6>
+                {/* User/role phrase above the subtitle */}
+                
+                <div style={{ marginBottom: 16, marginTop: 16 }}>
+                  {/*aici*/}
+                  <div style={{
+    display: "grid",
+    gridTemplateColumns: "max-content 1fr",
+    gap: "8px 24px",
+    alignItems: "center",
+    background: "#f8f9fa",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24
+  }}>
+    {/* Move-in date */}
+    <div>You can move in starting from</div>
+    <div>{listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"}</div>
+
+    {/* Last day of stay */}
+    {listing.availableTo && (
+      <>
+        <div>The last day of stay is</div>
+        <div>{new Date(listing.availableTo).toLocaleDateString()}</div>
+      </>
+    )}
+
+    {/* Deposit */}
+    {listing.noDeposit !== true && listing.deposit && (
+      <>
+        <div>The deposit required</div>
+        <div>{listing.deposit} EUR</div>
+      </>
+    )}
+
+    {/* Type of property offered */}
+    <div>Type of property offered</div>
+    <div>
+      {listing.listingType === "room"
+        ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+        : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+      }
+    </div>
+
+    {/* Property size */}
+    <div>Property size</div>
+    <div>{listing.sizeM2 || listing.size || "-"} m²</div>
+
+    {/* Room size */}
+    {listing.listingType === "room" && (listing.roomSizeM2 || listing.roomSize) && (
+      <>
+        <div>Room size</div>
+        <div>{listing.roomSizeM2 || listing.roomSize} m²</div>
+      </>
+    )}
+
+    {/* Roommates */}
+    {((listing.flatmatesFemale ?? 0) > 0 || (listing.flatmatesMale ?? 0) > 0 || (listing.femaleFlatmates ?? 0) > 0 || (listing.maleFlatmates ?? 0) > 0) && (
+      <>
+        <div>Roommates</div>
+        <div>
+          On the property already {totalRoommates === 1 ? "lives" : "live"} 
+          {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
+            <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
+          )}
+          {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0 && (listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && " and"}
+          {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
+            <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
+          )}
         </div>
+      </>
+    )}
+
+    {/* Property amenities */}
+    {listing.PropertyAmenities && listing.PropertyAmenities.length > 0 && (
+      <>
+        <div>Property amenities</div>
+        <div>{listing.PropertyAmenities.map((a: any) => a.name).join(", ")}</div>
+      </>
+    )}
+    {listing.amenities && listing.amenities.length > 0 && (
+      <>
+        <div>Property amenities</div>
+        <div>{listing.amenities.join(", ")}</div>
+      </>
+    )}
+
+    {/* Room amenities */}
+    {listing.listingType === "room" && listing.RoomAmenities && listing.RoomAmenities.length > 0 && (
+      <>
+        <div>Room amenities</div>
+        <div>{listing.RoomAmenities.map((a: any) => a.name).join(", ")}</div>
+      </>
+    )}
+    {listing.listingType === "room" && listing.roomAmenities && listing.roomAmenities.length > 0 && (
+      <>
+        <div>Room amenities</div>
+        <div>{listing.roomAmenities.join(", ")}</div>
+      </>
+    )}
+
+    {/* Bed type */}
+    {listing.listingType === "room" && listing.hasBed && listing.bedType && (
+      <>
+        <div>The room has a</div>
+        <div>{listing.bedType.replace('_', ' ')} bed</div>
+      </>
+    )}
+  </div>
+                </div>
+              </div>
+              
+            </div>
+            {/* Sidebar */}
+            <div className="col-md-4">
+              {/* Price and Add to favourites */}
+              <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem', position: 'relative' }}>
+                <div>
+                  <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
+                  <div className="d-flex align-items-center mt-2" style={{ gap: 16 }}>
+                    <div className="d-flex align-items-center" style={{ gap: 6 }}>
+                      <BsEye style={{ fontSize: 16, color: '#888' }} />
+                      <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).views ?? 0} views</span>
+                    </div>
+                    <div 
+                      className="d-flex align-items-center" 
+                      style={{ 
+                        gap: 6,
+                        cursor: listing.listingType === "entire_property" ? 'pointer' : 'default'
+                      }}
+                      onClick={handleLikesClick}
+                    >
+                      <FaHeart style={{ fontSize: 16, color: '#e74c3c' }} />
+                      <span style={{ fontSize: 14, color: '#666' }}>{(listing as any).likesCount ?? 0} likes</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
+                  {/* Add to favourites button */}
+                  {!isOwnListing && (
+                    <button
+                      className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
+                      style={{ fontWeight: 500 }}
+                      onClick={toggleLike}
+                    >
+                      <FaHeart style={{ marginRight: 8 }} />
+                      {isLiked ? 'Remove from favourites' : 'Add to favourites'}
+                    </button>
+                  )}
+                  {/* Delete button for owner */}
+                  {isOwner && (
+                    <button
+                      className="btn btn-danger"
+                      onClick={handleDelete}
+                      style={{ marginLeft: 8 }}
+                    >
+                      Delete Listing
+                    </button>
+                  )}
+                </div>
+              </div>
+              {/* User details card */}
+              <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>
+                <div className="d-flex align-items-center mb-3 w-100" style={{ gap: 16 }}>
+                  {listing.user?.profilePicture ? (
+                    <img
+                      src={listing.user.profilePicture.startsWith('http') ? listing.user.profilePicture : `http://localhost:5000${listing.user.profilePicture}`}
+                      alt="Profile"
+                      style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd', cursor: 'pointer' }}
+                      onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
+                    />
+                  ) : (
+                    <FaUserCircle 
+                      size={56} 
+                      color="#bbb" 
+                      style={{ background: '#eee', borderRadius: '50%', cursor: 'pointer' }} 
+                      onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
+                    />
+                  )}
+                  <span style={{ fontWeight: 600, fontSize: 20 }}>{listing.user?.name || '[user name]'}</span>
+                </div>
+                <button
+                  className="d-flex align-items-center justify-content-center mb-3"
+                  style={{
+                    background: '#e91e63', color: '#fff', border: 'none', borderRadius: 18, padding: '12px 24px', fontSize: 18, width: '100%', fontWeight: 500, cursor: 'pointer', position: 'relative', minHeight: 56
+                  }}
+                  onClick={() => setShowPhone(true)}
+                  disabled={showPhone || !listing.user?.phone}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', marginRight: 12, fontSize: 24 }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
+                  </span>
+                  {showPhone && listing.user?.phone
+                    ? listing.user.phone
+                    : `${(listing.user?.phone || '0000.....').slice(0, 4)} .....`}
+                  {!showPhone && listing.user?.phone && (
+                    <span style={{ fontSize: 13, display: 'block', marginLeft: 12, color: '#fff', opacity: 0.8 }}>
+                      Click to reveal phone number
+                    </span>
+                  )}
+                </button>
+                {!isOwnListing && (
+                  <button
+                    className="btn btn-primary mt-2 w-100"
+                    style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
+                    onClick={handleSendMessage}
+                  >
+                    Send message
+                  </button>
+                )}
+              </div>
+              {/* Map card */}
+              <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0 }}>
+                <div className="fw-bold mb-2">Address</div>
+                <div style={{ marginBottom: 12 }}>
+                  Str {streetName} No. {streetNo}
+                </div>
+                <MapPreview address={fullAddress} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Modal for photo viewing */}
       {showModal && (
