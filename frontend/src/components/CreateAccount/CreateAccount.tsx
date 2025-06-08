@@ -28,11 +28,25 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name === "new-password" ? "password" : name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate age (must be at least 18 years old)
+    const birthDate = new Date(formData.dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (age < 18 || (age === 18 && monthDiff < 0) || (age === 18 && monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      alert("You must be at least 18 years old to create an account.");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match");
@@ -212,6 +226,10 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    autoComplete="new-email"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
                   />
                 </div>
                 <div className="col-8 mb-3 d-flex align-items-center">
@@ -219,10 +237,14 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
                   <input
                     type="password"
                     className="col-4 form-control"
-                    name="password"
+                    name="new-password"
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
                   />
                 </div>
                 <div className="col-8 mb-3 d-flex align-items-center">
