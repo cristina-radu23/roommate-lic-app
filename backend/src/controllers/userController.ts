@@ -18,12 +18,18 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       password,
     } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-        res.status(400).json({ error: "Email already registered." });
-        return;
-        
+    // Check if user already exists with same email
+    const existingUserByEmail = await User.findOne({ where: { email } });
+    if (existingUserByEmail) {
+      res.status(400).json({ error: "Email already registered." });
+      return;
+    }
+
+    // Check if user already exists with same phone number
+    const existingUserByPhone = await User.findOne({ where: { phoneNumber } });
+    if (existingUserByPhone) {
+      res.status(400).json({ error: "Phone number already registered." });
+      return;
     }
 
     const passwordHash = await bcrypt.hash(password, 10);

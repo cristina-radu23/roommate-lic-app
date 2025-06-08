@@ -67,9 +67,8 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
 
       if (response.ok) {
         setShowSuccess(true);
-        // optionally clear form or redirect
       } else {
-        alert("Error: " + data.error);
+        alert(data.error || "Failed to create account");
       }
     } catch (error) {
       console.error("Error creating account:", error);
