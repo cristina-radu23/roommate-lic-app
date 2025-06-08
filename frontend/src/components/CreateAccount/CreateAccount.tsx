@@ -10,7 +10,8 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
     occupation: "not specified",
     email: "",
     password: "",
-    phoneNumber: ""
+    phoneNumber: "",
+    confirmPassword: ""
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
@@ -32,6 +33,11 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
 
     try {
       const response = await fetch("http://localhost:5000/api/users/register", {
@@ -161,6 +167,17 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
                 className="col-4 form-control"
                 name="password"
                 value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="col-8 mb-3 d-flex align-items-center">
+              <label className="col-4 me-2">Confirm Password</label>
+              <input
+                type="password"
+                className="col-4 form-control"
+                name="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleChange}
                 required
               />
