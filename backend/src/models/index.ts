@@ -12,6 +12,7 @@ import ChatRoomUser from "./ChatRoomUser";
 import Message from "./Message";
 import Like from "./Like";
 import Match from "./Match";
+import Notification from "./Notification";
 
 // =======================
 // One-to-Many Associations
@@ -91,4 +92,8 @@ Match.belongsTo(User, { as: 'UserA', foreignKey: 'userAId' });
 Match.belongsTo(User, { as: 'UserB', foreignKey: 'userBId' });
 Match.belongsTo(Listing, { foreignKey: 'listingId' });
 
-export { User, Listing, Address, City, County, Photo, RoomAmenity, PropertyAmenity, HouseRule, ChatRoom, ChatRoomUser, Message, Like, Match };
+// User ↔ Notification
+User.hasMany(Notification, { foreignKey: "userId" });
+Notification.belongsTo(User, { foreignKey: "userId" });
+
+export { User, Listing, Address, City, County, Photo, RoomAmenity, PropertyAmenity, HouseRule, ChatRoom, ChatRoomUser, Message, Like, Match, Notification };

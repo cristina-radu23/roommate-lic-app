@@ -6,6 +6,7 @@ interface MessageAttributes {
   chatRoomId: number;
   userId: number;
   content: string;
+  seen: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,6 +18,7 @@ class Message extends Model<MessageAttributes, MessageCreationAttributes> implem
   public chatRoomId!: number;
   public userId!: number;
   public content!: string;
+  public seen!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -39,6 +41,10 @@ Message.init(
     content: {
       type: DataTypes.TEXT,
       allowNull: false,
+    },
+    seen: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {

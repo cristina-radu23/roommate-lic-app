@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
-import profileIcon from '../assets/profileIcon.png';
 import { FaUserCircle, FaHeart } from 'react-icons/fa';
 import LikesList from '../LikesList/LikesList';
 
@@ -168,6 +167,26 @@ const ListingPage: React.FC = () => {
     }
   };
 
+  // Add delete handler
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    const token = localStorage.getItem('token');
+    if (!token || !listing) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/listings/${listing.listingId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        navigate('/mylistings');
+      } else {
+        alert('Failed to delete listing');
+      }
+    } catch (err) {
+      alert('Error deleting listing');
+    }
+  };
+
   if (loading) return <div className="container mt-5">Loading...</div>;
   if (!listing) return <div className="container mt-5">Listing not found.</div>;
 
@@ -181,7 +200,6 @@ const ListingPage: React.FC = () => {
     allPics = ["https://placehold.co/300x200?text=No+Image&font=roboto"];
   }
   const mainPic = allPics[currentPhotoIdx] || "https://placehold.co/300x200?text=No+Image&font=roboto";
-  const otherPics = allPics.filter((_, i) => i !== currentPhotoIdx);
 
   // Carousel navigation
   const goToPrev = () => setCurrentPhotoIdx((prev) => (prev - 1 + allPics.length) % allPics.length);
@@ -204,14 +222,15 @@ const ListingPage: React.FC = () => {
   const streetNo = (listing as any).Address?.streetNo || "";
   const city = (listing as any).Address?.City?.cityName || "";
   const fullAddress = `${streetName} ${streetNo} ${city}`.trim();
-  const lat = (listing as any).Address?.lat || 44.4268; // fallback: Bucharest
-  const lng = (listing as any).Address?.lng || 26.1025;
 
   const totalRoommates =
     (listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) +
     (listing.flatmatesMale ?? listing.maleFlatmates ?? 0);
 
   const isOwnListing = listing.user && listing.user.userId === userId;
+
+  // In the render, show delete button if user is owner
+  const isOwner = userId && (listing.user?.userId === userId);
 
   return (
     <div className="container-fluid" style={{ minHeight: "100vh", background: "#fff", marginTop: "56px",
@@ -445,7 +464,7 @@ const ListingPage: React.FC = () => {
         {/* Sidebar */}
         <div className="col-lg-4">
           {/* Price and Add to favourites */}
-          <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem' }}>
+          <div className="d-flex flex-row align-items-center justify-content-between mb-3" style={{ gap: '1rem', position: 'relative' }}>
             <div>
               <h4 className="fw-bold mb-0">{listing.rent ? `${listing.rent} EUR/month` : "Price of rent/month"}</h4>
               <div className="d-flex align-items-center mt-2" style={{ gap: 16 }}>
@@ -466,9 +485,9 @@ const ListingPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {!isOwnListing && (
-              <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
-                {/* Add to favourites button */}
+            <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
+              {/* Add to favourites button */}
+              {!isOwnListing && (
                 <button
                   className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
                   style={{ fontWeight: 500 }}
@@ -477,8 +496,18 @@ const ListingPage: React.FC = () => {
                   <FaHeart style={{ marginRight: 8 }} />
                   {isLiked ? 'Remove from favourites' : 'Add to favourites'}
                 </button>
-              </div>
-            )}
+              )}
+              {/* Delete button for owner */}
+              {isOwner && (
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                  style={{ marginLeft: 8 }}
+                >
+                  Delete Listing
+                </button>
+              )}
+            </div>
           </div>
           {/* User details card */}
           <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>

@@ -12,6 +12,8 @@ import { Op } from "sequelize";
 import Photo from "../models/Photo";
 import User from "../models/User";
 import Like from "../models/Like";
+import { sendNotification } from "../utils/notify";
+import Match from "../models/Match";
 
 export const createListing = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -345,5 +347,46 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
   } catch (error) {
     console.error("Error fetching user listings:", error);
     res.status(500).json({ error: "Failed to fetch user listings" });
+  }
+};
+
+export const deleteListing = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { listingId } = req.params;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const listing = await Listing.findByPk(listingId);
+    if (!listing) return res.status(404).json({ error: "Listing not found" });
+    if (listing.userId !== userId) return res.status(403).json({ error: "Forbidden: Not the owner" });
+
+    // Notify all likers before deleting
+    const likes = await Like.findAll({ where: { listingId } });
+    const title = (listing as any).title || (listing as any).listingTitle || "a listing you liked";
+    console.log(`[Listing Delete] Notifying ${likes.length} likers about deletion of listing '${title}' (ID: ${listingId})`);
+    await Promise.all(likes.map(async like => {
+      try {
+        console.log(`[Listing Delete] Notifying userId=${like.userId} about deleted listing '${title}'`);
+        await sendNotification(
+          like.userId,
+          "listing-deleted",
+          `The listing '${title}' you liked has been deleted, find new listings!`,
+          "/"
+        );
+        console.log(`[Listing Delete] Notification sent to userId=${like.userId}`);
+      } catch (err) {
+        console.error(`[Listing Delete] Failed to notify userId=${like.userId}:`, err);
+      }
+    }));
+
+    // Delete related records to avoid FK constraint errors
+    await Like.destroy({ where: { listingId } });
+    await Match.destroy({ where: { listingId } });
+    await Photo.destroy({ where: { listingId } });
+
+    await listing.destroy();
+    return res.json({ message: "Listing deleted" });
+  } catch (error) {
+    console.error("Error deleting listing:", error);
+    return res.status(500).json({ error: "Failed to delete listing" });
   }
 };

@@ -4,6 +4,7 @@ import ChatRoomUser from "../models/ChatRoomUser";
 import Message from "../models/Message";
 import Like from "../models/Like";
 import User from "../models/User";
+import { Op } from 'sequelize';
 
 // Create a chat room (user-owner or matchmaking)
 export const createChatRoom = async (req: Request, res: Response) => {
@@ -70,7 +71,7 @@ export const sendMessage = async (req: Request, res: Response) => {
       res.status(400).json({ error: "Message content required" });
       return;
     }
-    const message = await Message.create({ chatRoomId, userId, content });
+    const message = await Message.create({ chatRoomId, userId, content, seen: false });
     res.status(201).json(message);
   } catch (err) {
     res.status(500).json({ error: "Failed to send message" });
@@ -81,6 +82,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 export const getUserChatRooms = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
+    console.log('Fetching chat rooms for userId:', userId);
     // Find all chat rooms the user is part of, including all users in each chat
     const chatRoomUsers = await ChatRoomUser.findAll({
       where: { userId },
@@ -100,10 +102,11 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
       ],
     });
 
-    // For each chat, fetch the last message and attach as lastMessage
+    // For each chat, fetch the last message and attach as lastMessage, and count unread messages
     const chatRoomUsersWithLastMessage = await Promise.all(chatRoomUsers.map(async (chatRoomUser: any) => {
       const chatRoomId = chatRoomUser.ChatRoom?.chatRoomId;
       let lastMessage = null;
+      let unreadCount = 0;
       if (chatRoomId) {
         lastMessage = await Message.findOne({
           where: { chatRoomId },
@@ -113,15 +116,26 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
             attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
           }]
         });
+        // Count unseen messages from other users
+        unreadCount = await Message.count({
+          where: {
+            chatRoomId,
+            userId: { [Op.ne]: Number(userId) },
+            seen: false,
+          },
+        });
       }
       return {
         ...chatRoomUser.toJSON(),
-        lastMessage: lastMessage ? lastMessage.toJSON() : null
+        lastMessage: lastMessage ? lastMessage.toJSON() : null,
+        unreadCount,
       };
     }));
 
+    console.log('Found chat rooms:', chatRoomUsersWithLastMessage.length);
     res.json(chatRoomUsersWithLastMessage);
   } catch (err) {
+    console.error('Error in getUserChatRooms:', err);
     res.status(500).json({ error: "Failed to fetch chat rooms" });
   }
 };

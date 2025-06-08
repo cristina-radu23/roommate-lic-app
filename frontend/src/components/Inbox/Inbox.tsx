@@ -33,6 +33,14 @@ function getProfilePictureUrl(profilePicture?: string) {
   return profilePicture.startsWith('http') ? profilePicture : `http://localhost:5000${profilePicture}`;
 }
 
+// Helper to count unread messages for a chat
+// function countUnread(chat: any, userId: number) {
+//   const lastMsg = (chat as any).lastMessage;
+//   if (!lastMsg) return 0;
+//   // Only count if the last message is not from the current user and is not seen
+//   return lastMsg.userId !== userId && !lastMsg.seen ? 1 : 0;
+// }
+
 const Inbox: React.FC = () => {
   const [chats, setChats] = useState<ChatRoom[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatRoom | null>(null);
@@ -116,6 +124,25 @@ const Inbox: React.FC = () => {
     }
   }, [messages]);
 
+  // Mark messages as seen when entering a chatroom
+  useEffect(() => {
+    if (selectedChat && userId) {
+      fetch('http://localhost:5000/api/messages/seen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatRoomId: selectedChat.ChatRoom.chatRoomId, userId })
+      }).then(() => {
+        // Refresh chat list after marking as seen
+        fetch(`http://localhost:5000/api/chat/user/${userId}`)
+          .then(res => res.json())
+          .then(data => {
+            setChats(data);
+            window.dispatchEvent(new CustomEvent('refresh-unread'));
+          });
+      });
+    }
+  }, [selectedChat, userId]);
+
   const handleSend = async () => {
     if (!message.trim()) return;
     setSending(true);
@@ -189,13 +216,21 @@ const Inbox: React.FC = () => {
     }
   };
 
+  const handleChatClick = (chat: ChatRoom) => {
+    setSelectedChat(chat);
+    setPendingChat(null);
+    // Optimistically set unreadCount to 0 for this chat
+    setChats(prevChats => prevChats.map(c =>
+      c.ChatRoom.chatRoomId === chat.ChatRoom.chatRoomId ? { ...c, unreadCount: 0 } : c
+    ));
+  };
+
   // Render chat list
   const renderChatList = () => (
     <div className="inbox-list">
       {loadingChats ? <div style={{ padding: 16 }}>Loading...</div> : null}
       {chats.map((chat) => {
         const otherUser = getOtherUser(chat, userId);
-        // Use only lastMessage property from backend
         const lastMsg = (chat as any).lastMessage;
         let lastMsgContent = '';
         if (lastMsg) {
@@ -204,11 +239,12 @@ const Inbox: React.FC = () => {
             lastMsgContent = `you: ${lastMsgContent}`;
           }
         }
+        const unread = (chat as any).unreadCount || 0;
         return (
           <div
             key={chat.ChatRoom.chatRoomId}
             className={`inbox-list-item${selectedChat?.ChatRoom.chatRoomId === chat.ChatRoom.chatRoomId ? ' selected' : ''}`}
-            onClick={() => { setSelectedChat(chat); setPendingChat(null); }}
+            onClick={() => handleChatClick(chat)}
           >
             <img 
               src={otherUser?.profilePicture ? getProfilePictureUrl(otherUser.profilePicture) : profileIcon} 
@@ -219,6 +255,11 @@ const Inbox: React.FC = () => {
               <div className="inbox-list-name">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${chat.ChatRoom.chatRoomId}`}</div>
               <div className="inbox-list-last" style={{ color: '#888' }}>{lastMsgContent}</div>
             </div>
+            {unread > 0 && (
+              <span style={{ background: 'red', color: 'white', borderRadius: '50%', padding: '2px 8px', marginLeft: 8, fontSize: 12 }}>
+                {unread}
+              </span>
+            )}
             <div className="inbox-list-time">&nbsp;</div>
           </div>
         );

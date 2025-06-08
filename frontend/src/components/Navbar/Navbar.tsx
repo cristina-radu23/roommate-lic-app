@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { FaUserCircle, FaEnvelope } from "react-icons/fa";
+import { FaUserCircle, FaEnvelope, FaBell } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
+import NotificationPopup from "./NotificationPopup";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -20,6 +22,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   const [showDropdown, setShowDropdown] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const userId = Number(localStorage.getItem('userId'));
+  const location = useLocation();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,6 +54,27 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   useEffect(() => {
     setImgError(false); // Reset image error when user/profilePicture changes
   }, [user?.profilePicture, isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
+      setHasUnread(false);
+      return;
+    }
+    const fetchUnread = () => {
+      fetch(`http://localhost:5000/api/chat/user/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          setHasUnread(data.some((chat: any) => chat.unreadCount && chat.unreadCount > 0));
+        });
+    };
+    fetchUnread();
+    // Listen for custom event to refresh unread status
+    window.addEventListener('refresh-unread', fetchUnread);
+    return () => {
+      window.removeEventListener('refresh-unread', fetchUnread);
+    };
+  }, [isLoggedIn, userId, location.pathname]);
+
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top" style={{ zIndex: 10000 }}>
       <div className="container">
@@ -81,9 +109,50 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
               </>
             ) : (
               <>
+                <li className="nav-item me-2" style={{ position: 'relative' }}>
+                  <span className="nav-link position-relative" style={{ cursor: 'pointer' }} onClick={() => setShowNotifications((v) => !v)}>
+                    <FaBell size={22} />
+                    {hasNotifications && (
+                      <span style={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 4,
+                        width: 10,
+                        height: 10,
+                        background: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        border: '2px solid white',
+                        zIndex: 2
+                      }} />
+                    )}
+                  </span>
+                  {showNotifications && userId && (
+                    <NotificationPopup
+                      open={showNotifications}
+                      onClose={() => setShowNotifications(false)}
+                      userId={userId}
+                      onAnyUnread={setHasNotifications}
+                    />
+                  )}
+                </li>
                 <li className="nav-item me-2">
                   <Link className="nav-link position-relative" to="/inbox">
                     <FaEnvelope size={22} />
+                    {hasUnread && (
+                      <span style={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 4,
+                        width: 10,
+                        height: 10,
+                        background: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        border: '2px solid white',
+                        zIndex: 2
+                      }} />
+                    )}
                   </Link>
                 </li>
                 <li

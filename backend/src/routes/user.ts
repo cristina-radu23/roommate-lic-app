@@ -4,6 +4,8 @@ import authenticateToken, { AuthenticatedRequest } from "../middleware/authMiddl
 import upload from '../middleware/upload';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
+import path from 'path';
+import fs from 'fs/promises';
 
 const router = express.Router();
 
@@ -98,6 +100,46 @@ router.post("/change-password", authenticateToken, async (req: AuthenticatedRequ
   } catch (error) {
     console.error('Error changing password:', error);
     res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Delete account endpoint
+router.delete("/me", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('[DELETE /me] Endpoint hit');
+  try {
+    const userId = req.user?.userId;
+    console.log('[DELETE /me] userId:', userId);
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // Delete user's profile picture if exists
+    const user = await User.findByPk(userId);
+    console.log('[DELETE /me] User found:', user ? user.toJSON() : null);
+    if (user?.profilePicture) {
+      const filename = user.profilePicture.split('/').pop();
+      console.log('[DELETE /me] profilePicture filename:', filename);
+      if (filename) {
+        const filePath = path.join(__dirname, '../../uploads', filename);
+        console.log('[DELETE /me] Attempting to delete file:', filePath);
+        try {
+          await fs.unlink(filePath);
+          console.log('[DELETE /me] File deleted successfully');
+        } catch (err) {
+          console.error('[DELETE /me] Error deleting profile picture:', err);
+        }
+      }
+    }
+
+    // Delete user from database
+    const destroyResult = await User.destroy({ where: { userId } });
+    console.log('[DELETE /me] User.destroy result:', destroyResult);
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE /me] Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account', details: error instanceof Error ? error.message : error });
   }
 });
 

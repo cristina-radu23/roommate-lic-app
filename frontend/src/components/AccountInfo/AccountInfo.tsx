@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Modal, Button } from 'react-bootstrap';
 
 interface UserInfo {
   userFirstName: string;
@@ -29,6 +30,9 @@ const AccountInfo: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { userId } = useParams();
   const location = useLocation();
@@ -172,6 +176,39 @@ const AccountInfo: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/');
+        return;
+      }
+      const response = await fetch('http://localhost:5000/api/users/me', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      // Clear local storage and redirect to home
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      window.dispatchEvent(new CustomEvent('user-logout'));
+      navigate('/');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -443,11 +480,49 @@ const AccountInfo: React.FC = () => {
                   </form>
                 </div>
                 <div className="text-muted">Other settings coming soon...</div>
+                
+                {/* Delete Account Section */}
+                <div className="mt-5" style={{ maxWidth: 400 }}>
+                  <h5 className="mb-3 text-danger">Delete Account</h5>
+                  <p className="text-muted mb-3">
+                    Once you delete your account, there is no going back. Please be certain.
+                  </p>
+                  <button
+                    className="btn btn-outline-danger"
+                    onClick={() => setShowDeleteModal(true)}
+                    style={{ marginBottom: 100 }}
+                  >
+                    Delete Account
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+          {deleteError && <div className="text-danger mb-3">{deleteError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete Account'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

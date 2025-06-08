@@ -7,9 +7,10 @@ import { BsEye } from 'react-icons/bs';
 type ListingsGridProps = {
   listings: PostListingFormData[];
   isLoggedIn?: boolean;
+  showDeleteButton?: boolean;
 };
 
-const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, isLoggedIn = false }) => {
+const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, isLoggedIn = false, showDeleteButton = false }) => {
   const navigate = useNavigate();
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [listings, setListings] = React.useState<PostListingFormData[]>([]);
@@ -83,6 +84,25 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
       }
     } catch (err) {
       console.error('[ListingsGrid] Error toggling like:', err);
+    }
+  };
+
+  const handleDelete = async (listingId: number) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/listings/${listingId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setListings(current => current.filter(l => l.listingId !== listingId));
+      } else {
+        alert('Failed to delete listing');
+      }
+    } catch (err) {
+      alert('Error deleting listing');
     }
   };
 
@@ -194,6 +214,16 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                     </div>
                   </div>
                 </div>
+                {showDeleteButton && isOwnListing && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    style={{ position: 'absolute', top: 16, left: 16, zIndex: 2 }}
+                    onClick={e => { e.stopPropagation(); handleDelete(listing.listingId!); }}
+                    title="Delete listing"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           );
