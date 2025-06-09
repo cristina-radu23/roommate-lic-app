@@ -58,6 +58,7 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       gender,
       occupation,
       passwordHash,
+      isActive: true
     });
 
     res.status(201).json({ message: "Account created successfully", userId: newUser.userId });
@@ -81,6 +82,11 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   if (!isMatch) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
+  }
+
+  // If account was deactivated, reactivate it
+  if (!user.isActive) {
+    await user.update({ isActive: true });
   }
 
   const token = jwt.sign(
@@ -312,5 +318,27 @@ export const deleteUserAccount = async (req: AuthenticatedRequest, res: Response
     await t.rollback();
     console.error('Error deleting account:', error);
     res.status(500).json({ error: 'Failed to delete account', details: error instanceof Error ? error.message : error });
+  }
+};
+
+export const deactivateUserAccount = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    await user.update({ isActive: false });
+    res.json({ message: 'Account deactivated successfully' });
+  } catch (error) {
+    console.error('Error deactivating account:', error);
+    res.status(500).json({ error: 'Failed to deactivate account' });
   }
 };

@@ -13,6 +13,7 @@ interface UserAttributes {
   passwordHash: string;
   profilePicture?: string;
   bio?: string;
+  isActive: boolean;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "userId"> {}
@@ -29,6 +30,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public passwordHash!: string;
   public profilePicture?: string;
   public bio?: string;
+  public isActive!: boolean;
 }
 
 User.init(
@@ -54,6 +56,11 @@ User.init(
       field: 'profilePicture'
     },
     bio: { type: DataTypes.TEXT, allowNull: true },
+    isActive: { 
+      type: DataTypes.BOOLEAN, 
+      allowNull: false,
+      defaultValue: true 
+    },
   },
   {
     sequelize,

@@ -255,11 +255,18 @@ const AccountInfo: React.FC = () => {
         throw new Error(data.error || 'Failed to deactivate account');
       }
 
-      // Clear local storage and redirect to home
+      // Close the modal
+      setShowDeactivateModal(false);
+      
+      // Trigger the global logout event
+      window.dispatchEvent(new CustomEvent('user-logout'));
+      
+      // Clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
-      window.dispatchEvent(new CustomEvent('user-logout'));
-      navigate('/');
+      
+      // Force a page reload to ensure all components update their state
+      window.location.href = '/';
     } catch (err) {
       setDeactivateError(err instanceof Error ? err.message : 'Failed to deactivate account');
     } finally {
