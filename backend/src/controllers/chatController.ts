@@ -6,6 +6,35 @@ import Like from "../models/Like";
 import User from "../models/User";
 import { Op } from 'sequelize';
 
+interface MessageWithUser {
+  messageId: number;
+  userId: number;
+  content: string;
+  createdAt: Date;
+  User?: {
+    userFirstName: string;
+    userLastName: string;
+    profilePicture?: string | null;
+    isActive: boolean;
+  };
+}
+
+interface ChatRoomUserWithUser {
+  userId: number;
+  User?: {
+    userId: number;
+    userFirstName: string;
+    userLastName: string;
+    profilePicture?: string | null;
+    isActive: boolean;
+  };
+}
+
+interface ChatRoomWithUsers {
+  chatRoomId: number;
+  ChatRoomUsers: ChatRoomUserWithUser[];
+}
+
 // Create a chat room (user-owner or matchmaking)
 export const createChatRoom = async (req: Request, res: Response) => {
   try {
@@ -94,7 +123,7 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
               model: ChatRoomUser,
               include: [{
                 model: User,
-                attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
+                attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture', 'isActive']
               }],
             },
           ],
@@ -113,7 +142,7 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
           order: [['createdAt', 'DESC']],
           include: [{
             model: User,
-            attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture']
+            attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture', 'isActive']
           }]
         });
         // Count unseen messages from other users
@@ -125,18 +154,43 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
           },
         });
       }
+
+      // Process the chat room data to handle inactive users' profile pictures
+      const chatRoomData = chatRoomUser.toJSON();
+      if (chatRoomData.ChatRoom?.ChatRoomUsers) {
+        chatRoomData.ChatRoom.ChatRoomUsers = chatRoomData.ChatRoom.ChatRoomUsers.map((cru: ChatRoomUserWithUser) => {
+          if (cru.User) {
+            cru.User.profilePicture = cru.User.isActive ? cru.User.profilePicture : null;
+          }
+          return cru;
+        });
+      }
+
+      // Handle last message user's profile picture
+      if (lastMessage) {
+        const messageData = lastMessage.toJSON() as unknown as MessageWithUser;
+        if (messageData.User) {
+          messageData.User.profilePicture = messageData.User.isActive ? messageData.User.profilePicture : null;
+        }
+        return {
+          ...chatRoomData,
+          lastMessage: messageData,
+          unreadCount,
+        };
+      }
+
       return {
-        ...chatRoomUser.toJSON(),
-        lastMessage: lastMessage ? lastMessage.toJSON() : null,
+        ...chatRoomData,
+        lastMessage: null,
         unreadCount,
       };
     }));
 
     console.log('Found chat rooms:', chatRoomUsersWithLastMessage.length);
     res.json(chatRoomUsersWithLastMessage);
-  } catch (err) {
-    console.error('Error in getUserChatRooms:', err);
-    res.status(500).json({ error: "Failed to fetch chat rooms" });
+  } catch (error) {
+    console.error('Error fetching chat rooms:', error);
+    res.status(500).json({ error: 'Failed to fetch chat rooms' });
   }
 };
 
@@ -149,10 +203,20 @@ export const getChatRoomMessages = async (req: Request, res: Response) => {
       order: [["createdAt", "ASC"]], 
       include: [{
         model: User,
-        attributes: ['userFirstName', 'userLastName', 'profilePicture']
+        attributes: ['userFirstName', 'userLastName', 'profilePicture', 'isActive']
       }] 
     });
-    res.json(messages);
+
+    // Process messages to handle inactive users' profile pictures
+    const processedMessages = messages.map(message => {
+      const messageData = message.toJSON() as unknown as MessageWithUser;
+      if (messageData.User) {
+        messageData.User.profilePicture = messageData.User.isActive ? messageData.User.profilePicture : null;
+      }
+      return messageData;
+    });
+
+    res.json(processedMessages);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch messages" });
   }

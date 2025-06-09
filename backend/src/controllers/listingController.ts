@@ -145,7 +145,8 @@ export const getAllListings = async (req: Request, res: Response) => {
       {
         model: User,
         where: { isActive: 1 },
-        required: true
+        required: true,
+        attributes: ["userId", "userFirstName", "userLastName", "profilePicture", "isActive"]
       }
     ];
 
@@ -206,10 +207,17 @@ export const getAllListings = async (req: Request, res: Response) => {
       include,
     });
 
-    // Add likesCount to each listing
+    // Add likesCount to each listing and handle inactive users' profile pictures
     const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
       const likesCount = await Like.count({ where: { listingId: listing.listingId } });
-      return { ...listing.toJSON(), likesCount };
+      const listingData = listing.toJSON();
+      
+      // Handle user profile picture based on active status
+      if (listingData.User) {
+        listingData.User.profilePicture = listingData.User.isActive ? listingData.User.profilePicture : null;
+      }
+      
+      return { ...listingData, likesCount };
     }));
     res.status(200).json(listingsWithLikes);
   } catch (error) {
@@ -236,15 +244,23 @@ export const getListingsByCity = async (req: Request, res: Response) => {
         {
           model: User,
           where: { isActive: 1 },
-          required: true
+          required: true,
+          attributes: ["userId", "userFirstName", "userLastName", "profilePicture", "isActive"]
         }
       ],
     });
 
-    // Add likesCount to each listing
+    // Add likesCount to each listing and handle inactive users' profile pictures
     const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
       const likesCount = await Like.count({ where: { listingId: listing.listingId } });
-      return { ...listing.toJSON(), likesCount };
+      const listingData = listing.toJSON();
+      
+      // Handle user profile picture based on active status
+      if (listingData.User) {
+        listingData.User.profilePicture = listingData.User.isActive ? listingData.User.profilePicture : null;
+      }
+      
+      return { ...listingData, likesCount };
     }));
     res.status(200).json(listingsWithLikes);
   } catch (error) {
@@ -279,7 +295,7 @@ export const getListingById = async (req: Request, res: Response) => {
           model: User,
           where: { isActive: 1 },
           required: true,
-          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture"],
+          attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture", "isActive"],
         },
       ],
     });
@@ -303,7 +319,7 @@ export const getListingById = async (req: Request, res: Response) => {
           name: `${userInstance.userFirstName} ${userInstance.userLastName}`,
           phone: userInstance.phoneNumber,
           userId: userInstance.userId,
-          profilePicture: userInstance.profilePicture || null
+          profilePicture: userInstance.isActive ? userInstance.profilePicture : null
         }
       : undefined;
 

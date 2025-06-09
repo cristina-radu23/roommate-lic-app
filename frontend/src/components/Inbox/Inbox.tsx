@@ -18,6 +18,7 @@ interface Message {
     userFirstName: string;
     userLastName: string;
     profilePicture?: string;
+    isActive: boolean;
   };
 }
 
@@ -253,6 +254,9 @@ const Inbox: React.FC = () => {
             />
             <div className="inbox-list-info">
               <div className="inbox-list-name">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${chat.ChatRoom.chatRoomId}`}</div>
+              {otherUser && !otherUser.isActive && (
+                <div className="inbox-list-status" style={{ color: '#dc3545', fontSize: '0.85rem' }}>Inactive user</div>
+              )}
               <div className="inbox-list-last" style={{ color: '#888' }}>{lastMsgContent}</div>
             </div>
             {unread > 0 && (
@@ -309,6 +313,8 @@ const Inbox: React.FC = () => {
     // Existing chat
     if (selectedChat) {
       const otherUser = getOtherUser(selectedChat, userId);
+      const isOtherUserInactive = otherUser && !otherUser.isActive;
+      
       return (
         <div className="inbox-chat">
           <div className="inbox-chat-header">
@@ -317,7 +323,12 @@ const Inbox: React.FC = () => {
               alt="avatar" 
               className="inbox-avatar-large" 
             />
-            <span className="inbox-chat-username">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${selectedChat.ChatRoom.chatRoomId}`}</span>
+            <div>
+              <span className="inbox-chat-username">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${selectedChat.ChatRoom.chatRoomId}`}</span>
+              {isOtherUserInactive && (
+                <div style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: 2 }}>Inactive user</div>
+              )}
+            </div>
           </div>
           <div className="inbox-chat-messages" style={{ overflowY: 'auto' }}>
             {messages.map((msg, idx) => (
@@ -332,27 +343,42 @@ const Inbox: React.FC = () => {
                     className="inbox-message-avatar" 
                   />
                 )}
-                <div className="inbox-message-content">{msg.content}</div>
+                <div className="inbox-message-content">
+                  {msg.content}
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
-          <div className="inbox-chat-input">
-            <input
-              type="text"
-              placeholder="Write a message here"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              disabled={sending}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-            />
-            <button onClick={handleSend} disabled={sending || !message.trim()}>Send</button>
-          </div>
+          {isOtherUserInactive ? (
+            <div className="inbox-chat-input" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderTop: '1px solid #dee2e6'
+            }}>
+              <span style={{ color: '#dc3545' }}>Cannot send messages to inactive users</span>
+            </div>
+          ) : (
+            <div className="inbox-chat-input">
+              <input
+                type="text"
+                placeholder="Write a message here"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                disabled={sending}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+              />
+              <button onClick={handleSend} disabled={sending || !message.trim()}>Send</button>
+            </div>
+          )}
         </div>
       );
     }
