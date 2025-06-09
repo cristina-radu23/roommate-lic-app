@@ -3,7 +3,22 @@ import bcrypt from "bcrypt";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
-
+import Listing from "../models/Listing";
+import Like from "../models/Like";
+import Match from "../models/Match";
+import ChatRoom from "../models/ChatRoom";
+import ChatRoomUser from "../models/ChatRoomUser";
+import Message from "../models/Message";
+import Notification from "../models/Notification";
+import Photo from "../models/Photo";
+import Address from "../models/Address";
+import path from "path";
+import fs from "fs/promises";
+import { Op } from "sequelize";
+import RoomAmenity from "../models/RoomAmenity";
+import PropertyAmenity from "../models/PropertyAmenity";
+import HouseRule from "../models/HouseRule";
+import sequelize from "../config/db";
 
 export const createAccount = async (req: Request, res: Response): Promise<void>=> {
   try {
@@ -123,5 +138,179 @@ export const getUserById = async (req: Request, res: Response) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch user info" });
+  }
+};
+
+export const deleteUserAccount = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // 1. Get user's listings first (we need this for chat rooms and likes)
+    const listings = await Listing.findAll({ 
+      where: { userId },
+      include: [
+        { model: RoomAmenity },
+        { model: PropertyAmenity },
+        { model: HouseRule }
+      ],
+      transaction: t
+    });
+    const listingIds = listings.map(listing => listing.listingId);
+
+    // 2. Delete all notifications first (they reference the user)
+    await Notification.destroy({ 
+      where: { userId },
+      transaction: t
+    });
+
+    // 3. Find all chat rooms where user is involved
+    const chatRooms = await ChatRoom.findAll({
+      where: {
+        [Op.or]: [
+          { listingId: { [Op.in]: listingIds } },
+          { '$ChatRoomUsers.userId$': userId }
+        ]
+      },
+      include: [{
+        model: ChatRoomUser,
+        required: false
+      }],
+      transaction: t
+    });
+
+    const chatRoomIds = chatRooms.map(room => room.chatRoomId);
+
+    // 4. Delete all messages in these chat rooms
+    await Message.destroy({ 
+      where: { 
+        [Op.or]: [
+          { chatRoomId: { [Op.in]: chatRoomIds } },
+          { userId }
+        ]
+      },
+      transaction: t
+    });
+
+    // 5. Delete chat room participations
+    await ChatRoomUser.destroy({ 
+      where: { 
+        [Op.or]: [
+          { chatRoomId: { [Op.in]: chatRoomIds } },
+          { userId }
+        ]
+      },
+      transaction: t
+    });
+
+    // 6. Delete chat rooms related to user's listings
+    await ChatRoom.destroy({ 
+      where: { 
+        [Op.or]: [
+          { listingId: { [Op.in]: listingIds } },
+          { chatRoomId: { [Op.in]: chatRoomIds } }
+        ]
+      },
+      transaction: t
+    });
+
+    // 7. Delete all likes in both directions
+    // First, delete likes given by the user
+    await Like.destroy({ 
+      where: { userId },
+      transaction: t
+    });
+    // Then, delete likes received on user's listings
+    await Like.destroy({ 
+      where: { listingId: { [Op.in]: listingIds } },
+      transaction: t
+    });
+
+    // 8. Delete all matches where user is involved
+    await Match.destroy({ 
+      where: {
+        [Op.or]: [
+          { userAId: userId },
+          { userBId: userId },
+          { listingId: { [Op.in]: listingIds } }
+        ]
+      },
+      transaction: t
+    });
+    
+    // 9. For each listing, delete all dependencies first
+    for (const listing of listings) {
+      // Delete all photos for this listing
+      await Photo.destroy({ 
+        where: { listingId: listing.listingId },
+        transaction: t
+      });
+
+      // Remove all many-to-many associations
+      await listing.setRoomAmenities([]);
+      await listing.setPropertyAmenities([]);
+      await listing.setHouseRules([]);
+    }
+
+    // 10. Get all addresses associated with the listings
+    const addresses = await Address.findAll({
+      where: {
+        addressId: {
+          [Op.in]: listings.map(listing => listing.addressId)
+        }
+      },
+      transaction: t
+    });
+
+    // 11. Now that all dependencies are deleted, delete all listings
+    await Listing.destroy({ 
+      where: { userId },
+      transaction: t
+    });
+
+    // 12. Delete all addresses associated with the listings
+    await Address.destroy({
+      where: {
+        addressId: {
+          [Op.in]: addresses.map(address => address.addressId)
+        }
+      },
+      transaction: t
+    });
+
+    // 13. Delete user's profile picture if exists
+    const user = await User.findByPk(userId, { transaction: t });
+    if (user?.profilePicture) {
+      const filename = user.profilePicture.split('/').pop();
+      if (filename) {
+        const filePath = path.join(__dirname, '../../uploads', filename);
+        try {
+          await fs.unlink(filePath);
+        } catch (err) {
+          console.error('Error deleting profile picture:', err);
+        }
+      }
+    }
+
+    // 14. Finally, delete the user
+    await User.destroy({ 
+      where: { userId },
+      transaction: t
+    });
+
+    // Commit the transaction
+    await t.commit();
+
+    res.json({ message: 'Account and all related data deleted successfully' });
+  } catch (error) {
+    // Rollback the transaction in case of error
+    await t.rollback();
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account', details: error instanceof Error ? error.message : error });
   }
 };

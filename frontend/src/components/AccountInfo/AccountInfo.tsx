@@ -215,11 +215,18 @@ const AccountInfo: React.FC = () => {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      // Clear local storage and redirect to home
+      // Clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
+      
+      // Dispatch logout event to update UI state
       window.dispatchEvent(new CustomEvent('user-logout'));
-      navigate('/');
+      
+      // Close the modal
+      setShowDeleteModal(false);
+      
+      // Redirect to home page
+      navigate('/', { replace: true });
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
     } finally {
