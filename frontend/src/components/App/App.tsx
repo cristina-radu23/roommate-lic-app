@@ -11,6 +11,13 @@ import MyListings from '../MyListings/MyListings';
 import AccountInfo from '../AccountInfo/AccountInfo';
 import Favourites from '../Favourites';
 
+// Add TypeScript declaration for global navigation
+declare global {
+  interface Window {
+    navigateTo: (path: string) => void;
+  }
+}
+
 function App({ navigate }: { navigate: (path: string) => void }) {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,6 +47,10 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         if (data.userId) localStorage.setItem("userId", data.userId.toString());
         setIsLoggedIn(true);
         setLoginModalOpen(false);
+        // Only redirect if we're on the CreateAccount page
+        if (window.location.pathname === '/createaccount') {
+          window.location.href = '/';
+        }
       } else {
         alert(data.error || "Login failed. Please check your credentials.");
       }
@@ -58,6 +69,14 @@ function App({ navigate }: { navigate: (path: string) => void }) {
     navigate('/');
   };
 
+  // Add global navigation function
+  const globalNavigate = (path: string) => {
+    navigate(path);
+  };
+
+  // Make navigation available globally
+  window.navigateTo = globalNavigate;
+
   return (
     <div style={{ 
       backgroundColor: "#fcfaf8",
@@ -75,7 +94,7 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         onSubmit={handleLogin}
       />
       <Routes>
-        <Route path="/createaccount" element={<CreateAccount />} />
+        <Route path="/createaccount" element={<CreateAccount navigate={navigate} />} />
         <Route path="/postListing" element={<PostListing />} />
         <Route path="/listing/:id" element={<ListingPage />} />
         <Route path="/inbox" element={<Inbox />} />

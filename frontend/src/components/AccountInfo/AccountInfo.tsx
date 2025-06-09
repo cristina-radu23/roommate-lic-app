@@ -11,6 +11,7 @@ interface UserInfo {
   bio?: string;
   dateOfBirth: string;
   gender: string;
+  occupation?: string;
 }
 
 const AccountInfo: React.FC = () => {
@@ -33,6 +34,10 @@ const AccountInfo: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
   const navigate = useNavigate();
   const { userId } = useParams();
   const location = useLocation();
@@ -80,8 +85,13 @@ const AccountInfo: React.FC = () => {
         
         const data = await response.json();
         console.log('Fetched user data:', data);
-        setUser(data);
-        setEditFields(data);
+        // Ensure gender has a default value if not set
+        const userData = {
+          ...data,
+          gender: data.gender || 'not specified'
+        };
+        setUser(userData);
+        setEditFields(userData);
         setIsDirty(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching user info');
@@ -145,10 +155,11 @@ const AccountInfo: React.FC = () => {
     if (!editFields) return;
     setSaving(true);
     setError(null);
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/');
+        setError('Not authenticated');
         return;
       }
       const response = await fetch('http://localhost:5000/api/users/me', {
@@ -162,8 +173,12 @@ const AccountInfo: React.FC = () => {
           userLastName: editFields.userLastName,
           phoneNumber: editFields.phoneNumber,
           bio: editFields.bio,
+          gender: editFields.gender,
+          dateOfBirth: editFields.dateOfBirth,
+          occupation: editFields.occupation
         }),
       });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error || 'Failed to update profile');
@@ -200,15 +215,55 @@ const AccountInfo: React.FC = () => {
         throw new Error(data.error || 'Failed to delete account');
       }
 
+      // Clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      
+      // Dispatch logout event to update UI state
+      window.dispatchEvent(new CustomEvent('user-logout'));
+      
+      // Close the modal
+      setShowDeleteModal(false);
+      
+      // Redirect to home page
+      navigate('/', { replace: true });
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    setIsDeactivating(true);
+    setDeactivateError(null);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/');
+        return;
+      }
+      const response = await fetch('http://localhost:5000/api/users/me/deactivate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to deactivate account');
+      }
+
       // Clear local storage and redirect to home
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
       window.dispatchEvent(new CustomEvent('user-logout'));
       navigate('/');
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+      setDeactivateError(err instanceof Error ? err.message : 'Failed to deactivate account');
     } finally {
-      setIsDeleting(false);
+      setIsDeactivating(false);
     }
   };
 
@@ -313,7 +368,7 @@ const AccountInfo: React.FC = () => {
           {/* Main content area */}
           <div style={{ flex: 1 }}>
             {selectedMenu === 'profile' && (
-              <form onSubmit={e => { e.preventDefault(); handleSave(); }}>
+              <form onSubmit={handleSave}>
                 <h4 className="mb-4">Profile</h4>
                 <div className="mb-3">
                   <label className="form-label">About me</label>
@@ -348,19 +403,22 @@ const AccountInfo: React.FC = () => {
                   <input
                     type="date"
                     className="form-control"
-                    value={editFields.dateOfBirth}
-                    onChange={e => handleFieldChange('dateOfBirth', e.target.value)}
-                    disabled={isViewingOtherProfile}
+                    value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
+                    disabled={true}
                   />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Gender</label>
-                  <input
+                  <select
                     className="form-control"
-                    value={editFields.gender}
-                    onChange={e => handleFieldChange('gender', e.target.value)}
-                    disabled={isViewingOtherProfile}
-                  />
+                    name="gender"
+                    value={editFields.gender || "not specified"}
+                    disabled={true}
+                  >
+                    <option value="not specified">Select your gender</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                  </select>
                 </div>
                 {!isViewingOtherProfile && (
                   <>
@@ -379,22 +437,30 @@ const AccountInfo: React.FC = () => {
                     </div>
                   </>
                 )}
-                {!isViewingOtherProfile && (
+                <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "40px" }}>
                   <button
                     type="submit"
-                    className="btn btn-primary mt-3"
+                    className="btn"
+                    style={{ 
+                      backgroundColor: "#a1cca7", 
+                      borderColor: "#a1cca7", 
+                      color: "white",
+                      width: "25%",
+                      borderRadius: "8px",
+                      padding: "0.375rem 1rem"
+                    }}
                     disabled={!isDirty || saving}
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
-                )}
+                </div>
               </form>
             )}
             {selectedMenu === 'settings' && !isViewingOtherProfile && (
               <div>
                 <h4 className="mb-4">Settings</h4>
-                <div className="mb-4" style={{ maxWidth: 400 }}>
-                  <h5 className="mb-3">Change Password</h5>
+                <div className="mb-4">
+                  <h5>Change Password</h5>
                   <form onSubmit={async e => {
                     e.preventDefault();
                     setPasswordError(null);
@@ -439,51 +505,74 @@ const AccountInfo: React.FC = () => {
                     }
                   }}>
                     <div className="mb-3">
-                      <label className="form-label">Current password</label>
+                      <label className="form-label">Current Password</label>
                       <input
                         type="password"
                         className="form-control"
                         value={passwordFields.currentPassword}
-                        onChange={e => setPasswordFields(f => ({ ...f, currentPassword: e.target.value }))}
-                        autoComplete="current-password"
+                        onChange={e => setPasswordFields(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        required
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">New password</label>
+                      <label className="form-label">New Password</label>
                       <input
                         type="password"
                         className="form-control"
                         value={passwordFields.newPassword}
-                        onChange={e => setPasswordFields(f => ({ ...f, newPassword: e.target.value }))}
-                        autoComplete="new-password"
+                        onChange={e => setPasswordFields(prev => ({ ...prev, newPassword: e.target.value }))}
+                        required
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Confirm new password</label>
+                      <label className="form-label">Confirm New Password</label>
                       <input
                         type="password"
                         className="form-control"
                         value={passwordFields.confirmNewPassword}
-                        onChange={e => setPasswordFields(f => ({ ...f, confirmNewPassword: e.target.value }))}
-                        autoComplete="new-password"
+                        onChange={e => setPasswordFields(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
+                        required
                       />
                     </div>
-                    {passwordError && <div className="text-danger mb-2">{passwordError}</div>}
-                    {passwordSuccess && <div className="text-success mb-2">{passwordSuccess}</div>}
+                    {passwordError && <div className="text-danger mb-3">{passwordError}</div>}
+                    {passwordSuccess && <div className="text-success mb-3">{passwordSuccess}</div>}
                     <button
                       type="submit"
-                      className="btn btn-primary"
-                      disabled={passwordSaving || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword || passwordFields.newPassword !== passwordFields.confirmNewPassword}
+                      className="btn"
+                      style={{ 
+                        backgroundColor: "#a1cca7", 
+                        borderColor: "#a1cca7", 
+                        color: "white",
+                        width: "25%",
+                        borderRadius: "8px",
+                        padding: "0.375rem 1rem"
+                      }}
+                      disabled={passwordSaving || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword}
                     >
                       {passwordSaving ? 'Saving...' : 'Change Password'}
                     </button>
                   </form>
                 </div>
-                <div className="text-muted">Other settings coming soon...</div>
-                
-                {/* Delete Account Section */}
-                <div className="mt-5" style={{ maxWidth: 400 }}>
-                  <h5 className="mb-3 text-danger">Delete Account</h5>
+
+                <hr className="my-4" />
+
+                <div className="mb-4">
+                  <h5>Deactivate Account</h5>
+                  <p className="text-muted mb-3">
+                    Temporarily deactivate your account. You can reactivate it later by logging in.
+                  </p>
+                  <button
+                    className="btn btn-outline-warning"
+                    onClick={() => setShowDeactivateModal(true)}
+                  >
+                    Deactivate Account
+                  </button>
+                </div>
+
+                <hr className="my-4" />
+
+                <div>
+                  <h5>Delete Account</h5>
                   <p className="text-muted mb-3">
                     Once you delete your account, there is no going back. Please be certain.
                   </p>
@@ -520,6 +609,29 @@ const AccountInfo: React.FC = () => {
             disabled={isDeleting}
           >
             {isDeleting ? 'Deleting...' : 'Delete Account'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Deactivate Account Modal */}
+      <Modal show={showDeactivateModal} onHide={() => setShowDeactivateModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Deactivate Account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to deactivate your account? You can reactivate it later by logging in.</p>
+          {deactivateError && <div className="text-danger mb-3">{deactivateError}</div>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeactivateModal(false)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="warning" 
+            onClick={handleDeactivateAccount}
+            disabled={isDeactivating}
+          >
+            {isDeactivating ? 'Deactivating...' : 'Deactivate Account'}
           </Button>
         </Modal.Footer>
       </Modal>

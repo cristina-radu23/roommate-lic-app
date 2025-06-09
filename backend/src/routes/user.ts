@@ -51,14 +51,14 @@ router.put("/me", authenticateToken, async (req: AuthenticatedRequest, res: Resp
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const { userFirstName, userLastName, phoneNumber, bio } = req.body;
+    const { userFirstName, userLastName, phoneNumber, bio, gender, dateOfBirth, occupation } = req.body;
     const [updated] = await User.update(
-      { userFirstName, userLastName, phoneNumber, bio },
+      { userFirstName, userLastName, phoneNumber, bio, gender, dateOfBirth, occupation },
       { where: { userId } }
     );
     if (updated) {
       const updatedUser = await User.findByPk(userId, {
-        attributes: ["userFirstName", "userLastName", "email", "phoneNumber", "profilePicture", "bio"]
+        attributes: ["userFirstName", "userLastName", "email", "phoneNumber", "profilePicture", "bio", "gender", "dateOfBirth", "occupation"]
       });
       res.json(updatedUser);
     } else {
