@@ -531,6 +531,20 @@ const ListingPage: React.FC = () => {
                       alt="Profile"
                       style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd', cursor: 'pointer' }}
                       onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
+                      onError={(e) => {
+                        // Replace the img element with the default icon
+                        const target = e.target as HTMLElement;
+                        const parent = target.parentNode;
+                        if (parent) {
+                          const icon = document.createElement('div');
+                          icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="56" height="56" fill="#bbb" style="background: #eee; border-radius: 50%; cursor: pointer;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>`;
+                          icon.style.display = 'flex';
+                          icon.style.alignItems = 'center';
+                          icon.style.justifyContent = 'center';
+                          icon.onclick = () => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } });
+                          parent.replaceChild(icon, target);
+                        }
+                      }}
                     />
                   ) : (
                     <FaUserCircle 

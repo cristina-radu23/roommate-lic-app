@@ -142,7 +142,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                       position: 'absolute',
                       top: 16,
                       right: 16,
-                      zIndex: 2,
+                      zIndex: 1,
                       cursor: 'pointer',
                       fontSize: 24,
                       color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
@@ -175,7 +175,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                     position: 'absolute',
                     bottom: 16,
                     right: 16,
-                    zIndex: 2,
+                    zIndex: 1,
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -217,7 +217,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                 {showDeleteButton && isOwnListing && (
                   <button
                     className="btn btn-danger btn-sm"
-                    style={{ position: 'absolute', top: 16, left: 16, zIndex: 2 }}
+                    style={{ position: 'absolute', top: 16, left: 16, zIndex: 1 }}
                     onClick={e => { e.stopPropagation(); handleDelete(listing.listingId!); }}
                     title="Delete listing"
                   >

@@ -4,6 +4,8 @@ import Select from "react-select";
 import { FilterCriteria } from "./HomePage";
 import HomePageFilterPanel from "./HomePageFilterPanel";
 import homeBackground from "../../assets/Home.png";
+import ReactDOM from 'react-dom';
+import { FaFilter } from 'react-icons/fa';
 
 interface SearchBarProps {
   onSearch: (criteria: FilterCriteria) => void;
@@ -90,10 +92,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             padding: "10px 20px",
             width: "90%",
             maxWidth: "900px",
-            zIndex: 9999,
+            zIndex: 1000,
           }}
         >
-          <div style={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 9999 }}>
+          <div style={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 1000 }}>
             <Select
                options={cities}
                value={selectedCity}
@@ -108,11 +110,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                 }),
                 menu: (provided) => ({
                   ...provided,
-                  zIndex: 9999
+                  zIndex: 1000
                 }),
                 menuPortal: (provided) => ({
                   ...provided,
-                  zIndex: 9999
+                  zIndex: 1000
                 })
               }}
               menuPortalTarget={document.body}
@@ -121,8 +123,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           <button
             className={`btn ${hasActiveFilters ? 'btn-primary' : 'btn-outline-secondary'} ms-3`}
             onClick={() => setShowFilters(!showFilters)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            Filters {hasActiveFilters && '✓'}
+            <FaFilter />
+            {hasActiveFilters && <span style={{ fontSize: '12px' }}>✓</span>}
           </button>
           <button
             className="btn ms-2"
@@ -139,14 +143,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           </button>
         </div>
 
-        {showFilters && (
+        {showFilters && ReactDOM.createPortal(
           <>
             {/* Overlay */}
             <div
               className="position-fixed top-0 start-0 w-100 h-100"
               style={{
                 background: "rgba(0,0,0,0.3)",
-                zIndex: 1040,
+                zIndex: 9998,
                 left: 0,
                 top: 0,
               }}
@@ -156,12 +160,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             <div
               className="position-fixed top-50 start-50 translate-middle"
               style={{
-                zIndex: 1050,
+                zIndex: 9999,
                 minWidth: 400,
                 maxWidth: 600,
                 width: "90vw",
                 maxHeight: "90vh",
-                overflowY: "auto"
+                overflowY: "auto",
+                marginTop: "20px",
+                transform: "translate(-50%, -35%)"
               }}
             >
               <HomePageFilterPanel 
@@ -173,7 +179,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                 onClose={() => setShowFilters(false)} 
               />
             </div>
-          </>
+          </>,
+          document.body
         )}
       </div>
 
