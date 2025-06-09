@@ -142,6 +142,11 @@ export const getAllListings = async (req: Request, res: Response) => {
       PropertyAmenity,
       HouseRule,
       Photo,
+      {
+        model: User,
+        where: { isActive: 1 },
+        required: true
+      }
     ];
 
     // Filter by property amenities
@@ -228,6 +233,11 @@ export const getListingsByCity = async (req: Request, res: Response) => {
         PropertyAmenity,
         HouseRule,
         Photo,
+        {
+          model: User,
+          where: { isActive: 1 },
+          required: true
+        }
       ],
     });
 
@@ -267,6 +277,8 @@ export const getListingById = async (req: Request, res: Response) => {
         },
         {
           model: User,
+          where: { isActive: 1 },
+          required: true,
           attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture"],
         },
       ],
