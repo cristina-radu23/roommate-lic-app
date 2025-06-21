@@ -40,13 +40,7 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted }: StepSixProps
         hasBed: formData.listingType === "room" ? formData.hasBed === "yes" : false,
         bedType:
           formData.listingType === "room" && formData.hasBed === "yes"
-            ? formData.bedType === "sofa bed"
-              ? "sofa_bed"
-              : formData.bedType === "single bed"
-              ? "single"
-              : formData.bedType === "double bed"
-              ? "double"
-              : null
+            ? formData.bedType || null
             : null,
 
         title: formData.title,

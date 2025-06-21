@@ -131,7 +131,7 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
               }}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: n.read ? 400 : 600 }}>{n.message}</div>
+                <div style={{ fontWeight: n.read ? 400 : 600, color: '#000' }}>{n.message}</div>
                 <div style={{ fontSize: 12, color: '#888' }}>{new Date(n.createdAt).toLocaleString()}</div>
               </div>
               {!n.read && <span style={{ width: 10, height: 10, background: '#0d6efd', borderRadius: '50%', display: 'inline-block' }} />}

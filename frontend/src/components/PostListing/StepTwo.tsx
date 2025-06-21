@@ -66,44 +66,7 @@ const StepTwo = ({ formData, setFormData, onNext, onBack }: StepTwoProps) => {
             padding: "2rem",
             marginBottom: "2rem"
           }}>
-            <h3 className="mb-4 text-start">Step 2: Basic Information</h3>
-
-            {/* Form content */}
-            <div className="mb-4 text-start">
-              <label className="form-label fw-bold">Title *</label>
-              <input
-                type="text"
-                name="title"
-                className="form-control"
-                value={formData.title || ""}
-                onChange={handleChange}
-                style={{ borderRadius: "8px" }}
-              />
-            </div>
-
-            <div className="mb-4 text-start">
-              <label className="form-label fw-bold">Description *</label>
-              <textarea
-                name="description"
-                className="form-control"
-                value={formData.description || ""}
-                onChange={handleChange}
-                rows={4}
-                style={{ borderRadius: "8px" }}
-              />
-            </div>
-
-            <div className="mb-4 text-start">
-              <label className="form-label fw-bold">Rent (€) *</label>
-              <input
-                type="number"
-                name="rent"
-                className="form-control"
-                value={formData.rent || ""}
-                onChange={handleChange}
-                style={{ borderRadius: "8px" }}
-              />
-            </div>
+            <h3 className="mb-4 text-start">Step 2: Property Information</h3>
 
             {/* Size */}
             <div className="mb-4 text-start">

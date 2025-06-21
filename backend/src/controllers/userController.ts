@@ -19,6 +19,7 @@ import RoomAmenity from "../models/RoomAmenity";
 import PropertyAmenity from "../models/PropertyAmenity";
 import HouseRule from "../models/HouseRule";
 import sequelize from "../config/db";
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export const createAccount = async (req: Request, res: Response): Promise<void>=> {
   try {
@@ -32,6 +33,27 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       occupation,
       password,
     } = req.body;
+
+    // Email format validation (simple regex)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ error: "Invalid email format." });
+      return;
+    }
+
+    // Phone number validation using libphonenumber-js
+    console.log('Original phone number:', phoneNumber);
+    let sanitizedPhone = phoneNumber.replace(/[^+\d]/g, '');
+    if (!sanitizedPhone.startsWith('+')) {
+      sanitizedPhone = '+' + sanitizedPhone;
+    }
+    console.log('Sanitized phone number (with +):', sanitizedPhone);
+    const parsedPhone = parsePhoneNumberFromString(sanitizedPhone);
+    console.log('Parsed phone:', parsedPhone);
+    if (!parsedPhone || !parsedPhone.isValid()) {
+      res.status(400).json({ error: "Invalid phone number format." });
+      return;
+    }
 
     // Check if user already exists with same email
     const existingUserByEmail = await User.findOne({ where: { email } });

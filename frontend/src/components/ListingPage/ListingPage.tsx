@@ -68,8 +68,15 @@ const ListingPage: React.FC = () => {
       try {
         console.log(`[ListingPage] Fetching listing with id: ${id}`);
         const res = await fetch(`http://localhost:5000/api/listings/${id}`);
-        const data = await res.json();
-        console.log('[ListingPage] Received data:', data);
+        const text = await res.text();
+        console.log('[ListingPage] Raw response:', text);
+        console.log('[ListingPage] HTTP status:', res.status);
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = text;
+        }
         setListing(data);
       } catch (err) {
         console.error('[ListingPage] Error fetching listing:', err);
