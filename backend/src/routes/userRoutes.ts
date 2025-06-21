@@ -1,14 +1,14 @@
 import express from 'express';
-import { createAccount, login, getUserInfo, updateUserInfo, changePassword, deleteUserAccount } from '../controllers/userController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { createAccount, loginUser, getCurrentUser, deleteUserAccount, verifyEmail, resendVerificationEmail } from '../controllers/userController';
+import authenticateToken from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 router.post('/register', createAccount);
-router.post('/login', login);
-router.get('/me', authenticateToken, getUserInfo);
-router.put('/me', authenticateToken, updateUserInfo);
-router.post('/me/change-password', authenticateToken, changePassword);
+router.post('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerificationEmail);
+router.post('/login', loginUser);
+router.get('/me', authenticateToken, getCurrentUser);
 router.delete('/me', authenticateToken, deleteUserAccount);
 
 export default router; 
