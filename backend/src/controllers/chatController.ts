@@ -65,7 +65,12 @@ export const createChatRoom = async (req: Request, res: Response) => {
     const chatRoom = await ChatRoom.create({ listingId, isMatchmaking: !!isMatchmaking });
     await Promise.all(
       userIds.map((userId: number) =>
-        ChatRoomUser.create({ chatRoomId: chatRoom.chatRoomId, userId, hasConsented: !isMatchmaking })
+        ChatRoomUser.create({ 
+          chatRoomId: chatRoom.chatRoomId, 
+          userId, 
+          hasConsented: !isMatchmaking,
+          isChatVisible: true 
+        })
       )
     );
     res.status(201).json({ chatRoomId: chatRoom.chatRoomId });
@@ -176,6 +181,7 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
           ...chatRoomData,
           lastMessage: messageData,
           unreadCount,
+          isChatVisible: chatRoomUser.isChatVisible,
         };
       }
 
@@ -183,6 +189,7 @@ export const getUserChatRooms = async (req: Request, res: Response) => {
         ...chatRoomData,
         lastMessage: null,
         unreadCount,
+        isChatVisible: chatRoomUser.isChatVisible,
       };
     }));
 

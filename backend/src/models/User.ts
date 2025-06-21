@@ -14,9 +14,12 @@ interface UserAttributes {
   profilePicture?: string;
   bio?: string;
   isActive: boolean;
+  isEmailVerified: boolean;
+  emailVerificationCode?: string;
+  emailVerificationExpires?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "userId"> {}
+interface UserCreationAttributes extends Optional<UserAttributes, "userId" | "isEmailVerified"> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public userId!: number;
@@ -31,6 +34,9 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public profilePicture?: string;
   public bio?: string;
   public isActive!: boolean;
+  public isEmailVerified!: boolean;
+  public emailVerificationCode?: string;
+  public emailVerificationExpires?: Date;
 }
 
 User.init(
@@ -61,6 +67,19 @@ User.init(
       allowNull: false,
       defaultValue: true 
     },
+    isEmailVerified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    emailVerificationCode: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    emailVerificationExpires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
   },
   {
     sequelize,

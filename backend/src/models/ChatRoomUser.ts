@@ -6,6 +6,7 @@ interface ChatRoomUserAttributes {
   chatRoomId: number;
   userId: number;
   hasConsented: boolean;
+  isChatVisible: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,6 +18,7 @@ class ChatRoomUser extends Model<ChatRoomUserAttributes, ChatRoomUserCreationAtt
   public chatRoomId!: number;
   public userId!: number;
   public hasConsented!: boolean;
+  public isChatVisible!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -39,6 +41,10 @@ ChatRoomUser.init(
     hasConsented: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    isChatVisible: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {

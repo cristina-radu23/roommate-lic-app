@@ -20,6 +20,7 @@ import PropertyAmenity from "../models/PropertyAmenity";
 import HouseRule from "../models/HouseRule";
 import sequelize from "../config/db";
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { sendVerificationEmail, generateVerificationCode } from "../services/emailService";
 
 export const createAccount = async (req: Request, res: Response): Promise<void>=> {
   try {
@@ -70,6 +71,8 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const newUser = await User.create({
       userFirstName,
@@ -80,16 +83,145 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       gender,
       occupation,
       passwordHash,
-      isActive: true
+      isActive: true,
+      isEmailVerified: false,
+      emailVerificationCode: verificationCode,
+      emailVerificationExpires: verificationExpires
     });
 
-    res.status(201).json({ message: "Account created successfully", userId: newUser.userId });
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationCode, userFirstName);
+      res.status(201).json({ 
+        message: "Account created successfully. Please check your email for verification code.", 
+        userId: newUser.userId,
+        requiresVerification: true
+      });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Still create the account but inform about email issue
+      res.status(201).json({ 
+        message: "Account created successfully but verification email could not be sent. Please contact support.", 
+        userId: newUser.userId,
+        requiresVerification: true
+      });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Account creation failed." });
   }
 };
 
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('=== Email Verification Request ===');
+    console.log('Request body:', req.body);
+    
+    const { email, verificationCode } = req.body;
+
+    if (!email || !verificationCode) {
+      console.log('Missing email or verification code');
+      res.status(400).json({ error: "Email and verification code are required." });
+      return;
+    }
+
+    console.log('Looking for user with email:', email);
+    const user = await User.findOne({ where: { email } });
+    
+    if (!user) {
+      console.log('User not found');
+      res.status(404).json({ error: "User not found." });
+      return;
+    }
+
+    console.log('User found:', {
+      userId: user.userId,
+      email: user.email,
+      isEmailVerified: user.isEmailVerified,
+      storedCode: user.emailVerificationCode,
+      expires: user.emailVerificationExpires
+    });
+
+    if (user.isEmailVerified) {
+      console.log('Email already verified');
+      res.status(400).json({ error: "Email is already verified." });
+      return;
+    }
+
+    console.log('Comparing codes:', {
+      provided: verificationCode,
+      stored: user.emailVerificationCode,
+      match: user.emailVerificationCode === verificationCode
+    });
+
+    if (user.emailVerificationCode !== verificationCode) {
+      console.log('Invalid verification code');
+      res.status(400).json({ error: "Invalid verification code." });
+      return;
+    }
+
+    if (user.emailVerificationExpires && new Date() > user.emailVerificationExpires) {
+      console.log('Verification code expired');
+      res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+      return;
+    }
+
+    console.log('Updating user to mark email as verified');
+    // Mark email as verified and clear verification data
+    await user.update({
+      isEmailVerified: true,
+      emailVerificationCode: undefined,
+      emailVerificationExpires: undefined
+    });
+
+    console.log('Email verification successful');
+    res.json({ message: "Email verified successfully." });
+  } catch (err) {
+    console.error('Error in verifyEmail:', err);
+    res.status(500).json({ error: "Email verification failed." });
+  }
+};
+
+export const resendVerificationEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: "Email is required." });
+      return;
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      res.status(404).json({ error: "User not found." });
+      return;
+    }
+
+    if (user.isEmailVerified) {
+      res.status(400).json({ error: "Email is already verified." });
+      return;
+    }
+
+    const verificationCode = generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await user.update({
+      emailVerificationCode: verificationCode,
+      emailVerificationExpires: verificationExpires
+    });
+
+    try {
+      await sendVerificationEmail(email, verificationCode, user.userFirstName);
+      res.json({ message: "Verification email sent successfully." });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      res.status(500).json({ error: "Failed to send verification email." });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to resend verification email." });
+  }
+};
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
@@ -120,10 +252,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   res.json({ token, userId: user.userId });
 };
 
-export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
+export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const user = await User.findByPk(userId, {
       attributes: [
@@ -138,7 +273,10 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) =
         "occupation"
       ]
     });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
 
     res.json(user);
   } catch (error) {

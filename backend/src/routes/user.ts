@@ -1,5 +1,5 @@
 import express, { Response, Request } from "express";
-import { createAccount, loginUser, getCurrentUser, getUserById, deactivateUserAccount } from "../controllers/userController";
+import { createAccount, loginUser, getCurrentUser, getUserById, deactivateUserAccount, verifyEmail, resendVerificationEmail } from "../controllers/userController";
 import authenticateToken, { AuthenticatedRequest } from "../middleware/authMiddleware";
 import upload from '../middleware/upload';
 import User from '../models/User';
@@ -10,6 +10,8 @@ import fs from 'fs/promises';
 const router = express.Router();
 
 router.post("/register", createAccount);
+router.post("/verify-email", verifyEmail);
+router.post("/resend-verification", resendVerificationEmail);
 router.post("/login", loginUser);
 router.get("/me", authenticateToken, (req, res) => { getCurrentUser(req as AuthenticatedRequest, res); });
 router.post("/me/deactivate", authenticateToken, (req, res) => { deactivateUserAccount(req as AuthenticatedRequest, res); });
