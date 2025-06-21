@@ -66,29 +66,102 @@ const StepThree = ({ formData, setFormData, onNext, onBack }: StepThreeProps) =>
               />
             </div>
 
+            {/* Room Amenities */}
             <div className="mb-4 text-start">
-              <label className="form-label fw-bold">Number of Female Flatmates</label>
-              <input
-                type="number"
-                name="femaleFlatmates"
-                className="form-control"
-                value={formData.femaleFlatmates || ""}
-                onChange={handleChange}
-                style={{ borderRadius: "8px" }}
-              />
+              <label className="form-label fw-bold">Room Amenities</label>
+              <div className="d-flex flex-wrap gap-2">
+                {roomAmenitiesList.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`btn btn-sm ${
+                      formData.roomAmenities?.includes(item)
+                        ? "btn-primary"
+                        : "btn-outline-primary"
+                    }`}
+                    onClick={() => toggleAmenity(item)}
+                  >
+                    {formData.roomAmenities?.includes(item) ? `-${item}` : `+${item}`}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* Has Bed */}
             <div className="mb-4 text-start">
-              <label className="form-label fw-bold">Number of Male Flatmates</label>
-              <input
-                type="number"
-                name="maleFlatmates"
-                className="form-control"
-                value={formData.maleFlatmates || ""}
-                onChange={handleChange}
-                style={{ borderRadius: "8px" }}
-              />
+              <label className="form-label fw-bold">Does the room have a bed?</label>
+              <div>
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="hasBed"
+                    id="hasBedYes"
+                    value="yes"
+                    checked={formData.hasBed === "yes"}
+                    onChange={handleChange}
+                  />
+                  <label className="form-check-label" htmlFor="hasBedYes">Yes</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="hasBed"
+                    id="hasBedNo"
+                    value="no"
+                    checked={formData.hasBed === "no"}
+                    onChange={handleChange}
+                  />
+                  <label className="form-check-label" htmlFor="hasBedNo">No</label>
+                </div>
+              </div>
             </div>
+
+            {/* Bed Type (if hasBed is yes) */}
+            {formData.hasBed === "yes" && (
+              <div className="mb-4 text-start">
+                <label className="form-label fw-bold">Bed Type</label>
+                <div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="bedType"
+                      id="bedTypeSingle"
+                      value="single"
+                      checked={formData.bedType === "single"}
+                      onChange={handleChange}
+                    />
+                    <label className="form-check-label" htmlFor="bedTypeSingle">Single Bed</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="bedType"
+                      id="bedTypeDouble"
+                      value="double"
+                      checked={formData.bedType === "double"}
+                      onChange={handleChange}
+                    />
+                    <label className="form-check-label" htmlFor="bedTypeDouble">Double Bed</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="bedType"
+                      id="bedTypeSofa"
+                      value="sofa_bed"
+                      checked={formData.bedType === "sofa_bed"}
+                      onChange={handleChange}
+                    />
+                    <label className="form-check-label" htmlFor="bedTypeSofa">Sofa Bed</label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Error */}
             {error && <div className="text-danger mb-2">{error}</div>}

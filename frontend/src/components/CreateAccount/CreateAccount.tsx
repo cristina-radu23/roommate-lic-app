@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
   const [formData, setFormData] = useState({
@@ -81,6 +83,13 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
   };
 
   if (showSuccess) {
+    // Redirect to homepage and open login modal after a short delay
+    setTimeout(() => {
+      navigate("/");
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-login-modal'));
+      }, 100); // slight delay to ensure navigation
+    }, 1200); // show success for 1.2s
     return (
       <div style={{ 
         height: "100vh", 
@@ -100,36 +109,6 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
         }}>
           <h2 style={{ color: "#097C87", marginBottom: "20px" }}>Account created successfully!</h2>
           <p style={{ marginBottom: "30px" }}>Your account has been created. You can now log in to your account.</p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-            <button 
-              onClick={() => navigate("/")} 
-              className="btn" 
-              style={{ 
-                backgroundColor: "white", 
-                borderColor: "#097C87", 
-                color: "#097C87",
-                width: "40%",
-                borderRadius: "8px",
-                whiteSpace: "nowrap"
-              }}
-            >
-              Go to Homepage
-            </button>
-            <button 
-              onClick={() => navigate("/login")} 
-              className="btn" 
-              style={{ 
-                backgroundColor: "#a1cca7", 
-                borderColor: "#a1cca7", 
-                color: "white",
-                width: "40%",
-                borderRadius: "8px",
-                whiteSpace: "nowrap"
-              }}
-            >
-              Login
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -266,14 +245,20 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
                 </div>
                 <div className="col-8 mb-3 d-flex align-items-center">
                   <label className="col-4 me-2">Phone number</label>
-                  <input
-                    type="text"
-                    className="col-4 form-control"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    required
-                  />
+                  <div className="col-4">
+                    <PhoneInput 
+                      country={'ro'}
+                      value={formData.phoneNumber}
+                      onChange={phone => setFormData(prev => ({ ...prev, phoneNumber: phone }))}
+                      inputClass="form-control"
+                      containerClass="w-100"
+                      inputProps={{
+                        name: 'phoneNumber',
+                        required: true,
+                        autoFocus: false
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "20px" }}>
                   <button type="submit" className="btn" style={{ 
