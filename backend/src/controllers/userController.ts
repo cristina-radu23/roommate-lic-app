@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
+import PendingRegistration from "../models/PendingRegistration";
 import jwt from "jsonwebtoken";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Listing from "../models/Listing";
@@ -70,11 +71,19 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       return;
     }
 
+    // Check if there's already a pending registration for this email
+    const existingPendingRegistration = await PendingRegistration.findOne({ where: { email } });
+    if (existingPendingRegistration) {
+      // Delete the old pending registration
+      await existingPendingRegistration.destroy();
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationCode = generateVerificationCode();
     const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    const newUser = await User.create({
+    // Store pending registration instead of creating user
+    const pendingRegistration = await PendingRegistration.create({
       userFirstName,
       userLastName,
       email,
@@ -83,8 +92,6 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
       gender,
       occupation,
       passwordHash,
-      isActive: true,
-      isEmailVerified: false,
       emailVerificationCode: verificationCode,
       emailVerificationExpires: verificationExpires
     });
@@ -93,17 +100,16 @@ export const createAccount = async (req: Request, res: Response): Promise<void>=
     try {
       await sendVerificationEmail(email, verificationCode, userFirstName);
       res.status(201).json({ 
-        message: "Account created successfully. Please check your email for verification code.", 
-        userId: newUser.userId,
+        message: "Registration initiated. Please check your email for verification code.", 
+        pendingId: pendingRegistration.id,
         requiresVerification: true
       });
     } catch (emailError) {
       console.error('Error sending verification email:', emailError);
-      // Still create the account but inform about email issue
-      res.status(201).json({ 
-        message: "Account created successfully but verification email could not be sent. Please contact support.", 
-        userId: newUser.userId,
-        requiresVerification: true
+      // Delete the pending registration if email fails
+      await pendingRegistration.destroy();
+      res.status(500).json({ 
+        error: "Failed to send verification email. Please try again." 
       });
     }
   } catch (err) {
@@ -125,57 +131,67 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    console.log('Looking for user with email:', email);
-    const user = await User.findOne({ where: { email } });
+    console.log('Looking for pending registration with email:', email);
+    const pendingRegistration = await PendingRegistration.findOne({ where: { email } });
     
-    if (!user) {
-      console.log('User not found');
-      res.status(404).json({ error: "User not found." });
+    if (!pendingRegistration) {
+      console.log('Pending registration not found');
+      res.status(404).json({ error: "No pending registration found for this email." });
       return;
     }
 
-    console.log('User found:', {
-      userId: user.userId,
-      email: user.email,
-      isEmailVerified: user.isEmailVerified,
-      storedCode: user.emailVerificationCode,
-      expires: user.emailVerificationExpires
+    console.log('Pending registration found:', {
+      id: pendingRegistration.id,
+      email: pendingRegistration.email,
+      storedCode: pendingRegistration.emailVerificationCode,
+      expires: pendingRegistration.emailVerificationExpires
     });
-
-    if (user.isEmailVerified) {
-      console.log('Email already verified');
-      res.status(400).json({ error: "Email is already verified." });
-      return;
-    }
 
     console.log('Comparing codes:', {
       provided: verificationCode,
-      stored: user.emailVerificationCode,
-      match: user.emailVerificationCode === verificationCode
+      stored: pendingRegistration.emailVerificationCode,
+      match: pendingRegistration.emailVerificationCode === verificationCode
     });
 
-    if (user.emailVerificationCode !== verificationCode) {
+    if (pendingRegistration.emailVerificationCode !== verificationCode) {
       console.log('Invalid verification code');
       res.status(400).json({ error: "Invalid verification code." });
       return;
     }
 
-    if (user.emailVerificationExpires && new Date() > user.emailVerificationExpires) {
+    if (pendingRegistration.emailVerificationExpires && new Date() > pendingRegistration.emailVerificationExpires) {
       console.log('Verification code expired');
-      res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+      // Delete expired pending registration
+      await pendingRegistration.destroy();
+      res.status(400).json({ error: "Verification code has expired. Please register again." });
       return;
     }
 
-    console.log('Updating user to mark email as verified');
-    // Mark email as verified and clear verification data
-    await user.update({
+    console.log('Creating actual user account');
+    // Create the actual user account
+    const newUser = await User.create({
+      userFirstName: pendingRegistration.userFirstName,
+      userLastName: pendingRegistration.userLastName,
+      email: pendingRegistration.email,
+      phoneNumber: pendingRegistration.phoneNumber,
+      dateOfBirth: new Date(pendingRegistration.dateOfBirth),
+      gender: pendingRegistration.gender as "male" | "female" | "not specified",
+      occupation: pendingRegistration.occupation as "student" | "employeed" | "not specified",
+      passwordHash: pendingRegistration.passwordHash,
+      isActive: true,
       isEmailVerified: true,
       emailVerificationCode: undefined,
       emailVerificationExpires: undefined
     });
 
-    console.log('Email verification successful');
-    res.json({ message: "Email verified successfully." });
+    // Delete the pending registration
+    await pendingRegistration.destroy();
+
+    console.log('Email verification successful, user created:', newUser.userId);
+    res.json({ 
+      message: "Email verified successfully. Your account has been created.",
+      userId: newUser.userId
+    });
   } catch (err) {
     console.error('Error in verifyEmail:', err);
     res.status(500).json({ error: "Email verification failed." });
@@ -191,27 +207,22 @@ export const resendVerificationEmail = async (req: Request, res: Response): Prom
       return;
     }
 
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      res.status(404).json({ error: "User not found." });
-      return;
-    }
-
-    if (user.isEmailVerified) {
-      res.status(400).json({ error: "Email is already verified." });
+    const pendingRegistration = await PendingRegistration.findOne({ where: { email } });
+    if (!pendingRegistration) {
+      res.status(404).json({ error: "No pending registration found for this email." });
       return;
     }
 
     const verificationCode = generateVerificationCode();
     const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await user.update({
+    await pendingRegistration.update({
       emailVerificationCode: verificationCode,
       emailVerificationExpires: verificationExpires
     });
 
     try {
-      await sendVerificationEmail(email, verificationCode, user.userFirstName);
+      await sendVerificationEmail(email, verificationCode, pendingRegistration.userFirstName);
       res.json({ message: "Verification email sent successfully." });
     } catch (emailError) {
       console.error('Error sending verification email:', emailError);

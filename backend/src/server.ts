@@ -2,8 +2,10 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import sequelize from "./config/db";
+import { Op } from "sequelize";
 import "./models";
 import User from "./models/User";
+import PendingRegistration from "./models/PendingRegistration";
 
 // Load all models and associations
 
@@ -172,6 +174,24 @@ const seedCounties = async () => {
   console.log("✅ Counties seeded");
 };
 
+// Cleanup expired pending registrations
+const cleanupExpiredRegistrations = async () => {
+  try {
+    const expiredCount = await PendingRegistration.destroy({
+      where: {
+        emailVerificationExpires: {
+          [Op.lt]: new Date()
+        }
+      }
+    });
+    if (expiredCount > 0) {
+      console.log(`🧹 Cleaned up ${expiredCount} expired pending registrations`);
+    }
+  } catch (error) {
+    console.error('Error cleaning up expired registrations:', error);
+  }
+};
+
 // ✅ Initialize DB and start server
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {
@@ -183,6 +203,7 @@ const startServer = async () => {
     await seedCounties(); // Insert counties if not already
     await seedCities();
     await seedAmenities();
+    await cleanupExpiredRegistrations(); // Clean up expired registrations
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
