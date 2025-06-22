@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import L from 'leaflet';
 import SearchBar from "./SearchBar";
 import ListingsGrid from "./ListingsGrid";
+import MapComponent, { CityCoordinates } from "../Map/MapComponent";
 import { PostListingFormData } from "../PostListing/types";
-import Select from "react-select";
 
 export interface FilterCriteria {
   city?: string;
@@ -10,6 +11,10 @@ export interface FilterCriteria {
   maxRent?: number;
   rules?: string[];
   amenities?: string[];
+  north?: number;
+  south?: number;
+  east?: number;
+  west?: number;
 }
 
 function objectToQueryString(obj: Record<string, any>) {
@@ -25,73 +30,91 @@ function objectToQueryString(obj: Record<string, any>) {
 }
 
 const HomePage: React.FC = () => {
-  const [filters, setFilters] = useState<FilterCriteria>({});
   const [listings, setListings] = useState<PostListingFormData[]>([]);
-  const [cityOptions, setCityOptions] = useState<{ value: string; label: string }[]>([]);
-  const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
+  const [filters, setFilters] = useState<FilterCriteria>({});
+  const [mapCenter, setMapCenter] = useState<CityCoordinates | undefined>(undefined);
+  const [mapBounds, setMapBounds] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchListings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const query = objectToQueryString(filters);
+      // Combine filters and mapBounds for the query
+      const queryParams = { ...filters };
+      if (mapBounds) {
+        Object.assign(queryParams, mapBounds);
+      }
+      const query = objectToQueryString(queryParams);
       const url = `http://localhost:5000/api/listings${query}`;
-      console.log("[Frontend] Fetching listings with:", url);
       const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch listings');
       const data: PostListingFormData[] = await res.json();
       setListings(data);
-    } catch (err) {
-      console.error("Error fetching listings:", err);
+    } catch (err: any) {
+      setError(err.message);
+      setListings([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, mapBounds]);
 
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
-  // Add event listener for reset-filters
-  useEffect(() => {
-    const handleResetFilters = () => {
-      setFilters({});
+  const applyFilters = (newFilters: FilterCriteria, coordinates?: CityCoordinates) => {
+    setFilters(newFilters);
+    if (coordinates) {
+      setMapCenter(coordinates);
+    }
+    setMapBounds(null); // Reset map bounds when applying new filters
+  };
+  
+  const handleMapChange = (bounds: L.LatLngBounds) => {
+    const newBoundsFilter = {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
     };
-    window.addEventListener('reset-filters', handleResetFilters);
-    return () => window.removeEventListener('reset-filters', handleResetFilters);
-  }, []);
-
-  const applyFilters = (criteria: FilterCriteria) => {
-    setFilters(criteria);
+    setMapBounds(newBoundsFilter);
   };
 
-  const handleCityChange = (selectedOption: any) => {
-    setSelectedCity(selectedOption?.value);
-  };
-
-  const handleSearch = () => {
-    // Implement search functionality
-  };
+  const mapListings = listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number');
 
   return (
     <div style={{ 
-      backgroundColor: "#f8f9fa", 
-      height: "100%",
-      width: "100%",
-      position: "fixed",
-      top: 0,
-      left: 0
+      display: "flex",
+      flexDirection: "column",
+      height: "calc(100vh + 100px)",
+      marginTop: "56px",
     }}>
-      <div style={{ 
-        height: "100%",
-        overflowY: "auto"
-      }}>
-        <div className="container-fluid p-0" style={{ width: "100%" }}>
-          <div style={{ width: "100%", background: "#f0d4f3", padding: 0, margin: 0, marginTop: "56px", paddingTop: 0 }}>
-            <SearchBar onSearch={applyFilters} />
-          </div>
-          {listings.length === 0 ? (
-            <div style={{ minHeight: "500px", width: "100%", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <p className="text-muted text-center mt-5">No listings found.</p>
+      <SearchBar onSearch={applyFilters} />
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* Left side: Listings */}
+        <div style={{ flex: "2 1 0", overflowY: "auto", padding: "1rem" }}>
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p className="text-danger">Error: {error}</p>
+          ) : listings.length === 0 ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <p className="text-muted text-center">No listings found.</p>
             </div>
           ) : (
             <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
           )}
+        </div>
+
+        {/* Right side: Map */}
+        <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
+          <MapComponent 
+            listings={mapListings as any} 
+            onBoundsChange={handleMapChange}
+            center={mapCenter}
+          />
         </div>
       </div>
     </div>

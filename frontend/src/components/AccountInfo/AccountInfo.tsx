@@ -449,12 +449,12 @@ const AccountInfo: React.FC = () => {
                       disabled
                     />
                   ) : (
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
                       onChange={e => handleFieldChange('dateOfBirth', e.target.value)}
-                    />
+                  />
                   )}
                 </div>
                 <div className="mb-3">

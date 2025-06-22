@@ -111,7 +111,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
   }
 
   return (
-    <div className="container mt-5 container-fluid" style={{ width:"2000px", marginBottom:"70px"}}>
+    <div className="container-fluid">
       <div className="row g-4">
         {listings.map((listing, index) => {
           // Try to get the first photo from the Photo table (listing.Photos)
@@ -127,7 +127,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
           }
           const isOwnListing = (listing as any).user?.userId === userId || (listing as any).userId === userId;
           return (
-            <div key={index} className="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div key={index} className="col-12 col-md-6 col-lg-4">
               <div className="card h-100 shadow-sm" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
                 <img
                   src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}

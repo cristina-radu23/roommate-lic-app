@@ -37,6 +37,8 @@ interface ListingAttributes {
   description: string;
 
   views?: number;
+  latitude?: number | null;
+  longitude?: number | null;
 
   createdAt?: Date;
   updatedAt?: Date;
@@ -84,6 +86,8 @@ class Listing extends Model<ListingAttributes, ListingCreationAttributes> implem
   public description!: string;
 
   public views?: number;
+  public latitude?: number | null;
+  public longitude?: number | null;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -181,6 +185,14 @@ Listing.init(
       allowNull: false,
     },
     views: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    latitude: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
   },
   {
     sequelize,

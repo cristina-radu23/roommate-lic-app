@@ -5,6 +5,8 @@ interface CityAttributes {
   cityId: number;
   countyId: string;
   cityName: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface CityCreationAttributes extends Optional<CityAttributes, "cityId"> {}
@@ -13,6 +15,8 @@ class City extends Model<CityAttributes, CityCreationAttributes> implements City
   public cityId!: number;
   public countyId!: string;
   public cityName!: string;
+  public latitude?: number | null;
+  public longitude?: number | null;
 }
 
 City.init(
@@ -29,6 +33,14 @@ City.init(
     cityName: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    latitude: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
     },
   },
   {

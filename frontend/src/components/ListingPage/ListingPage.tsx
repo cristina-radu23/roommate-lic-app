@@ -67,8 +67,36 @@ const ListingPage: React.FC = () => {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [savingChanges, setSavingChanges] = useState(false);
   
+  // Editable details state
+  const [editAvailableFrom, setEditAvailableFrom] = useState("");
+  const [editAvailableTo, setEditAvailableTo] = useState("");
+  const [editDeposit, setEditDeposit] = useState("");
+  const [editNoDeposit, setEditNoDeposit] = useState(false);
+  const [editListingType, setEditListingType] = useState<"room" | "entire_property">("room");
+  const [editPropertyType, setEditPropertyType] = useState<"apartment" | "house">("apartment");
+  const [editSizeM2, setEditSizeM2] = useState("");
+  const [editRoomSizeM2, setEditRoomSizeM2] = useState("");
+  const [editFlatmatesFemale, setEditFlatmatesFemale] = useState("");
+  const [editFlatmatesMale, setEditFlatmatesMale] = useState("");
+  
+  // Editable amenities state
+  const [editPropertyAmenities, setEditPropertyAmenities] = useState<string[]>([]);
+  const [editRoomAmenities, setEditRoomAmenities] = useState<string[]>([]);
+  
+  // Amenities lists
+  const propertyAmenitiesList = [
+    "TV", "WiFi", "Air Conditioning", "Parking", "Heating",
+    "Washing Machine", "Elevator", "Furnished", "Garden", "Terrace",
+  ];
+  
+  const roomAmenitiesList = ["Furnished", "Private Bathroom", "Balcony", "Air Conditioner"];
+  
   // Dropdown menu state
   const [showDropdown, setShowDropdown] = useState(false);
+  
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -217,12 +245,52 @@ const ListingPage: React.FC = () => {
     if (!listing) return;
     setIsEditMode(true);
     setEditDescription(listing.description || "");
+    
+    // Populate editable details fields
+    setEditAvailableFrom(listing.availableFrom ? listing.availableFrom.split('T')[0] : "");
+    setEditAvailableTo(listing.availableTo ? listing.availableTo.split('T')[0] : "");
+    setEditDeposit(listing.deposit ? listing.deposit.toString() : "");
+    setEditNoDeposit(listing.noDeposit || false);
+    setEditListingType(listing.listingType || "room");
+    setEditPropertyType(listing.propertyType || "apartment");
+    setEditSizeM2(listing.sizeM2 ? listing.sizeM2.toString() : "");
+    setEditRoomSizeM2(listing.roomSizeM2 ? listing.roomSizeM2.toString() : "");
+    setEditFlatmatesFemale(listing.flatmatesFemale ? listing.flatmatesFemale.toString() : "");
+    setEditFlatmatesMale(listing.flatmatesMale ? listing.flatmatesMale.toString() : "");
+    
+    // Populate editable amenities fields
+    setEditPropertyAmenities(
+      listing.PropertyAmenities?.map((a: any) => a.name) || 
+      listing.amenities || 
+      []
+    );
+    setEditRoomAmenities(
+      listing.RoomAmenities?.map((a: any) => a.name) || 
+      listing.roomAmenities || 
+      []
+    );
   };
 
   const exitEditMode = () => {
     setIsEditMode(false);
     setEditDescription("");
     setNewPhotos([]);
+    
+    // Reset editable details fields
+    setEditAvailableFrom("");
+    setEditAvailableTo("");
+    setEditDeposit("");
+    setEditNoDeposit(false);
+    setEditListingType("room");
+    setEditPropertyType("apartment");
+    setEditSizeM2("");
+    setEditRoomSizeM2("");
+    setEditFlatmatesFemale("");
+    setEditFlatmatesMale("");
+    
+    // Reset editable amenities fields
+    setEditPropertyAmenities([]);
+    setEditRoomAmenities([]);
   };
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +303,61 @@ const ListingPage: React.FC = () => {
 
   const removeNewPhoto = (index: number) => {
     setNewPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove existing photo from listing
+  const removeExistingPhoto = (index: number) => {
+    if (!listing) return;
+    
+    setListing(prev => prev ? {
+      ...prev,
+      Photos: prev.Photos?.filter((_, i) => i !== index) || []
+    } : null);
+  };
+
+  // Drag and drop functions
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex || !listing) return;
+    
+    const photos = [...(listing.Photos || [])];
+    const draggedPhoto = photos[draggedIndex];
+    
+    // Remove the dragged photo from its original position
+    photos.splice(draggedIndex, 1);
+    
+    // Insert it at the new position
+    photos.splice(dropIndex, 0, draggedPhoto);
+    
+    // Update the listing with reordered photos
+    setListing(prev => prev ? {
+      ...prev,
+      Photos: photos
+    } : null);
+    
+    // Reset drag state
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const uploadPhotos = async (): Promise<string[]> => {
@@ -282,16 +405,33 @@ const ListingPage: React.FC = () => {
       const newPhotoUrls = await uploadPhotos();
       
       // Update listing with new description and photos
+      const updateData = {
+        description: editDescription,
+        photos: newPhotoUrls,
+        updatedPhotos: listing.Photos?.map(p => p.url.startsWith("http") ? p.url : `http://localhost:5000${p.url}`) || [],
+        availableFrom: editAvailableFrom,
+        availableTo: editAvailableTo,
+        deposit: editDeposit ? parseInt(editDeposit) : undefined,
+        noDeposit: editNoDeposit,
+        listingType: editListingType,
+        propertyType: editPropertyType,
+        sizeM2: editSizeM2 ? parseInt(editSizeM2) : undefined,
+        roomSizeM2: editRoomSizeM2 ? parseInt(editRoomSizeM2) : undefined,
+        flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
+        flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0,
+        propertyAmenities: editPropertyAmenities,
+        roomAmenities: editRoomAmenities
+      };
+      
+      console.log('Sending update data to backend:', updateData);
+      
       const response = await fetch(`http://localhost:5000/api/listings/${listing.listingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          description: editDescription,
-          photos: newPhotoUrls
-        })
+        body: JSON.stringify(updateData)
       });
 
       if (response.ok) {
@@ -299,7 +439,19 @@ const ListingPage: React.FC = () => {
         setListing(prev => prev ? {
           ...prev,
           description: editDescription,
-          Photos: [...(prev.Photos || []), ...newPhotoUrls.map(url => ({ url }))]
+          Photos: [...(prev.Photos || []), ...newPhotoUrls.map(url => ({ url }))],
+          availableFrom: editAvailableFrom,
+          availableTo: editAvailableTo,
+          deposit: editDeposit ? parseInt(editDeposit) : undefined,
+          noDeposit: editNoDeposit,
+          listingType: editListingType,
+          propertyType: editPropertyType,
+          sizeM2: editSizeM2 ? parseInt(editSizeM2) : undefined,
+          roomSizeM2: editRoomSizeM2 ? parseInt(editRoomSizeM2) : undefined,
+          flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
+          flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0,
+          PropertyAmenities: editPropertyAmenities.map(name => ({ name })),
+          RoomAmenities: editRoomAmenities.map(name => ({ name }))
         } : null);
         
         exitEditMode();
@@ -340,6 +492,21 @@ const ListingPage: React.FC = () => {
     };
   }, []);
 
+  // Amenities toggle functions
+  const togglePropertyAmenity = (item: string) => {
+    const updated = editPropertyAmenities.includes(item)
+      ? editPropertyAmenities.filter((i) => i !== item)
+      : [...editPropertyAmenities, item];
+    setEditPropertyAmenities(updated);
+  };
+
+  const toggleRoomAmenity = (item: string) => {
+    const updated = editRoomAmenities.includes(item)
+      ? editRoomAmenities.filter((i) => i !== item)
+      : [...editRoomAmenities, item];
+    setEditRoomAmenities(updated);
+  };
+
   if (loading) return <div className="container mt-5">Loading...</div>;
   if (!listing) return <div className="container mt-5">Listing not found.</div>;
 
@@ -367,8 +534,8 @@ const ListingPage: React.FC = () => {
   const modalPrev = () => setModalPhotoIdx((prev) => (prev - 1 + allPics.length) % allPics.length);
   const modalNext = () => setModalPhotoIdx((prev) => (prev + 1) % allPics.length);
 
-  // Previews: main photo first, then others
-  const previews = [mainPic, ...allPics.filter((_, i) => i !== currentPhotoIdx)];
+  // Previews: keep original order, just highlight the current one
+  const previews = allPics;
 
   // Extract address and coordinates
   const streetName = (listing as any).Address?.streetName || "";
@@ -469,31 +636,85 @@ const ListingPage: React.FC = () => {
                     </button>
                   )}
                 </div>
+                {/* Photo reorder hint in edit mode */}
+                {isEditMode && allPics.length > 1 && (
+                  <div className="text-center mt-2">
+                    <small className="text-muted">
+                      💡 Drag photos to reorder. The first photo will be the main photo.
+                    </small>
+                  </div>
+                )}
                 {/* Previews: main + others */}
                 <div className="d-flex gap-3 mt-3">
                   {previews.map((pic, i) => {
-                    // Find the real index in allPics
-                    const realIdx = allPics.findIndex((p) => p === pic);
-                    const isMain = i === 0;
+                    const isCurrent = i === currentPhotoIdx;
+                    const isDragging = draggedIndex === i;
+                    const isDragOver = dragOverIndex === i;
+                    
                     return (
-                      <img
-                        key={i}
-                        src={pic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
-                        alt={`preview-${i}`}
-                        style={{
-                          borderRadius: "1rem",
-                          border: isMain ? "3px solid #007bff" : "2px solid #ccc",
-                          width: 120,
-                          height: 80,
-                          objectFit: "cover",
-                          background: "#f5f5f5",
-                          cursor: isMain ? "default" : "pointer",
-                          opacity: isMain ? 1 : 0.8
+                      <div 
+                        key={i} 
+                        style={{ 
+                          position: 'relative',
+                          opacity: isDragging ? 0.5 : 1,
+                          transform: isDragging ? 'scale(0.95)' : 'scale(1)',
+                          transition: 'all 0.2s ease',
+                          cursor: isEditMode ? 'grab' : 'pointer'
                         }}
-                        onClick={() => {
-                          if (!isMain) setCurrentPhotoIdx(realIdx);
-                        }}
-                      />
+                        draggable={isEditMode}
+                        onDragStart={(e) => handleDragStart(e, i)}
+                        onDragOver={(e) => handleDragOver(e, i)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, i)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <img
+                          src={pic || "https://placehold.co/300x200?text=No+Image&font=roboto"}
+                          alt={`preview-${i}`}
+                          style={{
+                            borderRadius: "1rem",
+                            border: isCurrent ? "3px solid #007bff" : isDragOver ? "3px solid #28a745" : "2px solid #ccc",
+                            width: 120,
+                            height: 80,
+                            objectFit: "cover",
+                            background: "#f5f5f5",
+                            cursor: isCurrent ? "default" : "pointer",
+                            opacity: isCurrent ? 1 : 0.8,
+                            pointerEvents: isEditMode ? 'none' : 'auto'
+                          }}
+                          onClick={() => {
+                            if (!isCurrent && !isEditMode) setCurrentPhotoIdx(i);
+                          }}
+                        />
+                        
+                        {/* Delete button for existing photos in edit mode */}
+                        {isEditMode && (
+                          <button
+                            onClick={() => removeExistingPhoto(i)}
+                            style={{
+                              position: 'absolute',
+                              top: -8,
+                              right: -8,
+                              background: '#dc3545',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: 24,
+                              height: 24,
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              zIndex: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              lineHeight: 1
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -619,50 +840,174 @@ const ListingPage: React.FC = () => {
   }}>
     {/* Move-in date */}
     <div>You can move in starting from</div>
-    <div>{listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"}</div>
+    <div>
+      {isEditMode ? (
+        <input
+          type="date"
+          className="form-control"
+          value={editAvailableFrom}
+          onChange={(e) => setEditAvailableFrom(e.target.value)}
+          style={{ width: '100%', maxWidth: '200px' }}
+        />
+      ) : (
+        listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"
+      )}
+    </div>
 
     {/* Last day of stay */}
-    {listing.availableTo && (
-      <>
-        <div>The last day of stay is</div>
-        <div>{new Date(listing.availableTo).toLocaleDateString()}</div>
-      </>
-    )}
+    <div>The last day of stay is</div>
+    <div>
+      {isEditMode ? (
+        <input
+          type="date"
+          className="form-control"
+          value={editAvailableTo}
+          onChange={(e) => setEditAvailableTo(e.target.value)}
+          style={{ width: '100%', maxWidth: '200px' }}
+        />
+      ) : (
+        listing.availableTo ? new Date(listing.availableTo).toLocaleDateString() : "-"
+      )}
+    </div>
 
     {/* Deposit */}
-    {listing.noDeposit !== true && listing.deposit && (
-      <>
-        <div>The deposit required</div>
-        <div>{listing.deposit} EUR</div>
-      </>
-    )}
+    <div>The deposit required</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <input
+            type="number"
+            className="form-control"
+            value={editDeposit}
+            onChange={(e) => setEditDeposit(e.target.value)}
+            placeholder="Amount"
+            style={{ width: '100px' }}
+            disabled={editNoDeposit}
+          />
+          <span>EUR</span>
+          <div className="form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={editNoDeposit}
+              onChange={(e) => setEditNoDeposit(e.target.checked)}
+              id="noDeposit"
+            />
+            <label className="form-check-label" htmlFor="noDeposit">
+              No deposit
+            </label>
+          </div>
+        </div>
+      ) : (
+        listing.noDeposit !== true && listing.deposit ? `${listing.deposit} EUR` : "No deposit"
+      )}
+    </div>
 
     {/* Type of property offered */}
     <div>Type of property offered</div>
     <div>
-      {listing.listingType === "room"
-        ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-        : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-      }
+      {isEditMode ? (
+        <div className="d-flex gap-2">
+          <select
+            className="form-select"
+            value={editListingType}
+            onChange={(e) => setEditListingType(e.target.value as "room" | "entire_property")}
+            style={{ width: 'auto' }}
+          >
+            <option value="room">Room</option>
+            <option value="entire_property">Entire Property</option>
+          </select>
+          <span>in a</span>
+          <select
+            className="form-select"
+            value={editPropertyType}
+            onChange={(e) => setEditPropertyType(e.target.value as "apartment" | "house")}
+            style={{ width: 'auto' }}
+          >
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+          </select>
+        </div>
+      ) : (
+        listing.listingType === "room"
+          ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+          : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+      )}
     </div>
 
     {/* Property size */}
     <div>Property size</div>
-    <div>{listing.sizeM2 || listing.size || "-"} m²</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <input
+            type="number"
+            className="form-control"
+            value={editSizeM2}
+            onChange={(e) => setEditSizeM2(e.target.value)}
+            placeholder="Size"
+            style={{ width: '100px' }}
+          />
+          <span>m²</span>
+        </div>
+      ) : (
+        `${listing.sizeM2 || listing.size || "-"} m²`
+      )}
+    </div>
 
     {/* Room size */}
-    {listing.listingType === "room" && (listing.roomSizeM2 || listing.roomSize) && (
+    {editListingType === "room" && (
       <>
         <div>Room size</div>
-        <div>{listing.roomSizeM2 || listing.roomSize} m²</div>
+        <div>
+          {isEditMode ? (
+            <div className="d-flex align-items-center gap-2">
+              <input
+                type="number"
+                className="form-control"
+                value={editRoomSizeM2}
+                onChange={(e) => setEditRoomSizeM2(e.target.value)}
+                placeholder="Room size"
+                style={{ width: '100px' }}
+              />
+              <span>m²</span>
+            </div>
+          ) : (
+            `${listing.roomSizeM2 || listing.roomSize || "-"} m²`
+          )}
+        </div>
       </>
     )}
 
     {/* Roommates */}
-    {((listing.flatmatesFemale ?? 0) > 0 || (listing.flatmatesMale ?? 0) > 0 || (listing.femaleFlatmates ?? 0) > 0 || (listing.maleFlatmates ?? 0) > 0) && (
-      <>
-        <div>Roommates</div>
-        <div>
+    <div>Roommates</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <span>On the property already live</span>
+          <input
+            type="number"
+            className="form-control"
+            value={editFlatmatesFemale}
+            onChange={(e) => setEditFlatmatesFemale(e.target.value)}
+            placeholder="0"
+            style={{ width: '60px' }}
+            min="0"
+          />
+          <span>women and</span>
+          <input
+            type="number"
+            className="form-control"
+            value={editFlatmatesMale}
+            onChange={(e) => setEditFlatmatesMale(e.target.value)}
+            placeholder="0"
+            style={{ width: '60px' }}
+            min="0"
+          />
+          <span>men</span>
+        </div>
+      ) : (
+        <>
           On the property already {totalRoommates === 1 ? "lives" : "live"} 
           {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
             <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
@@ -671,35 +1016,69 @@ const ListingPage: React.FC = () => {
           {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
             <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
           )}
-        </div>
-      </>
-    )}
+        </>
+      )}
+    </div>
 
     {/* Property amenities */}
-    {listing.PropertyAmenities && listing.PropertyAmenities.length > 0 && (
-      <>
-        <div>Property amenities</div>
-        <div>{listing.PropertyAmenities.map((a: any) => a.name).join(", ")}</div>
-      </>
-    )}
-    {listing.amenities && listing.amenities.length > 0 && (
-      <>
-        <div>Property amenities</div>
-        <div>{listing.amenities.join(", ")}</div>
-      </>
-    )}
+    <div>Property amenities</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex flex-wrap gap-2">
+          {propertyAmenitiesList.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={`btn btn-sm ${
+                editPropertyAmenities.includes(item)
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => togglePropertyAmenity(item)}
+            >
+              {editPropertyAmenities.includes(item) ? `-${item}` : `+${item}`}
+            </button>
+          ))}
+        </div>
+      ) : (
+        listing.PropertyAmenities && listing.PropertyAmenities.length > 0 
+          ? listing.PropertyAmenities.map((a: any) => a.name).join(", ")
+          : listing.amenities && listing.amenities.length > 0
+          ? listing.amenities.join(", ")
+          : "No amenities specified"
+      )}
+    </div>
 
     {/* Room amenities */}
-    {listing.listingType === "room" && listing.RoomAmenities && listing.RoomAmenities.length > 0 && (
+    {editListingType === "room" && (
       <>
         <div>Room amenities</div>
-        <div>{listing.RoomAmenities.map((a: any) => a.name).join(", ")}</div>
-      </>
-    )}
-    {listing.listingType === "room" && listing.roomAmenities && listing.roomAmenities.length > 0 && (
-      <>
-        <div>Room amenities</div>
-        <div>{listing.roomAmenities.join(", ")}</div>
+        <div>
+          {isEditMode ? (
+            <div className="d-flex flex-wrap gap-2">
+              {roomAmenitiesList.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`btn btn-sm ${
+                    editRoomAmenities.includes(item)
+                      ? "btn-primary"
+                      : "btn-outline-primary"
+                  }`}
+                  onClick={() => toggleRoomAmenity(item)}
+                >
+                  {editRoomAmenities.includes(item) ? `-${item}` : `+${item}`}
+                </button>
+              ))}
+            </div>
+          ) : (
+            listing.RoomAmenities && listing.RoomAmenities.length > 0
+              ? listing.RoomAmenities.map((a: any) => a.name).join(", ")
+              : listing.roomAmenities && listing.roomAmenities.length > 0
+              ? listing.roomAmenities.join(", ")
+              : "No room amenities specified"
+          )}
+        </div>
       </>
     )}
 
