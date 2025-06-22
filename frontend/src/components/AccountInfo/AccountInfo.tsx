@@ -274,6 +274,40 @@ const AccountInfo: React.FC = () => {
     }
   };
 
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) {
+      return 'Not specified';
+    }
+    // Check if dateString is a valid date
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      // It might be just a date string without time, which Safari might not parse correctly
+      // Try to parse it as YYYY-MM-DD
+      const parts = dateString.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // month is 0-indexed
+        const day = parseInt(parts[2], 10);
+        const utcDate = new Date(Date.UTC(year, month, day));
+        if (!isNaN(utcDate.getTime())) {
+          return utcDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: 'UTC'
+          });
+        }
+      }
+      return 'Not specified'; // or return the original string, or some error
+    }
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC' // using UTC to avoid timezone issues from browser
+    });
+  };
+
   if (loading) {
     return <div className="container mt-5">Loading...</div>;
   }
@@ -407,25 +441,43 @@ const AccountInfo: React.FC = () => {
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Date of Birth</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
-                    disabled={true}
-                  />
+                  {isViewingOtherProfile ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formatDate(user.dateOfBirth)}
+                      disabled
+                    />
+                  ) : (
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={editFields.dateOfBirth ? new Date(editFields.dateOfBirth).toISOString().split('T')[0] : ''}
+                      onChange={e => handleFieldChange('dateOfBirth', e.target.value)}
+                    />
+                  )}
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Gender</label>
+                  {isViewingOtherProfile ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={user.gender || 'Not specified'}
+                      disabled
+                    />
+                  ) : (
                   <select
                     className="form-control"
                     name="gender"
                     value={editFields.gender || "not specified"}
-                    disabled={true}
+                    onChange={e => handleFieldChange('gender', e.target.value)}
                   >
                     <option value="not specified">Select your gender</option>
                     <option value="female">Female</option>
                     <option value="male">Male</option>
                   </select>
+                  )}
                 </div>
                 {!isViewingOtherProfile && (
                   <>
@@ -444,6 +496,7 @@ const AccountInfo: React.FC = () => {
                     </div>
                   </>
                 )}
+                {!isViewingOtherProfile && (
                 <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "40px" }}>
                   <button
                     type="submit"
@@ -461,6 +514,7 @@ const AccountInfo: React.FC = () => {
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                 </div>
+                )}
               </form>
             )}
             {selectedMenu === 'settings' && !isViewingOtherProfile && (
