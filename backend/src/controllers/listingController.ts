@@ -14,6 +14,9 @@ import User from "../models/User";
 import Like from "../models/Like";
 import { sendNotification } from "../utils/notify";
 import Match from "../models/Match";
+import ChatRoom from "../models/ChatRoom";
+import ChatRoomUser from "../models/ChatRoomUser";
+import Message from "../models/Message";
 
 export const createListing = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -80,9 +83,14 @@ export const createListing = async (req: AuthenticatedRequest, res: Response) =>
     console.log("Received photos:", req.body.photos);
     if (req.body.photos && Array.isArray(req.body.photos)) {
       console.log("Saving photos to DB:", req.body.photos);
-      for (const url of req.body.photos) {
-        await Photo.create({ listingId: listing.listingId, url });
-        console.log("Saved photo:", url);
+      for (let i = 0; i < req.body.photos.length; i++) {
+        const url = req.body.photos[i];
+        await Photo.create({ 
+          listingId: listing.listingId, 
+          url,
+          order: i 
+        });
+        console.log("Saved photo:", url, "with order:", i);
       }
     }
 
@@ -141,7 +149,9 @@ export const getAllListings = async (req: Request, res: Response) => {
       RoomAmenity,
       PropertyAmenity,
       HouseRule,
-      Photo,
+      {
+        model: Photo
+      },
       {
         model: User,
         where: { isActive: 1 },
@@ -205,6 +215,10 @@ export const getAllListings = async (req: Request, res: Response) => {
     const listings = await Listing.findAll({
       where,
       include,
+      order: [
+        ['createdAt', 'DESC'],
+        [{ model: Photo, as: 'Photos' }, 'order', 'ASC']
+      ]
     });
 
     // Add likesCount to each listing and handle inactive users' profile pictures
@@ -240,7 +254,9 @@ export const getListingsByCity = async (req: Request, res: Response) => {
         RoomAmenity,
         PropertyAmenity,
         HouseRule,
-        Photo,
+        {
+          model: Photo
+        },
         {
           model: User,
           where: { isActive: 1 },
@@ -248,6 +264,10 @@ export const getListingsByCity = async (req: Request, res: Response) => {
           attributes: ["userId", "userFirstName", "userLastName", "profilePicture", "isActive"]
         }
       ],
+      order: [
+        ['createdAt', 'DESC'],
+        [{ model: Photo, as: 'Photos' }, 'order', 'ASC']
+      ]
     });
 
     // Add likesCount to each listing and handle inactive users' profile pictures
@@ -280,7 +300,7 @@ export const getListingById = async (req: Request, res: Response) => {
           include: [City],
         },
         {
-          model: Photo,
+          model: Photo
         },
         {
           model: RoomAmenity,
@@ -298,6 +318,9 @@ export const getListingById = async (req: Request, res: Response) => {
           attributes: ["userId", "userFirstName", "userLastName", "phoneNumber", "profilePicture", "isActive"],
         },
       ],
+      order: [
+        [{ model: Photo, as: 'Photos' }, 'order', 'ASC']
+      ]
     });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
@@ -362,8 +385,14 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
         RoomAmenity,
         PropertyAmenity,
         HouseRule,
-        Photo,
+        {
+          model: Photo
+        },
       ],
+      order: [
+        ['createdAt', 'DESC'],
+        [{ model: Photo, as: 'Photos' }, 'order', 'ASC']
+      ]
     });
 
     // Add likesCount to each listing
@@ -394,7 +423,37 @@ export const deleteListing = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(403).json({ error: "Not authorized to delete this listing" });
     }
 
+    // Delete all photos associated with this listing first
+    await Photo.destroy({ where: { listingId: listing.listingId } });
+    console.log(`Deleted photos for listing ${listingId}`);
+
+    // Delete all likes associated with this listing
+    await Like.destroy({ where: { listingId: listing.listingId } });
+    console.log(`Deleted likes for listing ${listingId}`);
+
+    // Delete all chat-related data
+    // First, find all chat rooms for this listing
+    const chatRooms = await ChatRoom.findAll({ where: { listingId: listing.listingId } });
+    const chatRoomIds = chatRooms.map(room => room.chatRoomId);
+    
+    if (chatRoomIds.length > 0) {
+      // Delete all messages in these chat rooms
+      await Message.destroy({ where: { chatRoomId: { [Op.in]: chatRoomIds } } });
+      console.log(`Deleted messages for chat rooms: ${chatRoomIds.join(', ')}`);
+      
+      // Delete all chat room user associations
+      await ChatRoomUser.destroy({ where: { chatRoomId: { [Op.in]: chatRoomIds } } });
+      console.log(`Deleted chat room users for chat rooms: ${chatRoomIds.join(', ')}`);
+    }
+    
+    // Delete the chat rooms themselves
+    await ChatRoom.destroy({ where: { listingId: listing.listingId } });
+    console.log(`Deleted chat rooms for listing ${listingId}`);
+
+    // Now delete the listing itself
     await listing.destroy();
+    console.log(`Deleted listing ${listingId}`);
+
     return res.json({ message: "Listing deleted successfully" });
 
   } catch (error) {
@@ -462,27 +521,75 @@ export const updateListing = async (req: AuthenticatedRequest, res: Response) =>
     });
 
     // Update M:N associations
-    if (roomAmenities?.length) {
-      const amenities = await RoomAmenity.findAll({ where: { name: roomAmenities } });
-      await listing.setRoomAmenities(amenities);
+    if (roomAmenities && Array.isArray(roomAmenities)) {
+      if (roomAmenities.length > 0) {
+        const amenities = await RoomAmenity.findAll({ where: { name: roomAmenities } });
+        await listing.setRoomAmenities(amenities);
+      } else {
+        // Clear all room amenities if empty array is provided
+        await listing.setRoomAmenities([]);
+      }
     }
 
-    if (propertyAmenities?.length) {
-      const amenities = await PropertyAmenity.findAll({ where: { name: propertyAmenities } });
-      await listing.setPropertyAmenities(amenities);
+    if (propertyAmenities && Array.isArray(propertyAmenities)) {
+      if (propertyAmenities.length > 0) {
+        const amenities = await PropertyAmenity.findAll({ where: { name: propertyAmenities } });
+        await listing.setPropertyAmenities(amenities);
+      } else {
+        // Clear all property amenities if empty array is provided
+        await listing.setPropertyAmenities([]);
+      }
     }
 
-    if (houseRules?.length) {
-      const rules = await HouseRule.findAll({ where: { name: houseRules } });
-      await listing.setHouseRules(rules);
+    if (houseRules && Array.isArray(houseRules)) {
+      if (houseRules.length > 0) {
+        const rules = await HouseRule.findAll({ where: { name: houseRules } });
+        await listing.setHouseRules(rules);
+      } else {
+        // Clear all house rules if empty array is provided
+        await listing.setHouseRules([]);
+      }
     }
 
     // Add new photos if provided
     if (photos && Array.isArray(photos) && photos.length > 0) {
       console.log("Adding new photos to listing:", photos);
-      for (const url of photos) {
-        await Photo.create({ listingId: listing.listingId, url });
-        console.log("Added photo:", url);
+      
+      // Get the current highest order
+      const currentPhotos = await Photo.findAll({ 
+        where: { listingId: listing.listingId },
+        order: [['order', 'DESC']],
+        limit: 1
+      });
+      const nextOrder = currentPhotos.length > 0 ? (currentPhotos[0].order || 0) + 1 : 0;
+      
+      for (let i = 0; i < photos.length; i++) {
+        const url = photos[i];
+        await Photo.create({ 
+          listingId: listing.listingId, 
+          url,
+          order: nextOrder + i 
+        });
+        console.log("Added photo:", url, "with order:", nextOrder + i);
+      }
+    }
+
+    // Handle photo updates (replace all photos)
+    if (req.body.updatedPhotos && Array.isArray(req.body.updatedPhotos)) {
+      console.log("Updating photos for listing:", req.body.updatedPhotos);
+      
+      // Delete all existing photos for this listing
+      await Photo.destroy({ where: { listingId: listing.listingId } });
+      
+      // Add the new photo list with proper order
+      for (let i = 0; i < req.body.updatedPhotos.length; i++) {
+        const url = req.body.updatedPhotos[i];
+        await Photo.create({ 
+          listingId: listing.listingId, 
+          url,
+          order: i 
+        });
+        console.log("Updated photo:", url, "with order:", i);
       }
     }
 

@@ -6,16 +6,18 @@ interface PhotoAttributes {
   listingId: number;
   url: string;
   isCover?: boolean;
+  order?: number;
   createdAt?: Date;
 }
 
-interface PhotoCreationAttributes extends Optional<PhotoAttributes, "photoId" | "isCover" | "createdAt"> {}
+interface PhotoCreationAttributes extends Optional<PhotoAttributes, "photoId" | "isCover" | "order" | "createdAt"> {}
 
 class Photo extends Model<PhotoAttributes, PhotoCreationAttributes> implements PhotoAttributes {
   public photoId!: number;
   public listingId!: number;
   public url!: string;
   public isCover?: boolean;
+  public order?: number;
   public readonly createdAt!: Date;
 }
 
@@ -37,6 +39,11 @@ Photo.init(
     isCover: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    order: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
     },
   },
   {
