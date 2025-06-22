@@ -18,6 +18,8 @@ const PostListing = () => {
     propertyType: "",
     userType: "",
     livesInProperty: false,
+    cityId: "",
+    cityName: "",
   });
 
   const onNext = () => setStep((prev) => prev + 1);

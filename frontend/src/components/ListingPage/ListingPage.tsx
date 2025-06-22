@@ -1156,14 +1156,35 @@ const ListingPage: React.FC = () => {
                 <div className="d-flex align-items-center" style={{ gap: 16, alignSelf: 'center' }}>
                   {/* Add to favourites button */}
                   {!isOwnListing && (
-                    <button
-                      className={`btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} d-flex align-items-center`}
-                      style={{ fontWeight: 500 }}
-                      onClick={toggleLike}
-                    >
-                      <FaHeart style={{ marginRight: 8 }} />
-                      {isLiked ? 'Remove from favourites' : 'Add to favourites'}
-                    </button>
+                    <div style={{ overflow: 'visible', minWidth: '140px', display: 'flex', justifyContent: 'center' }}>
+                      <button
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer',
+                          fontSize: '24px',
+                          padding: '32px',
+                          width: '120px',
+                          height: '120px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'visible'
+                        }}
+                        onClick={toggleLike}
+                      >
+                        {isLiked ? (
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="red" stroke="#e74c3c" strokeWidth="2"/>
+                          </svg>
+                        ) : (
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="#333" strokeWidth="1"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   )}
                   
                   {/* Dropdown menu for owner actions */}
@@ -1322,8 +1343,10 @@ const ListingPage: React.FC = () => {
                     ? listing.user.phone
                     : `${(listing.user?.phone || '0000.....').slice(0, 4)} .....`}
                   {!showPhone && listing.user?.phone && (
-                    <span style={{ fontSize: 13, display: 'block', marginLeft: 12, color: '#fff', opacity: 0.8 }}>
-                      Click to reveal phone number
+                    <span style={{ display: 'flex', alignItems: 'center', marginLeft: 12, color: '#fff', opacity: 0.8 }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                      </svg>
                     </span>
                   )}
                 </button>
