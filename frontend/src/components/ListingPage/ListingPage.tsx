@@ -67,6 +67,18 @@ const ListingPage: React.FC = () => {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [savingChanges, setSavingChanges] = useState(false);
   
+  // Editable details state
+  const [editAvailableFrom, setEditAvailableFrom] = useState("");
+  const [editAvailableTo, setEditAvailableTo] = useState("");
+  const [editDeposit, setEditDeposit] = useState("");
+  const [editNoDeposit, setEditNoDeposit] = useState(false);
+  const [editListingType, setEditListingType] = useState<"room" | "entire_property">("room");
+  const [editPropertyType, setEditPropertyType] = useState<"apartment" | "house">("apartment");
+  const [editSizeM2, setEditSizeM2] = useState("");
+  const [editRoomSizeM2, setEditRoomSizeM2] = useState("");
+  const [editFlatmatesFemale, setEditFlatmatesFemale] = useState("");
+  const [editFlatmatesMale, setEditFlatmatesMale] = useState("");
+  
   // Dropdown menu state
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -217,12 +229,36 @@ const ListingPage: React.FC = () => {
     if (!listing) return;
     setIsEditMode(true);
     setEditDescription(listing.description || "");
+    
+    // Populate editable details fields
+    setEditAvailableFrom(listing.availableFrom ? listing.availableFrom.split('T')[0] : "");
+    setEditAvailableTo(listing.availableTo ? listing.availableTo.split('T')[0] : "");
+    setEditDeposit(listing.deposit ? listing.deposit.toString() : "");
+    setEditNoDeposit(listing.noDeposit || false);
+    setEditListingType(listing.listingType || "room");
+    setEditPropertyType(listing.propertyType || "apartment");
+    setEditSizeM2(listing.sizeM2 ? listing.sizeM2.toString() : "");
+    setEditRoomSizeM2(listing.roomSizeM2 ? listing.roomSizeM2.toString() : "");
+    setEditFlatmatesFemale(listing.flatmatesFemale ? listing.flatmatesFemale.toString() : "");
+    setEditFlatmatesMale(listing.flatmatesMale ? listing.flatmatesMale.toString() : "");
   };
 
   const exitEditMode = () => {
     setIsEditMode(false);
     setEditDescription("");
     setNewPhotos([]);
+    
+    // Reset editable details fields
+    setEditAvailableFrom("");
+    setEditAvailableTo("");
+    setEditDeposit("");
+    setEditNoDeposit(false);
+    setEditListingType("room");
+    setEditPropertyType("apartment");
+    setEditSizeM2("");
+    setEditRoomSizeM2("");
+    setEditFlatmatesFemale("");
+    setEditFlatmatesMale("");
   };
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,7 +326,17 @@ const ListingPage: React.FC = () => {
         },
         body: JSON.stringify({
           description: editDescription,
-          photos: newPhotoUrls
+          photos: newPhotoUrls,
+          availableFrom: editAvailableFrom,
+          availableTo: editAvailableTo,
+          deposit: editDeposit ? parseInt(editDeposit) : undefined,
+          noDeposit: editNoDeposit,
+          listingType: editListingType,
+          propertyType: editPropertyType,
+          sizeM2: editSizeM2 ? parseInt(editSizeM2) : undefined,
+          roomSizeM2: editRoomSizeM2 ? parseInt(editRoomSizeM2) : undefined,
+          flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
+          flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0
         })
       });
 
@@ -299,7 +345,17 @@ const ListingPage: React.FC = () => {
         setListing(prev => prev ? {
           ...prev,
           description: editDescription,
-          Photos: [...(prev.Photos || []), ...newPhotoUrls.map(url => ({ url }))]
+          Photos: [...(prev.Photos || []), ...newPhotoUrls.map(url => ({ url }))],
+          availableFrom: editAvailableFrom,
+          availableTo: editAvailableTo,
+          deposit: editDeposit ? parseInt(editDeposit) : undefined,
+          noDeposit: editNoDeposit,
+          listingType: editListingType,
+          propertyType: editPropertyType,
+          sizeM2: editSizeM2 ? parseInt(editSizeM2) : undefined,
+          roomSizeM2: editRoomSizeM2 ? parseInt(editRoomSizeM2) : undefined,
+          flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
+          flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0
         } : null);
         
         exitEditMode();
@@ -619,50 +675,174 @@ const ListingPage: React.FC = () => {
   }}>
     {/* Move-in date */}
     <div>You can move in starting from</div>
-    <div>{listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"}</div>
+    <div>
+      {isEditMode ? (
+        <input
+          type="date"
+          className="form-control"
+          value={editAvailableFrom}
+          onChange={(e) => setEditAvailableFrom(e.target.value)}
+          style={{ width: '100%', maxWidth: '200px' }}
+        />
+      ) : (
+        listing.availableFrom ? new Date(listing.availableFrom).toLocaleDateString() : "-"
+      )}
+    </div>
 
     {/* Last day of stay */}
-    {listing.availableTo && (
-      <>
-        <div>The last day of stay is</div>
-        <div>{new Date(listing.availableTo).toLocaleDateString()}</div>
-      </>
-    )}
+    <div>The last day of stay is</div>
+    <div>
+      {isEditMode ? (
+        <input
+          type="date"
+          className="form-control"
+          value={editAvailableTo}
+          onChange={(e) => setEditAvailableTo(e.target.value)}
+          style={{ width: '100%', maxWidth: '200px' }}
+        />
+      ) : (
+        listing.availableTo ? new Date(listing.availableTo).toLocaleDateString() : "-"
+      )}
+    </div>
 
     {/* Deposit */}
-    {listing.noDeposit !== true && listing.deposit && (
-      <>
-        <div>The deposit required</div>
-        <div>{listing.deposit} EUR</div>
-      </>
-    )}
+    <div>The deposit required</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <input
+            type="number"
+            className="form-control"
+            value={editDeposit}
+            onChange={(e) => setEditDeposit(e.target.value)}
+            placeholder="Amount"
+            style={{ width: '100px' }}
+            disabled={editNoDeposit}
+          />
+          <span>EUR</span>
+          <div className="form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={editNoDeposit}
+              onChange={(e) => setEditNoDeposit(e.target.checked)}
+              id="noDeposit"
+            />
+            <label className="form-check-label" htmlFor="noDeposit">
+              No deposit
+            </label>
+          </div>
+        </div>
+      ) : (
+        listing.noDeposit !== true && listing.deposit ? `${listing.deposit} EUR` : "No deposit"
+      )}
+    </div>
 
     {/* Type of property offered */}
     <div>Type of property offered</div>
     <div>
-      {listing.listingType === "room"
-        ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-        : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
-      }
+      {isEditMode ? (
+        <div className="d-flex gap-2">
+          <select
+            className="form-select"
+            value={editListingType}
+            onChange={(e) => setEditListingType(e.target.value as "room" | "entire_property")}
+            style={{ width: 'auto' }}
+          >
+            <option value="room">Room</option>
+            <option value="entire_property">Entire Property</option>
+          </select>
+          <span>in a</span>
+          <select
+            className="form-select"
+            value={editPropertyType}
+            onChange={(e) => setEditPropertyType(e.target.value as "apartment" | "house")}
+            style={{ width: 'auto' }}
+          >
+            <option value="apartment">Apartment</option>
+            <option value="house">House</option>
+          </select>
+        </div>
+      ) : (
+        listing.listingType === "room"
+          ? `A room in an ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+          : `The entire ${listing.propertyType === "apartment" ? "apartment" : "house"}.`
+      )}
     </div>
 
     {/* Property size */}
     <div>Property size</div>
-    <div>{listing.sizeM2 || listing.size || "-"} m²</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <input
+            type="number"
+            className="form-control"
+            value={editSizeM2}
+            onChange={(e) => setEditSizeM2(e.target.value)}
+            placeholder="Size"
+            style={{ width: '100px' }}
+          />
+          <span>m²</span>
+        </div>
+      ) : (
+        `${listing.sizeM2 || listing.size || "-"} m²`
+      )}
+    </div>
 
     {/* Room size */}
-    {listing.listingType === "room" && (listing.roomSizeM2 || listing.roomSize) && (
+    {editListingType === "room" && (
       <>
         <div>Room size</div>
-        <div>{listing.roomSizeM2 || listing.roomSize} m²</div>
+        <div>
+          {isEditMode ? (
+            <div className="d-flex align-items-center gap-2">
+              <input
+                type="number"
+                className="form-control"
+                value={editRoomSizeM2}
+                onChange={(e) => setEditRoomSizeM2(e.target.value)}
+                placeholder="Room size"
+                style={{ width: '100px' }}
+              />
+              <span>m²</span>
+            </div>
+          ) : (
+            `${listing.roomSizeM2 || listing.roomSize || "-"} m²`
+          )}
+        </div>
       </>
     )}
 
     {/* Roommates */}
-    {((listing.flatmatesFemale ?? 0) > 0 || (listing.flatmatesMale ?? 0) > 0 || (listing.femaleFlatmates ?? 0) > 0 || (listing.maleFlatmates ?? 0) > 0) && (
-      <>
-        <div>Roommates</div>
-        <div>
+    <div>Roommates</div>
+    <div>
+      {isEditMode ? (
+        <div className="d-flex align-items-center gap-2">
+          <span>On the property already live</span>
+          <input
+            type="number"
+            className="form-control"
+            value={editFlatmatesFemale}
+            onChange={(e) => setEditFlatmatesFemale(e.target.value)}
+            placeholder="0"
+            style={{ width: '60px' }}
+            min="0"
+          />
+          <span>women and</span>
+          <input
+            type="number"
+            className="form-control"
+            value={editFlatmatesMale}
+            onChange={(e) => setEditFlatmatesMale(e.target.value)}
+            placeholder="0"
+            style={{ width: '60px' }}
+            min="0"
+          />
+          <span>men</span>
+        </div>
+      ) : (
+        <>
           On the property already {totalRoommates === 1 ? "lives" : "live"} 
           {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
             <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
@@ -671,9 +851,9 @@ const ListingPage: React.FC = () => {
           {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
             <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
           )}
-        </div>
-      </>
-    )}
+        </>
+      )}
+    </div>
 
     {/* Property amenities */}
     {listing.PropertyAmenities && listing.PropertyAmenities.length > 0 && (
