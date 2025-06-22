@@ -381,40 +381,115 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
 export const deleteListing = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { listingId } = req.params;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { listingId } = req.params;
     const listing = await Listing.findByPk(listingId);
-    if (!listing) return res.status(404).json({ error: "Listing not found" });
-    if (listing.userId !== userId) return res.status(403).json({ error: "Forbidden: Not the owner" });
 
-    // Notify all likers before deleting
-    const likes = await Like.findAll({ where: { listingId } });
-    const title = (listing as any).title || (listing as any).listingTitle || "a listing you liked";
-    console.log(`[Listing Delete] Notifying ${likes.length} likers about deletion of listing '${title}' (ID: ${listingId})`);
-    await Promise.all(likes.map(async like => {
-      try {
-        console.log(`[Listing Delete] Notifying userId=${like.userId} about deleted listing '${title}'`);
-        await sendNotification(
-          like.userId,
-          "listing-deleted",
-          `The listing '${title}' you liked has been deleted, find new listings!`,
-          "/"
-        );
-        console.log(`[Listing Delete] Notification sent to userId=${like.userId}`);
-      } catch (err) {
-        console.error(`[Listing Delete] Failed to notify userId=${like.userId}:`, err);
-      }
-    }));
+    if (!listing) {
+      return res.status(404).json({ error: "Listing not found" });
+    }
 
-    // Delete related records to avoid FK constraint errors
-    await Like.destroy({ where: { listingId } });
-    await Match.destroy({ where: { listingId } });
-    await Photo.destroy({ where: { listingId } });
+    if (listing.userId !== userId) {
+      return res.status(403).json({ error: "Not authorized to delete this listing" });
+    }
 
     await listing.destroy();
-    return res.json({ message: "Listing deleted" });
+    return res.json({ message: "Listing deleted successfully" });
+
   } catch (error) {
     console.error("Error deleting listing:", error);
     return res.status(500).json({ error: "Failed to delete listing" });
+  }
+};
+
+export const updateListing = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { listingId } = req.params;
+    const listing = await Listing.findByPk(listingId);
+
+    if (!listing) {
+      return res.status(404).json({ error: "Listing not found" });
+    }
+
+    if (listing.userId !== userId) {
+      return res.status(403).json({ error: "Not authorized to update this listing" });
+    }
+
+    const {
+      cityId, streetName, streetNo,
+      listingType, propertyType, userRole,
+      sizeM2, bedroomsSingle, bedroomsDouble,
+      flatmatesFemale, flatmatesMale,
+      availableFrom, availableTo, openEnded,
+      rent, deposit, noDeposit,
+      roomSizeM2, hasBed, bedType,
+      title, description,
+      roomAmenities, propertyAmenities, houseRules,
+      photos // New photos to add
+    } = req.body;
+
+    // Update Address
+    const address = await Address.findByPk(listing.addressId);
+    if (address) {
+      await address.update({ streetName, streetNo, cityId });
+    }
+
+    // Update Listing
+    await listing.update({
+      listingType,
+      propertyType,
+      userRole,
+      sizeM2,
+      bedroomsSingle,
+      bedroomsDouble,
+      flatmatesFemale,
+      flatmatesMale,
+      availableFrom,
+      availableTo,
+      openEnded,
+      rent,
+      deposit,
+      noDeposit,
+      roomSizeM2,
+      hasBed,
+      bedType,
+      title,
+      description
+    });
+
+    // Update M:N associations
+    if (roomAmenities?.length) {
+      const amenities = await RoomAmenity.findAll({ where: { name: roomAmenities } });
+      await listing.setRoomAmenities(amenities);
+    }
+
+    if (propertyAmenities?.length) {
+      const amenities = await PropertyAmenity.findAll({ where: { name: propertyAmenities } });
+      await listing.setPropertyAmenities(amenities);
+    }
+
+    if (houseRules?.length) {
+      const rules = await HouseRule.findAll({ where: { name: houseRules } });
+      await listing.setHouseRules(rules);
+    }
+
+    // Add new photos if provided
+    if (photos && Array.isArray(photos) && photos.length > 0) {
+      console.log("Adding new photos to listing:", photos);
+      for (const url of photos) {
+        await Photo.create({ listingId: listing.listingId, url });
+        console.log("Added photo:", url);
+      }
+    }
+
+    return res.json({ message: "Listing updated successfully", listingId: listing.listingId });
+
+  } catch (error) {
+    console.error("Error updating listing:", error);
+    return res.status(500).json({ error: "Failed to update listing" });
   }
 };

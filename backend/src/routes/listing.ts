@@ -1,5 +1,5 @@
 import express from "express";
-import { createListing, getAllListings, getListingsByCity, getListingById, getUserListings, deleteListing } from "../controllers/listingController";
+import { createListing, getAllListings, getListingsByCity, getListingById, getUserListings, deleteListing, updateListing } from "../controllers/listingController";
 import authenticateToken from "../middleware/authMiddleware";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import upload from '../middleware/upload';
@@ -27,6 +27,7 @@ router.post('/upload-photo', upload.single('photo'), (req, res) => {
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 
+router.put("/:listingId", authenticateToken, (req, res) => { void updateListing(req as AuthenticatedRequest, res); });
 router.delete("/:listingId", authenticateToken, (req, res) => { void deleteListing(req as AuthenticatedRequest, res); });
 
 export default router;

@@ -1,7 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const SuccessPage = () => {
+interface SuccessPageProps {
+  isEditing?: boolean;
+}
+
+const SuccessPage = ({ isEditing = false }: SuccessPageProps) => {
   const navigate = useNavigate();
 
   return (
@@ -15,8 +19,15 @@ const SuccessPage = () => {
             marginBottom: "2rem"
           }}>
             <div className="text-center">
-              <h3 className="mb-4">Listing Posted Successfully!</h3>
-              <p className="mb-4">Your listing has been successfully posted and is now visible to potential tenants.</p>
+              <h3 className="mb-4">
+                {isEditing ? "Listing Updated Successfully!" : "Listing Posted Successfully!"}
+              </h3>
+              <p className="mb-4">
+                {isEditing 
+                  ? "Your listing has been successfully updated and is now visible to potential tenants."
+                  : "Your listing has been successfully posted and is now visible to potential tenants."
+                }
+              </p>
               <button 
                 className="btn" 
                 onClick={() => navigate("/")}

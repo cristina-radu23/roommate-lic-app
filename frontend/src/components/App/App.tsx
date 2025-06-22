@@ -94,7 +94,7 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         onSubmit={handleLogin}
       />
       <Routes>
-        <Route path="/createaccount" element={<CreateAccount navigate={navigate} />} />
+        <Route path="/createaccount" element={<CreateAccount onLoginClick={() => setLoginModalOpen(true)} />} />
         <Route path="/postListing" element={<PostListing />} />
         <Route path="/listing/:id" element={<ListingPage />} />
         <Route path="/inbox" element={<Inbox />} />
