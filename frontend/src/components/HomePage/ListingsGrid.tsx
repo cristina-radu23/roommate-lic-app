@@ -14,6 +14,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
   const navigate = useNavigate();
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [listings, setListings] = React.useState<PostListingFormData[]>([]);
+  const [failedImages, setFailedImages] = React.useState<Set<number>>(new Set());
   const userId = Number(localStorage.getItem('userId'));
 
   React.useEffect(() => {
@@ -106,6 +107,11 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
     }
   };
 
+  // Handle image load errors
+  const handleImageError = (listingId: number) => {
+    setFailedImages(prev => new Set(prev).add(listingId));
+  };
+
   if (listings.length === 0) {
     return <p className="text-muted text-center mt-5">No listings found.</p>;
   }
@@ -117,14 +123,19 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
           // Try to get the first photo from the Photo table (listing.Photos)
           // Fallback to listing.photos or default image
           let imageUrl = "https://placehold.co/300x200?text=No+Image&font=roboto";
-          if ((listing as any).Photos && Array.isArray((listing as any).Photos) && (listing as any).Photos.length > 0) {
-            imageUrl = (listing as any).Photos[0].url;
-            if (imageUrl && !imageUrl.startsWith("http")) {
-              imageUrl = `http://localhost:5000${imageUrl}`;
+          
+          // Check if this listing's image has failed to load
+          if (!failedImages.has(listing.listingId!)) {
+            if ((listing as any).Photos && Array.isArray((listing as any).Photos) && (listing as any).Photos.length > 0) {
+              imageUrl = (listing as any).Photos[0].url;
+              if (imageUrl && !imageUrl.startsWith("http")) {
+                imageUrl = `http://localhost:5000${imageUrl}`;
+              }
+            } else if (listing.photos && listing.photos.length > 0) {
+              imageUrl = listing.photos[0];
             }
-          } else if (listing.photos && listing.photos.length > 0) {
-            imageUrl = listing.photos[0];
           }
+          
           const isOwnListing = (listing as any).user?.userId === userId || (listing as any).userId === userId;
           return (
             <div key={index} className="col-12 col-md-6 col-lg-4">
@@ -134,6 +145,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                   className="card-img-top"
                   alt={listing.title || "Listing"}
                   style={{ height: "200px", objectFit: "cover" }}
+                  onError={() => handleImageError(listing.listingId!)}
                 />
                 {/* Heart icon - hidden for owner */}
                 {!isOwnListing && (

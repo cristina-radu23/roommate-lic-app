@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
+import { FaUserCircle } from 'react-icons/fa';
 
 interface User {
   userId: number;
@@ -24,15 +25,20 @@ interface LikesListProps {
   onHide: () => void;
   users: User[];
   listingId: number;
+  listingOwnerId?: number;
 }
 
-const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId }) => {
+const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, listingOwnerId }) => {
   const currentUserId = Number(localStorage.getItem('userId'));
   const navigate = useNavigate();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState<number | null>(null); // userId being matched/unmatched
   const [pendingMatchUserId, setPendingMatchUserId] = useState<number | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+
+  // Check if current user is the listing owner
+  const isListingOwner = listingOwnerId && currentUserId === listingOwnerId;
 
   useEffect(() => {
     if (!show) return;
@@ -104,6 +110,11 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId })
     }
   }, [matches, pendingMatchUserId]);
 
+  // Handle image load errors
+  const handleImageError = (userId: number) => {
+    setFailedImages(prev => new Set(prev).add(userId));
+  };
+
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
@@ -124,18 +135,25 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId })
                       onClick={onHide}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      <img
-                        src={
-                          user.profilePicture
-                            ? user.profilePicture.startsWith('http')
+                      {user.profilePicture && !failedImages.has(user.userId) ? (
+                        <img
+                          src={
+                            user.profilePicture.startsWith('http')
                               ? user.profilePicture
                               : `http://localhost:5000${user.profilePicture}`
-                            : "https://placehold.co/100x100?text=No+Image&font=roboto"
-                        }
-                        alt={`${user.userFirstName} ${user.userLastName}`}
-                        className="rounded-circle"
-                        style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                      />
+                          }
+                          alt={`${user.userFirstName} ${user.userLastName}`}
+                          className="rounded-circle"
+                          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                          onError={() => handleImageError(user.userId)}
+                        />
+                      ) : (
+                        <FaUserCircle 
+                          size={50} 
+                          color="#bbb" 
+                          style={{ background: '#eee', borderRadius: '50%' }} 
+                        />
+                      )}
                       <div>
                         <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                       </div>
@@ -165,38 +183,47 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId })
                       onClick={onHide}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      <img
-                        src={
-                          user.profilePicture
-                            ? user.profilePicture.startsWith('http')
+                      {user.profilePicture && !failedImages.has(user.userId) ? (
+                        <img
+                          src={
+                            user.profilePicture.startsWith('http')
                               ? user.profilePicture
                               : `http://localhost:5000${user.profilePicture}`
-                            : "https://placehold.co/100x100?text=No+Image&font=roboto"
-                        }
-                        alt={`${user.userFirstName} ${user.userLastName}`}
-                        className="rounded-circle"
-                        style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                      />
+                          }
+                          alt={`${user.userFirstName} ${user.userLastName}`}
+                          className="rounded-circle"
+                          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                          onError={() => handleImageError(user.userId)}
+                        />
+                      ) : (
+                        <FaUserCircle 
+                          size={50} 
+                          color="#bbb" 
+                          style={{ background: '#eee', borderRadius: '50%' }} 
+                        />
+                      )}
                       <div>
                         <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                       </div>
                     </Link>
-                    <button
-                      className="btn btn-primary ms-auto"
-                      style={{ minWidth: 120 }}
-                      onClick={() => {
-                        onHide();
-                        navigate('/inbox', {
-                          state: {
-                            receiverId: user.userId,
-                            receiverName: `${user.userFirstName} ${user.userLastName}`,
-                            listingId: listingId
-                          }
-                        });
-                      }}
-                    >
-                      Send message
-                    </button>
+                    {!isListingOwner && (
+                      <button
+                        className="btn btn-primary ms-auto"
+                        style={{ minWidth: 120 }}
+                        onClick={() => {
+                          onHide();
+                          navigate('/inbox', {
+                            state: {
+                              receiverId: user.userId,
+                              receiverName: `${user.userFirstName} ${user.userLastName}`,
+                              listingId: listingId
+                            }
+                          });
+                        }}
+                      >
+                        Send message
+                      </button>
+                    )}
                   </div>
                 );
               }
@@ -210,30 +237,39 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId })
                       onClick={onHide}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      <img
-                        src={
-                          user.profilePicture
-                            ? user.profilePicture.startsWith('http')
+                      {user.profilePicture && !failedImages.has(user.userId) ? (
+                        <img
+                          src={
+                            user.profilePicture.startsWith('http')
                               ? user.profilePicture
                               : `http://localhost:5000${user.profilePicture}`
-                            : "https://placehold.co/100x100?text=No+Image&font=roboto"
-                        }
-                        alt={`${user.userFirstName} ${user.userLastName}`}
-                        className="rounded-circle"
-                        style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                      />
+                          }
+                          alt={`${user.userFirstName} ${user.userLastName}`}
+                          className="rounded-circle"
+                          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                          onError={() => handleImageError(user.userId)}
+                        />
+                      ) : (
+                        <FaUserCircle 
+                          size={50} 
+                          color="#bbb" 
+                          style={{ background: '#eee', borderRadius: '50%' }} 
+                        />
+                      )}
                       <div>
                         <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                       </div>
                     </Link>
-                    <button
-                      className="btn btn-outline-danger ms-auto"
-                      style={{ minWidth: 80 }}
-                      onClick={() => handleUnmatch(user.userId)}
-                      disabled={isPending}
-                    >
-                      {isPending ? '...' : 'Cancel'}
-                    </button>
+                    {!isListingOwner && (
+                      <button
+                        className="btn btn-outline-danger ms-auto"
+                        style={{ minWidth: 80 }}
+                        onClick={() => handleUnmatch(user.userId)}
+                        disabled={isPending}
+                      >
+                        {isPending ? '...' : 'Cancel'}
+                      </button>
+                    )}
                   </div>
                 );
               }
@@ -246,30 +282,39 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId })
                     onClick={onHide}
                     style={{ textDecoration: 'none', color: 'inherit' }}
                   >
-                    <img
-                      src={
-                        user.profilePicture
-                          ? user.profilePicture.startsWith('http')
+                    {user.profilePicture && !failedImages.has(user.userId) ? (
+                      <img
+                        src={
+                          user.profilePicture.startsWith('http')
                             ? user.profilePicture
                             : `http://localhost:5000${user.profilePicture}`
-                          : "https://placehold.co/100x100?text=No+Image&font=roboto"
-                      }
-                      alt={`${user.userFirstName} ${user.userLastName}`}
-                      className="rounded-circle"
-                      style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                    />
+                        }
+                        alt={`${user.userFirstName} ${user.userLastName}`}
+                        className="rounded-circle"
+                        style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                        onError={() => handleImageError(user.userId)}
+                      />
+                    ) : (
+                      <FaUserCircle 
+                        size={50} 
+                        color="#bbb" 
+                        style={{ background: '#eee', borderRadius: '50%' }} 
+                      />
+                    )}
                     <div>
                       <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                     </div>
                   </Link>
-                  <button
-                    className="btn btn-outline-success ms-auto"
-                    style={{ minWidth: 80 }}
-                    onClick={() => handleMatch(user.userId)}
-                    disabled={isPending}
-                  >
-                    {isPending ? '...' : 'Match'}
-                  </button>
+                  {!isListingOwner && (
+                    <button
+                      className="btn btn-outline-success ms-auto"
+                      style={{ minWidth: 80 }}
+                      onClick={() => handleMatch(user.userId)}
+                      disabled={isPending}
+                    >
+                      {isPending ? '...' : 'Match'}
+                    </button>
+                  )}
                 </div>
               );
             })}

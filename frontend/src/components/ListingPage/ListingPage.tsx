@@ -78,6 +78,8 @@ const ListingPage: React.FC = () => {
   const [editRoomSizeM2, setEditRoomSizeM2] = useState("");
   const [editFlatmatesFemale, setEditFlatmatesFemale] = useState("");
   const [editFlatmatesMale, setEditFlatmatesMale] = useState("");
+  const [editHasBed, setEditHasBed] = useState<"yes" | "no">("no");
+  const [editBedType, setEditBedType] = useState("");
   
   // Editable amenities state
   const [editPropertyAmenities, setEditPropertyAmenities] = useState<string[]>([]);
@@ -90,6 +92,11 @@ const ListingPage: React.FC = () => {
   ];
   
   const roomAmenitiesList = ["Furnished", "Private Bathroom", "Balcony", "Air Conditioner"];
+  
+  // Bed types list
+  const bedTypesList = [
+    "single", "double", "sofa_bed"
+  ];
   
   // Dropdown menu state
   const [showDropdown, setShowDropdown] = useState(false);
@@ -257,6 +264,8 @@ const ListingPage: React.FC = () => {
     setEditRoomSizeM2(listing.roomSizeM2 ? listing.roomSizeM2.toString() : "");
     setEditFlatmatesFemale(listing.flatmatesFemale ? listing.flatmatesFemale.toString() : "");
     setEditFlatmatesMale(listing.flatmatesMale ? listing.flatmatesMale.toString() : "");
+    setEditHasBed(listing.hasBed ? "yes" : "no");
+    setEditBedType(listing.bedType || "");
     
     // Populate editable amenities fields
     setEditPropertyAmenities(
@@ -287,6 +296,8 @@ const ListingPage: React.FC = () => {
     setEditRoomSizeM2("");
     setEditFlatmatesFemale("");
     setEditFlatmatesMale("");
+    setEditHasBed("no");
+    setEditBedType("");
     
     // Reset editable amenities fields
     setEditPropertyAmenities([]);
@@ -420,7 +431,9 @@ const ListingPage: React.FC = () => {
         flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
         flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0,
         propertyAmenities: editPropertyAmenities,
-        roomAmenities: editRoomAmenities
+        roomAmenities: editRoomAmenities,
+        hasBed: editHasBed === "yes",
+        bedType: editBedType
       };
       
       console.log('Sending update data to backend:', updateData);
@@ -451,7 +464,9 @@ const ListingPage: React.FC = () => {
           flatmatesFemale: editFlatmatesFemale ? parseInt(editFlatmatesFemale) : 0,
           flatmatesMale: editFlatmatesMale ? parseInt(editFlatmatesMale) : 0,
           PropertyAmenities: editPropertyAmenities.map(name => ({ name })),
-          RoomAmenities: editRoomAmenities.map(name => ({ name }))
+          RoomAmenities: editRoomAmenities.map(name => ({ name })),
+          hasBed: editHasBed === "yes",
+          bedType: editBedType
         } : null);
         
         exitEditMode();
@@ -1007,16 +1022,20 @@ const ListingPage: React.FC = () => {
           <span>men</span>
         </div>
       ) : (
-        <>
-          On the property already {totalRoommates === 1 ? "lives" : "live"} 
-          {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
-            <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
-          )}
-          {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0 && (listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && " and"}
-          {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
-            <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
-          )}
-        </>
+        totalRoommates === 0 ? (
+          <div>No other roommates</div>
+        ) : (
+          <>
+            On the property already {totalRoommates === 1 ? "lives" : "live"} 
+            {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0) && (
+              <> {(listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0)} {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) === 1 ? "woman" : "women")}</>
+            )}
+            {((listing.flatmatesFemale ?? listing.femaleFlatmates ?? 0) > 0 && (listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && " and"}
+            {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) > 0) && (
+              <> {(listing.flatmatesMale ?? listing.maleFlatmates ?? 0)} {((listing.flatmatesMale ?? listing.maleFlatmates ?? 0) === 1 ? "man" : "men")}</>
+            )}
+          </>
+        )
       )}
     </div>
 
@@ -1083,10 +1102,90 @@ const ListingPage: React.FC = () => {
     )}
 
     {/* Bed type */}
-    {listing.listingType === "room" && listing.hasBed && listing.bedType && (
+    {listing.listingType === "room" && (
       <>
-        <div>The room has a</div>
-        <div>{listing.bedType.replace('_', ' ')} bed</div>
+        <div>The room has a bed</div>
+        <div>
+          {isEditMode ? (
+            <div>
+              {/* Has Bed */}
+              <div className="mb-2">
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="editHasBed"
+                    id="editHasBedYes"
+                    value="yes"
+                    checked={editHasBed === "yes"}
+                    onChange={(e) => setEditHasBed(e.target.value as "yes" | "no")}
+                  />
+                  <label className="form-check-label" htmlFor="editHasBedYes">Yes</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="editHasBed"
+                    id="editHasBedNo"
+                    value="no"
+                    checked={editHasBed === "no"}
+                    onChange={(e) => setEditHasBed(e.target.value as "yes" | "no")}
+                  />
+                  <label className="form-check-label" htmlFor="editHasBedNo">No</label>
+                </div>
+              </div>
+              
+              {/* Bed Type (if hasBed is yes) */}
+              {editHasBed === "yes" && (
+                <div className="mb-2">
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="editBedType"
+                      id="editBedTypeSingle"
+                      value="single"
+                      checked={editBedType === "single"}
+                      onChange={(e) => setEditBedType(e.target.value)}
+                    />
+                    <label className="form-check-label" htmlFor="editBedTypeSingle">Single Bed</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="editBedType"
+                      id="editBedTypeDouble"
+                      value="double"
+                      checked={editBedType === "double"}
+                      onChange={(e) => setEditBedType(e.target.value)}
+                    />
+                    <label className="form-check-label" htmlFor="editBedTypeDouble">Double Bed</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="editBedType"
+                      id="editBedTypeSofa"
+                      value="sofa_bed"
+                      checked={editBedType === "sofa_bed"}
+                      onChange={(e) => setEditBedType(e.target.value)}
+                    />
+                    <label className="form-check-label" htmlFor="editBedTypeSofa">Sofa Bed</label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            listing.hasBed && listing.bedType ? (
+              <div>{listing.bedType.replace('_', ' ')}</div>
+            ) : (
+              <div>No bed</div>
+            )
+          )}
+        </div>
       </>
     )}
   </div>
@@ -1482,6 +1581,7 @@ const ListingPage: React.FC = () => {
         onHide={() => setShowLikesList(false)}
         users={likedUsers}
         listingId={listing?.listingId}
+        listingOwnerId={listing?.user?.userId}
       />
     </div>
   );

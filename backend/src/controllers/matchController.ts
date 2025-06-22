@@ -12,11 +12,22 @@ export const createOrUpdateMatch = async (req: Request, res: Response) => {
     if (!userAId || !userBId || !listingId || !actingUserId) {
       return res.status(400).json({ error: "userAId, userBId, listingId, and actingUserId are required" });
     }
+
+    // Get the listing to check if the acting user is the owner
+    const listing = await Listing.findByPk(listingId);
+    if (!listing) {
+      return res.status(404).json({ error: "Listing not found" });
+    }
+
+    // Prevent the listing owner from matching with users who liked their listing
+    if (listing.userId === actingUserId) {
+      return res.status(403).json({ error: "Listing owners cannot match with users who liked their listing" });
+    }
+
     // Always store userAId < userBId for uniqueness
     const [firstId, secondId] = userAId < userBId ? [userAId, userBId] : [userBId, userAId];
     const isA = actingUserId === firstId;
     let match = await Match.findOne({ where: { userAId: firstId, userBId: secondId, listingId } });
-    const listing = await Listing.findByPk(listingId);
     const listingTitle = listing ? listing.title : "a listing";
     const userA = await User.findByPk(userAId);
     const userB = await User.findByPk(userBId);
