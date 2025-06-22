@@ -2,9 +2,11 @@ import { StepProps } from "./types";
 
 type StepSixProps = StepProps & {
   setSubmitted: (value: boolean) => void;
+  isEditing?: boolean;
+  listingId?: string;
 };
 
-const StepSix = ({ formData, onBack, displayedStep, setSubmitted }: StepSixProps) => {
+const StepSix = ({ formData, onBack, displayedStep, setSubmitted, isEditing, listingId }: StepSixProps) => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -53,8 +55,14 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted }: StepSixProps
         photos: formData.photos || [],
       };
 
-      const response = await fetch("http://localhost:5000/api/listings", {
-        method: "POST",
+      const url = isEditing && listingId 
+        ? `http://localhost:5000/api/listings/${listingId}`
+        : "http://localhost:5000/api/listings";
+      
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -64,13 +72,13 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted }: StepSixProps
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit listing");
+        throw new Error(errorData.error || `Failed to ${isEditing ? 'update' : 'submit'} listing`);
       }
 
       setSubmitted(true);
     } catch (err) {
       console.error("Submission failed:", err);
-      alert("Error submitting listing. Please try again.");
+      alert(`Error ${isEditing ? 'updating' : 'submitting'} listing. Please try again.`);
     }
   };
 
@@ -160,7 +168,7 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted }: StepSixProps
                   width: "25%"
                 }}
               >
-                Submit
+                {isEditing ? 'Update' : 'Submit'}
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
-import { FaUserCircle, FaHeart } from 'react-icons/fa';
+import { FaUserCircle, FaHeart, FaEdit, FaSave, FaTimes, FaEllipsisV, FaTrash } from 'react-icons/fa';
 import LikesList from '../LikesList/LikesList';
 
 interface ListingData {
@@ -59,6 +59,16 @@ const ListingPage: React.FC = () => {
   const [showPhone, setShowPhone] = useState(false);
   const hasFetched = useRef(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editDescription, setEditDescription] = useState("");
+  const [newPhotos, setNewPhotos] = useState<File[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [savingChanges, setSavingChanges] = useState(false);
+  
+  // Dropdown menu state
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -195,6 +205,140 @@ const ListingPage: React.FC = () => {
       alert('Error deleting listing');
     }
   };
+
+  // Add edit handler
+  const handleEdit = () => {
+    if (!listing) return;
+    navigate(`/edit-listing/${listing.listingId}`);
+  };
+
+  // Edit mode functions
+  const enterEditMode = () => {
+    if (!listing) return;
+    setIsEditMode(true);
+    setEditDescription(listing.description || "");
+  };
+
+  const exitEditMode = () => {
+    setIsEditMode(false);
+    setEditDescription("");
+    setNewPhotos([]);
+  };
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      setNewPhotos(prev => [...prev, ...fileArray]);
+    }
+  };
+
+  const removeNewPhoto = (index: number) => {
+    setNewPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (newPhotos.length === 0) return [];
+    
+    setUploadingPhotos(true);
+    const uploadedUrls: string[] = [];
+    
+    try {
+      for (const photo of newPhotos) {
+        const formData = new FormData();
+        formData.append('photo', photo);
+        
+        const response = await fetch('http://localhost:5000/api/listings/upload-photo', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          uploadedUrls.push(data.url);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+    } finally {
+      setUploadingPhotos(false);
+    }
+    
+    return uploadedUrls;
+  };
+
+  const saveChanges = async () => {
+    if (!listing) return;
+    
+    setSavingChanges(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to edit listings');
+        return;
+      }
+
+      // Upload new photos first
+      const newPhotoUrls = await uploadPhotos();
+      
+      // Update listing with new description and photos
+      const response = await fetch(`http://localhost:5000/api/listings/${listing.listingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          description: editDescription,
+          photos: newPhotoUrls
+        })
+      });
+
+      if (response.ok) {
+        // Update local state
+        setListing(prev => prev ? {
+          ...prev,
+          description: editDescription,
+          Photos: [...(prev.Photos || []), ...newPhotoUrls.map(url => ({ url }))]
+        } : null);
+        
+        exitEditMode();
+        alert('Changes saved successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to save changes');
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('Error saving changes. Please try again.');
+    } finally {
+      setSavingChanges(false);
+    }
+  };
+
+  // Dropdown menu functions
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const closeDropdown = () => {
+    setShowDropdown(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.dropdown-container')) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   if (loading) return <div className="container mt-5">Loading...</div>;
   if (!listing) return <div className="container mt-5">Listing not found.</div>;
@@ -354,19 +498,109 @@ const ListingPage: React.FC = () => {
                   })}
                 </div>
               </div>
+              {/* Photo upload section in edit mode */}
+              {isEditMode && (
+                <div className="card p-4 mb-4" style={{ borderRadius: "2rem" }}>
+                  <h5 className="fw-bold mb-3">Add More Photos</h5>
+                  <div className="mb-3">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="form-control"
+                      style={{ borderRadius: "8px" }}
+                    />
+                    <small className="text-muted">Select multiple photos to add to your listing.</small>
+                  </div>
+                  
+                  {/* Preview of new photos */}
+                  {newPhotos.length > 0 && (
+                    <div>
+                      <h6 className="fw-bold mb-2">New Photos to Upload:</h6>
+                      <div className="d-flex gap-2 flex-wrap">
+                        {newPhotos.map((photo, index) => (
+                          <div key={index} style={{ position: 'relative' }}>
+                            <img
+                              src={URL.createObjectURL(photo)}
+                              alt={`new-photo-${index}`}
+                              style={{
+                                width: 120,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                border: '2px solid #ddd'
+                              }}
+                            />
+                            <button
+                              onClick={() => removeNewPhoto(index)}
+                              style={{
+                                position: 'absolute',
+                                top: -8,
+                                right: -8,
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {uploadingPhotos && (
+                    <div className="mt-3">
+                      <div className="spinner-border spinner-border-sm" role="status">
+                        <span className="visually-hidden">Uploading...</span>
+                      </div>
+                      <span className="ms-2">Uploading photos...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Description and all data */}
               <div className="card p-4 mb-4" style={{ borderRadius: "2rem" }}>
                 <h5 className="fw-bold mb-3">Description</h5>
                 <div style={{ marginBottom: 16 }}>
-                  {listing.description || <span className="text-muted">No description provided.</span>}
-                  <p style={{ marginTop: 12 }}>
-                  {listing.userRole === "tenant" && (
-                      <span>{listing.user?.name} is a tenant in the property.</span>
-                    )}
-                    {listing.userRole === "owner" && (
-                      <span>{listing.user?.name} is the owner of the property.</span>
-                    )}
-                  </p>
+                  {isEditMode ? (
+                    <div>
+                      <textarea
+                        className="form-control"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        rows={6}
+                        placeholder="Enter description..."
+                        style={{ 
+                          borderRadius: "8px",
+                          border: "1px solid #ddd",
+                          padding: "12px",
+                          fontSize: "14px"
+                        }}
+                      />
+                      <small className="text-muted">Edit your listing description here.</small>
+                    </div>
+                  ) : (
+                    <>
+                      {listing.description || <span className="text-muted">No description provided.</span>}
+                      <p style={{ marginTop: 12 }}>
+                        {listing.userRole === "tenant" && (
+                          <span>{listing.user?.name} is a tenant in the property.</span>
+                        )}
+                        {listing.userRole === "owner" && (
+                          <span>{listing.user?.name} is the owner of the property.</span>
+                        )}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <h6 className="fw-bold mb-2">Details</h6>
                 {/* User/role phrase above the subtitle */}
@@ -478,6 +712,41 @@ const ListingPage: React.FC = () => {
     )}
   </div>
                 </div>
+                
+                {/* Save Changes button in edit mode */}
+                {isEditMode && (
+                  <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
+                    <div className="d-flex justify-content-center">
+                      <button
+                        className="btn btn-lg"
+                        onClick={saveChanges}
+                        disabled={savingChanges || uploadingPhotos}
+                        style={{
+                          padding: '12px 32px',
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          borderRadius: '12px',
+                          minWidth: '200px',
+                          backgroundColor: '#a1cca7',
+                          borderColor: '#a1cca7',
+                          color: 'white'
+                        }}
+                      >
+                        {savingChanges ? 'Saving Changes...' : 'Save Changes'}
+                      </button>
+                    </div>
+                    {(savingChanges || uploadingPhotos) && (
+                      <div className="text-center mt-3">
+                        <div className="spinner-border spinner-border-sm" role="status">
+                          <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <span className="ms-2 text-muted">
+                          {uploadingPhotos ? 'Uploading photos...' : 'Saving changes...'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
             </div>
@@ -517,15 +786,111 @@ const ListingPage: React.FC = () => {
                       {isLiked ? 'Remove from favourites' : 'Add to favourites'}
                     </button>
                   )}
-                  {/* Delete button for owner */}
+                  
+                  {/* Dropdown menu for owner actions */}
                   {isOwner && (
-                    <button
-                      className="btn btn-danger"
-                      onClick={handleDelete}
-                      style={{ marginLeft: 8 }}
-                    >
-                      Delete Listing
-                    </button>
+                    <div className="dropdown-container" style={{ position: 'relative' }}>
+                      <button
+                        className="btn btn-outline-secondary"
+                        onClick={toggleDropdown}
+                        style={{
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          border: '1px solid #ddd'
+                        }}
+                      >
+                        <FaEllipsisV />
+                      </button>
+                      
+                      {showDropdown && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            backgroundColor: 'white',
+                            border: '1px solid #ddd',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            zIndex: 1000,
+                            minWidth: '180px',
+                            marginTop: '4px'
+                          }}
+                        >
+                          {!isEditMode ? (
+                            <>
+                              <button
+                                className="btn btn-link w-100 text-start"
+                                onClick={() => {
+                                  enterEditMode();
+                                  closeDropdown();
+                                }}
+                                style={{
+                                  border: 'none',
+                                  padding: '12px 16px',
+                                  color: '#333',
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <FaEdit />
+                                Edit Listing
+                              </button>
+                              <button
+                                className="btn btn-link w-100 text-start"
+                                onClick={() => {
+                                  handleDelete();
+                                  closeDropdown();
+                                }}
+                                style={{
+                                  border: 'none',
+                                  padding: '12px 16px',
+                                  color: '#dc3545',
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <FaTrash />
+                                Delete Listing
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-link w-100 text-start"
+                                onClick={() => {
+                                  exitEditMode();
+                                  closeDropdown();
+                                }}
+                                disabled={savingChanges || uploadingPhotos}
+                                style={{
+                                  border: 'none',
+                                  padding: '12px 16px',
+                                  color: '#6c757d',
+                                  textDecoration: 'none',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  opacity: (savingChanges || uploadingPhotos) ? 0.6 : 1
+                                }}
+                              >
+                                <FaTimes />
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
