@@ -10,6 +10,7 @@ import Inbox from '../Inbox/Inbox';
 import MyListings from '../MyListings/MyListings';
 import AccountInfo from '../AccountInfo/AccountInfo';
 import Favourites from '../Favourites';
+import Recommendations from '../Recommendations/Recommendations';
 
 // Add TypeScript declaration for global navigation
 declare global {
@@ -103,6 +104,7 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/account" element={<AccountInfo />} />
         <Route path="/account/:userId" element={<AccountInfo />} />
         <Route path="/favourites" element={<Favourites />} />
+        <Route path="/recommendations" element={<Recommendations />} />
       </Routes>
     </div>
   );

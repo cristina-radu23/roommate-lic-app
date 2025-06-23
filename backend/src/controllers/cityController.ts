@@ -3,7 +3,9 @@ import { Request, Response } from "express";
 
 export const getCities = async (req: Request, res: Response) => {
   try {
-    const cities = await City.findAll({attributes: ['cityId', 'cityName']});
+    const cities = await City.findAll({
+      attributes: ['cityId', 'cityName', 'latitude', 'longitude']
+    });
     res.json(cities);
   } catch (error) {
     console.error("Error fetching cities:", error);

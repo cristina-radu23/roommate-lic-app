@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import Like from "../models/Like";
 import User from "../models/User";
+import { RecommendationService } from "../services/recommendationService";
+
+// Initialize recommendation service
+const recommendationService = new RecommendationService();
 
 export const addLike = async (req: Request, res: Response) => {
   try {
@@ -10,6 +14,17 @@ export const addLike = async (req: Request, res: Response) => {
       return;
     }
     const [like, created] = await Like.findOrCreate({ where: { userId, listingId } });
+    
+    // Update user preferences for recommendations if like was created
+    if (created) {
+      try {
+        await recommendationService.updateUserPreferences(userId);
+      } catch (error) {
+        console.error('Error updating user preferences:', error);
+        // Don't fail the like operation if recommendation update fails
+      }
+    }
+    
     res.status(created ? 201 : 200).json(like);
     return;
   } catch (err) {
@@ -26,7 +41,18 @@ export const removeLike = async (req: Request, res: Response) => {
       return;
     }
     const deleted = await Like.destroy({ where: { userId, listingId } });
-    res.json({ success: !!deleted });
+    
+    // Update user preferences for recommendations if like was removed
+    if (deleted > 0) {
+      try {
+        await recommendationService.updateUserPreferences(userId);
+      } catch (error) {
+        console.error('Error updating user preferences:', error);
+        // Don't fail the unlike operation if recommendation update fails
+      }
+    }
+    
+    res.json({ deleted: deleted > 0 });
     return;
   } catch (err) {
     res.status(500).json({ error: "Failed to remove like" });

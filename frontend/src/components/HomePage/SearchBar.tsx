@@ -6,14 +6,17 @@ import HomePageFilterPanel from "./HomePageFilterPanel";
 import homeBackground from "../../assets/Home.png";
 import ReactDOM from 'react-dom';
 import { FaFilter } from 'react-icons/fa';
+import { CityCoordinates } from "../Map/MapComponent";
 
 interface SearchBarProps {
-  onSearch: (criteria: FilterCriteria) => void;
+  onSearch: (criteria: FilterCriteria, coordinates?: CityCoordinates) => void;
 }
 
 interface CityOption {
   value: string;
   label: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
@@ -27,9 +30,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
       try {
         const res = await fetch("http://localhost:5000/api/cities");
         const data = await res.json();
-        const formatted = data.map((city: { cityId: string; cityName: string }) => ({
+        const formatted = data.map((city: { cityId: string; cityName: string; latitude?: number; longitude?: number }) => ({
           value: city.cityId,
           label: city.cityName,
+          latitude: city.latitude,
+          longitude: city.longitude,
         }));
         setCities(formatted);
       } catch (err) {
@@ -40,7 +45,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   }, []);
 
   const handleSearch = () => {
-    onSearch({ ...selectedFilters, city: selectedCity?.value });
+    const coordinates = selectedCity?.latitude && selectedCity?.longitude 
+      ? { lat: selectedCity.latitude, lng: selectedCity.longitude }
+      : undefined;
+    
+    onSearch({ ...selectedFilters, city: selectedCity?.value }, coordinates);
   };
 
   const handleCityChange = (option: CityOption | null) => {

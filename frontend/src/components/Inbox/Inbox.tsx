@@ -2,18 +2,23 @@ import React, { useEffect, useState, useRef } from 'react';
 import profileIcon from '../../assets/profileIcon.png';
 import './Inbox.css';
 import { useLocation } from 'react-router-dom';
+import { useSocket } from '../../hooks/useSocket';
 
 interface ChatRoom {
   chatRoomId: number;
   ChatRoom: { chatRoomId: number; listingId: number; isMatchmaking: boolean };
   // ...other fields as needed
   users?: { userId: number; name: string; avatar?: string }[];
+  unreadCount?: number;
 }
+
 interface Message {
   messageId: number;
   userId: number;
   content: string;
   createdAt: string;
+  chatRoomId?: number;
+  seen?: boolean;
   User?: { 
     userFirstName: string;
     userLastName: string;
@@ -49,10 +54,16 @@ const Inbox: React.FC = () => {
   const [message, setMessage] = useState('');
   const [loadingChats, setLoadingChats] = useState(true);
   const [sending, setSending] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // WebSocket hook
+  const { socket, isConnected } = useSocket();
 
   console.log('[Inbox] location.state:', location.state);
+  console.log('[Inbox] WebSocket connected:', isConnected);
 
   const userId = Number(localStorage.getItem('userId')); // You should store userId on login
   const token = localStorage.getItem('token');
@@ -144,11 +155,99 @@ const Inbox: React.FC = () => {
     }
   }, [selectedChat, userId]);
 
+  // WebSocket event handlers
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for new messages
+    socket.on('new_message', (data: Message) => {
+      console.log('[Inbox] Received new message:', data);
+      if (selectedChat?.ChatRoom.chatRoomId === data.chatRoomId) {
+        setMessages(prev => [...prev, data]);
+      }
+      // Update chat list with new message
+      updateChatList();
+    });
+
+    // Listen for typing indicators
+    socket.on('user_typing', (data: { userId: number; chatRoomId: number }) => {
+      if (selectedChat?.ChatRoom.chatRoomId === data.chatRoomId) {
+        setTypingUsers(prev => new Set(prev).add(data.userId));
+      }
+    });
+
+    socket.on('user_stop_typing', (data: { userId: number; chatRoomId: number }) => {
+      if (selectedChat?.ChatRoom.chatRoomId === data.chatRoomId) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(data.userId);
+          return newSet;
+        });
+      }
+    });
+
+    // Listen for message seen notifications
+    socket.on('message_seen', (data: { chatRoomId: number; seenBy: number }) => {
+      console.log('[Inbox] Message seen:', data);
+      // Update UI to show message as seen
+      updateMessageStatus(data);
+    });
+
+    // Listen for unread count updates
+    socket.on('unread_count_update', (data: { chatRoomId: number; count: number }) => {
+      console.log('[Inbox] Unread count update:', data);
+      // Update unread count in chat list
+      updateUnreadCount(data);
+    });
+
+    return () => {
+      socket.off('new_message');
+      socket.off('user_typing');
+      socket.off('user_stop_typing');
+      socket.off('message_seen');
+      socket.off('unread_count_update');
+    };
+  }, [socket, selectedChat]);
+
+  // Helper functions for WebSocket updates
+  const updateChatList = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+      const data = await res.json();
+      setChats(data);
+    } catch (error) {
+      console.error('Error updating chat list:', error);
+    }
+  };
+
+  const updateMessageStatus = (data: { chatRoomId: number; seenBy: number }) => {
+    // Update messages to show as seen
+    setMessages(prev => prev.map(msg => ({
+      ...msg,
+      seen: msg.chatRoomId === data.chatRoomId ? true : msg.seen
+    })));
+  };
+
+  const updateUnreadCount = (data: { chatRoomId: number; count: number }) => {
+    // Update unread count in chat list
+    setChats(prev => prev.map(chat => {
+      if (chat.ChatRoom.chatRoomId === data.chatRoomId) {
+        return {
+          ...chat,
+          unreadCount: (chat.unreadCount || 0) + data.count
+        };
+      }
+      return chat;
+    }));
+  };
+
   const handleSend = async () => {
     if (!message.trim()) return;
     setSending(true);
     try {
       let chatRoomId = selectedChat?.ChatRoom.chatRoomId;
+      
       // If this is a new chat (from ListingPage), create it first
       if (pendingChat && !chatRoomId) {
         const createRes = await fetch('http://localhost:5000/api/chat/create', {
@@ -162,56 +261,66 @@ const Inbox: React.FC = () => {
         });
         const createData = await createRes.json();
         chatRoomId = createData.chatRoomId;
+        
         // Refresh chat list
         const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
         const chatList = await chatListRes.json();
         setChats(chatList);
+        
         // If chat already existed, select it; otherwise select the new chat
         const newChat = chatList.find((c: any) => c.ChatRoom.chatRoomId === chatRoomId);
         setSelectedChat(newChat);
         setPendingChat(null);
+        
+        // Join the chat room via WebSocket
+        if (socket && chatRoomId) {
+          socket.emit('join_chat', { chatRoomId });
+        }
+        
         if (createData.existing) {
-          // Now send the message to the existing chat
-          await fetch('http://localhost:5000/api/chat/message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
+          // Send message via WebSocket for existing chat
+          if (socket && chatRoomId) {
+            socket.emit('send_message', {
               chatRoomId,
-              userId,
               content: message
-            })
-          });
-          setMessage('');
-          if (chatRoomId) {
-            const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
-            setMessages(await msgRes.json());
+            });
           }
-          // Refetch chat list to update preview
-          const chatListRes2 = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
-          setChats(await chatListRes2.json());
+          setMessage('');
           setSending(false);
           return;
         }
       }
-      // Send the message
-      await fetch('http://localhost:5000/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
+
+      // Send message via WebSocket
+      if (socket && chatRoomId) {
+        socket.emit('send_message', {
           chatRoomId,
-          userId,
           content: message
-        })
-      });
-      setMessage('');
-      // Refresh messages
-      if (chatRoomId) {
-        const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
-        setMessages(await msgRes.json());
+        });
+        setMessage('');
+      } else {
+        // Fallback to REST API if WebSocket is not available
+        await fetch('http://localhost:5000/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            chatRoomId,
+            userId,
+            content: message
+          })
+        });
+        setMessage('');
+        
+        // Refresh messages and chat list
+        if (chatRoomId) {
+          const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
+          setMessages(await msgRes.json());
+        }
+        const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+        setChats(await chatListRes.json());
       }
-      // Refetch chat list to update preview
-      const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
-      setChats(await chatListRes.json());
+    } catch (error) {
+      console.error('Error sending message:', error);
     } finally {
       setSending(false);
     }
@@ -220,10 +329,37 @@ const Inbox: React.FC = () => {
   const handleChatClick = (chat: ChatRoom) => {
     setSelectedChat(chat);
     setPendingChat(null);
+    
+    // Join the chat room via WebSocket
+    if (socket && chat.ChatRoom.chatRoomId) {
+      socket.emit('join_chat', { chatRoomId: chat.ChatRoom.chatRoomId });
+    }
+    
     // Optimistically set unreadCount to 0 for this chat
     setChats(prevChats => prevChats.map(c =>
       c.ChatRoom.chatRoomId === chat.ChatRoom.chatRoomId ? { ...c, unreadCount: 0 } : c
     ));
+  };
+
+  const handleTyping = () => {
+    if (!socket || !selectedChat) return;
+
+    // Emit typing start
+    socket.emit('typing_start', {
+      chatRoomId: selectedChat.ChatRoom.chatRoomId
+    });
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('typing_stop', {
+        chatRoomId: selectedChat.ChatRoom.chatRoomId
+      });
+    }, 2000);
   };
 
   // Render chat list
@@ -296,7 +432,10 @@ const Inbox: React.FC = () => {
               type="text"
               placeholder="Write a message here"
               value={message}
-              onChange={e => setMessage(e.target.value)}
+              onChange={e => {
+                setMessage(e.target.value);
+                handleTyping();
+              }}
               disabled={sending}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -328,6 +467,11 @@ const Inbox: React.FC = () => {
               {isOtherUserInactive && (
                 <div style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: 2 }}>Inactive user</div>
               )}
+              <div style={{ fontSize: '0.75rem', marginTop: 2 }}>
+                <span style={{ color: isConnected ? '#28a745' : '#dc3545' }}>
+                  ● {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="inbox-chat-messages" style={{ overflowY: 'auto' }}>
@@ -348,6 +492,18 @@ const Inbox: React.FC = () => {
                 </div>
               </div>
             ))}
+            {/* Typing indicator */}
+            {typingUsers.size > 0 && (
+              <div className="inbox-message received">
+                <img src={profileIcon} alt="avatar" className="inbox-message-avatar" />
+                <div className="inbox-message-content" style={{ fontStyle: 'italic', color: '#666' }}>
+                  {Array.from(typingUsers).map(userId => {
+                    const user = getOtherUser(selectedChat, userId);
+                    return user ? `${user.userFirstName} is typing...` : 'Someone is typing...';
+                  }).join(', ')}
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
           {isOtherUserInactive ? (
@@ -367,7 +523,10 @@ const Inbox: React.FC = () => {
                 type="text"
                 placeholder="Write a message here"
                 value={message}
-                onChange={e => setMessage(e.target.value)}
+                onChange={e => {
+                  setMessage(e.target.value);
+                  handleTyping();
+                }}
                 disabled={sending}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey) {

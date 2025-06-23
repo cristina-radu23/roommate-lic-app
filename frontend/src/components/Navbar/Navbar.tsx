@@ -185,6 +185,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   {showDropdown && (
                     <ul className="dropdown-menu dropdown-menu-end show" style={{ position: "absolute" }}>
                       <li><Link className="dropdown-item" to="/favourites">Favourites</Link></li>
+                      <li><Link className="dropdown-item" to="/recommendations">Recommendations</Link></li>
                       <li><Link className="dropdown-item" to="/account">Account</Link></li>
                       <li><Link className="dropdown-item" to="/mylistings">My Listings</Link></li>
                       <li><Link className="dropdown-item" to="/postListing">Add listing</Link></li>

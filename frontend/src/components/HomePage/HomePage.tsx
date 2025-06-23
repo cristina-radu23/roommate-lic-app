@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import L from 'leaflet';
 import SearchBar from "./SearchBar";
 import ListingsGrid from "./ListingsGrid";
@@ -36,6 +36,8 @@ const HomePage: React.FC = () => {
   const [mapBounds, setMapBounds] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [useMapBounds, setUseMapBounds] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchListings = useCallback(async () => {
     setIsLoading(true);
@@ -43,14 +45,17 @@ const HomePage: React.FC = () => {
     try {
       // Combine filters and mapBounds for the query
       const queryParams = { ...filters };
-      if (mapBounds) {
+      if (mapBounds && useMapBounds) {
         Object.assign(queryParams, mapBounds);
+        console.log("[HomePage] Using map bounds for filtering:", mapBounds);
       }
       const query = objectToQueryString(queryParams);
       const url = `http://localhost:5000/api/listings${query}`;
+      console.log("[HomePage] Fetching listings from:", url);
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch listings');
       const data: PostListingFormData[] = await res.json();
+      console.log("[HomePage] Received listings:", data.length);
       setListings(data);
     } catch (err: any) {
       setError(err.message);
@@ -58,18 +63,32 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, mapBounds]);
+  }, [filters, mapBounds, useMapBounds]);
 
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const applyFilters = (newFilters: FilterCriteria, coordinates?: CityCoordinates) => {
+    console.log("[HomePage] Applying filters:", newFilters, "with coordinates:", coordinates);
     setFilters(newFilters);
     if (coordinates) {
       setMapCenter(coordinates);
+      console.log("[HomePage] Setting map center to:", coordinates);
+    } else {
+      setMapCenter(undefined);
     }
     setMapBounds(null); // Reset map bounds when applying new filters
+    setUseMapBounds(false); // Don't use map bounds for initial filter
   };
   
   const handleMapChange = (bounds: L.LatLngBounds) => {
@@ -79,7 +98,20 @@ const HomePage: React.FC = () => {
       east: bounds.getEast(),
       west: bounds.getWest(),
     };
-    setMapBounds(newBoundsFilter);
+    
+    console.log("[HomePage] Map bounds changed:", newBoundsFilter);
+    
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    // Set a new timeout to debounce the API call
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log("[HomePage] Applying debounced map bounds");
+      setMapBounds(newBoundsFilter);
+      setUseMapBounds(true); // Enable map bounds filtering after user stops moving
+    }, 500); // 500ms delay
   };
 
   const mapListings = listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number');

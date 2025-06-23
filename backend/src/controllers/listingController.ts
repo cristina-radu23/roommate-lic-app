@@ -134,7 +134,11 @@ export const getAllListings = async (req: Request, res: Response) => {
       amenities,
       rules,
       roomAmenities,
-      city
+      city,
+      north,
+      south,
+      east,
+      west
     } = req.query;
 
     // Debug: print received query params
@@ -151,6 +155,25 @@ export const getAllListings = async (req: Request, res: Response) => {
     if (propertyType) where.propertyType = propertyType;
     if (preferredRoommate === "female") where.flatmatesMale = 0;
     if (preferredRoommate === "male") where.flatmatesFemale = 0;
+
+    // Add geographic bounds filtering
+    if (north && south && east && west) {
+      console.log("[Backend] Applying geographic bounds filtering:", { north, south, east, west });
+      // Only include listings that have coordinates and are within bounds
+      where.latitude = {
+        [Op.and]: [
+          { [Op.between]: [Number(south), Number(north)] },
+          { [Op.ne]: null }
+        ]
+      };
+      where.longitude = {
+        [Op.and]: [
+          { [Op.between]: [Number(west), Number(east)] },
+          { [Op.ne]: null }
+        ]
+      };
+      console.log("[Backend] Geographic where clause:", where.latitude, where.longitude);
+    }
 
     // Debug: print where clause
     console.log("[Listings] Built where clause:", where);
@@ -378,12 +401,20 @@ export const getListingById = async (req: Request, res: Response) => {
     }
     // Add likesCount
     const likesCount = await Like.count({ where: { listingId: listing.listingId } });
+
+    // Map photos to a simple array of URLs
+    const photoInstances = (listing as any).Photos || (listing as any).Photo || [];
+    const photos = Array.isArray(photoInstances)
+      ? photoInstances.map((p: any) => p.url)
+      : [];
+
     res.json({
       ...listing.toJSON(),
       user,
       cityName,
       likesCount,
       views: listing.views,
+      photos,
     });
   } catch (error) {
     console.error("Error fetching listing by id:", error);

@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createServer } from "http";
 import sequelize from "./config/db";
 import { Op } from "sequelize";
 import "./models";
 import User from "./models/User";
 import PendingRegistration from "./models/PendingRegistration";
+import { SocketService } from "./services/socketService";
 
 // Load all models and associations
 
@@ -26,7 +28,7 @@ import likeRoutes from './routes/likes';
 import matchRoutes from './routes/match';
 import messageRoutes from './routes/messageRoutes';
 import notificationRoutes from "./routes/notificationRoutes";
-
+import recommendationRoutes from "./routes/recommendations";
 
 // Only a few cities shown for brevity — add the full list
 const cities: { countyId: string; cityName: string }[] = [
@@ -118,6 +120,7 @@ app.use("/api/likes", likeRoutes);
 app.use("/api/match", matchRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 
 // ✅ County seeding function
@@ -205,8 +208,16 @@ const startServer = async () => {
     await seedAmenities();
     await cleanupExpiredRegistrations(); // Clean up expired registrations
 
-    app.listen(PORT, () => {
+    // Create HTTP server
+    const httpServer = createServer(app);
+    
+    // Initialize WebSocket service
+    const socketService = new SocketService(httpServer);
+    console.log("✅ WebSocket service initialized");
+
+    httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🔌 WebSocket server ready`);
     });
   } catch (err) {
     console.error("❌ Failed to start server:", err);

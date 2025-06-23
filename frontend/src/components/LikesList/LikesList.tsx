@@ -30,6 +30,7 @@ interface LikesListProps {
 
 const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, listingOwnerId }) => {
   const currentUserId = Number(localStorage.getItem('userId'));
+  const isAuthenticated = !!localStorage.getItem('token') && currentUserId;
   const navigate = useNavigate();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,27 +41,34 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
   // Check if current user is the listing owner
   const isListingOwner = listingOwnerId && currentUserId === listingOwnerId;
 
+  // Check if user can perform match actions (authenticated and not listing owner)
+  const canPerformMatchActions = isAuthenticated && !isListingOwner;
+
   useEffect(() => {
-    if (!show) return;
+    if (!show || !isAuthenticated) return;
     setLoading(true);
-    fetch(`http://localhost:5000/api/match/user/${currentUserId}`)
+    fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
       .then(res => res.json())
       .then(data => setMatches(data.filter((m: Match) => m.listingId === listingId)))
       .finally(() => setLoading(false));
-  }, [show, listingId, currentUserId]);
-
-  const isMatched = (userId: number) => {
-    return matches.some(
-      m => (m.userAId === currentUserId && m.userBId === userId || m.userAId === userId && m.userBId === currentUserId) && (m.userAConfirmed || m.userBConfirmed)
-    );
-  };
+  }, [show, listingId, currentUserId, isAuthenticated]);
 
   const handleMatch = async (userId: number) => {
+    if (!isAuthenticated) {
+      return;
+    }
     setPending(userId);
     setPendingMatchUserId(userId);
     await fetch('http://localhost:5000/api/match', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
       body: JSON.stringify({
         userAId: currentUserId,
         userBId: userId,
@@ -69,18 +77,28 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
       })
     });
     // Refresh matches
-    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`);
+    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
     const data = await res.json();
     setMatches(data.filter((m: Match) => m.listingId === listingId));
     setPending(null);
   };
 
   const handleUnmatch = async (userId: number) => {
+    if (!isAuthenticated) {
+      return;
+    }
     setPending(userId);
     setPendingMatchUserId(null);
     await fetch('http://localhost:5000/api/match', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
       body: JSON.stringify({
         userAId: currentUserId,
         userBId: userId,
@@ -88,7 +106,11 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
       })
     });
     // Refresh matches
-    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`);
+    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
     const data = await res.json();
     setMatches(data.filter((m: Match) => m.listingId === listingId));
     setPending(null);
@@ -121,6 +143,12 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
         <Modal.Title>People who liked this listing</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {!isAuthenticated && (
+          <div className="alert alert-info text-center mb-3">
+            <i className="fas fa-info-circle me-2"></i>
+            Please <Link to="/login" onClick={onHide}>log in</Link> to match with other users.
+          </div>
+        )}
         {users.length === 0 ? (
           <p className="text-muted text-center">No likes yet</p>
         ) : (
@@ -206,7 +234,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                         <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                       </div>
                     </Link>
-                    {!isListingOwner && (
+                    {canPerformMatchActions && (
                       <button
                         className="btn btn-primary ms-auto"
                         style={{ minWidth: 120 }}
@@ -260,7 +288,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                         <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                       </div>
                     </Link>
-                    {!isListingOwner && (
+                    {canPerformMatchActions && (
                       <button
                         className="btn btn-outline-danger ms-auto"
                         style={{ minWidth: 80 }}
@@ -305,7 +333,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                       <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                     </div>
                   </Link>
-                  {!isListingOwner && (
+                  {canPerformMatchActions && (
                     <button
                       className="btn btn-outline-success ms-auto"
                       style={{ minWidth: 80 }}
