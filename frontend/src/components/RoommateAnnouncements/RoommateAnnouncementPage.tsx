@@ -83,14 +83,134 @@ const RoommateAnnouncementPage: React.FC = () => {
           {announcement.user?.userFirstName} {announcement.user?.userLastName} is looking for a roommate
         </h2>
         <div style={{ marginBottom: 18, color: '#666' }}>{announcement.description}</div>
-        
-        {/* Clean table format for details */}
-        <div style={{ marginBottom: 24 }}>
-          <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 16, color: '#333' }}>Preferences</h3>
+
+        {/* About Me Section */}
+        <div style={{ marginBottom: 32 }}>
+          <h3 style={{ fontWeight: 600, fontSize: 22, marginBottom: 16, color: '#333' }}>About Me</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
+            {announcement.fullName && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Name:</span>
+                <span>{announcement.fullName}</span>
+              </div>
+            )}
+            {announcement.age && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Age:</span>
+                <span>{announcement.age}</span>
+              </div>
+            )}
+            {announcement.gender && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Gender:</span>
+                <span>{announcement.gender}</span>
+              </div>
+            )}
+            {announcement.occupation && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Occupation:</span>
+                <span>{announcement.occupation}</span>
+              </div>
+            )}
+            {announcement.occupationOther && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Occupation (Other):</span>
+                <span>{announcement.occupationOther}</span>
+              </div>
+            )}
+            {announcement.workSchedule && announcement.workSchedule.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Work Schedule:</span>
+                <span>{Array.isArray(announcement.workSchedule) ? announcement.workSchedule.join(', ') : announcement.workSchedule}</span>
+              </div>
+            )}
+            {announcement.smoking && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Smoking:</span>
+                <span>{announcement.smoking}</span>
+              </div>
+            )}
+            {announcement.drinking && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Drinking:</span>
+                <span>{announcement.drinking}</span>
+              </div>
+            )}
+            {announcement.hasPets && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Has Pets:</span>
+                <span>{announcement.hasPets}</span>
+              </div>
+            )}
+            {announcement.petType && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Pet Type:</span>
+                <span>{announcement.petType}</span>
+              </div>
+            )}
+            {announcement.okayWithPets && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Okay With Pets:</span>
+                <span>{announcement.okayWithPets}</span>
+              </div>
+            )}
+            {announcement.cleanlinessLevelNum && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Cleanliness Level:</span>
+                <span>{announcement.cleanlinessLevelNum}/5</span>
+              </div>
+            )}
+            {announcement.socialPreferenceRaw && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Social Preference:</span>
+                <span>{announcement.socialPreferenceRaw}</span>
+              </div>
+            )}
+            {announcement.noiseLevelRaw && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Noise Level:</span>
+                <span>{announcement.noiseLevelRaw}</span>
+              </div>
+            )}
+            {announcement.sleepSchedule && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Sleep Schedule:</span>
+                <span>{announcement.sleepSchedule}</span>
+              </div>
+            )}
+            {announcement.visitorsOften && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Visitors Often:</span>
+                <span>{announcement.visitorsOften}</span>
+              </div>
+            )}
+            {announcement.languages && announcement.languages.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Languages:</span>
+                <span>{Array.isArray(announcement.languages) ? announcement.languages.join(', ') : announcement.languages}</span>
+              </div>
+            )}
+            {announcement.culturalBackground && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Cultural Background:</span>
+                <span>{announcement.culturalBackground}</span>
+              </div>
+            )}
+            {announcement.hobbies && announcement.hobbies.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Hobbies:</span>
+                <span>{Array.isArray(announcement.hobbies) ? announcement.hobbies.join(', ') : announcement.hobbies}</span>
+              </div>
+            )}
+            {announcement.locationAreas && announcement.locationAreas.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                <span style={{ fontWeight: 500, color: '#555' }}>Preferred Cities:</span>
+                <span>{announcement.locationAreas.join(', ')}</span>
+              </div>
+            )}
             {announcement.preferredAgeMin && announcement.preferredAgeMax && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: 500, color: '#555' }}>Age Range:</span>
+                <span style={{ fontWeight: 500, color: '#555' }}>Preferred Age Range:</span>
                 <span>{announcement.preferredAgeMin} - {announcement.preferredAgeMax}</span>
               </div>
             )}
@@ -114,25 +234,25 @@ const RoommateAnnouncementPage: React.FC = () => {
             )}
             {announcement.smokingPreference && announcement.smokingPreference !== 'N/A' && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: 500, color: '#555' }}>Smoking:</span>
+                <span style={{ fontWeight: 500, color: '#555' }}>Smoking Preference:</span>
                 <span>{announcement.smokingPreference}</span>
               </div>
             )}
             {announcement.petPreference && announcement.petPreference !== 'N/A' && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: 500, color: '#555' }}>Pets:</span>
+                <span style={{ fontWeight: 500, color: '#555' }}>Pet Preference:</span>
                 <span>{announcement.petPreference}</span>
               </div>
             )}
             {announcement.cleanlinessLevel && announcement.cleanlinessLevel !== 'N/A' && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: 500, color: '#555' }}>Cleanliness:</span>
+                <span style={{ fontWeight: 500, color: '#555' }}>Cleanliness Preference:</span>
                 <span>{announcement.cleanlinessLevel}</span>
               </div>
             )}
             {announcement.noiseLevel && announcement.noiseLevel !== 'N/A' && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: 500, color: '#555' }}>Noise Level:</span>
+                <span style={{ fontWeight: 500, color: '#555' }}>Noise Preference:</span>
                 <span>{announcement.noiseLevel}</span>
               </div>
             )}
@@ -150,6 +270,8 @@ const RoommateAnnouncementPage: React.FC = () => {
             )}
           </div>
         </div>
+        
+       
 
         {/* Location and other preferences */}
         {announcement.locationPreferences && announcement.locationPreferences.length > 0 && (

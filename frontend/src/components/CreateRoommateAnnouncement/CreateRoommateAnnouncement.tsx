@@ -106,28 +106,51 @@ const CreateRoommateAnnouncement: React.FC = () => {
       const announcementData = {
         title: `${formData.fullName || 'Someone'} looking for roommate`,
         description: formData.bio,
-        budgetMin: Math.floor(formData.budget * 0.8), // 20% range
+        budgetMin: Math.floor(formData.budget * 0.8),
         budgetMax: Math.ceil(formData.budget * 1.2),
         moveInDate: formData.moveInDate,
         leaseDuration: 12, // Default to 12 months
         preferredGender: formData.preferredGender.length > 0 ? 
           (formData.preferredGender[0] === 'male' ? 'male' : 
            formData.preferredGender[0] === 'female' ? 'female' : 'any') as 'male' | 'female' | 'any' : 'any',
-        preferredOccupation: formData.occupation === 'student' ? 'student' as 'student' : 'employed' as 'employed',
-        preferredAgeMin: Math.max(18, formData.age - 5),
-        preferredAgeMax: formData.age + 5,
-        smokingPreference: (formData.smoking === 'yes' ? 'smoker' : 'non-smoker') as 'smoker' | 'non-smoker' | 'any',
-        petPreference: (formData.okayWithPets === 'yes' ? 'pet-friendly' : 'no-pets') as 'pet-friendly' | 'no-pets' | 'any',
-        cleanlinessLevel: (formData.cleanlinessLevel <= 2 ? 'relaxed' : 
+        userOccupation: formData.occupation === 'student' ? 'student' as 'student' : 'employed' as 'employed',
+        userAgeMin: Math.max(18, formData.age - 5),
+        userAgeMax: formData.age + 5,
+        smokingStatus: (formData.smoking === 'yes' ? 'smoker' : 'non-smoker') as 'smoker' | 'non-smoker' | 'any',
+        petStatus: (formData.okayWithPets === 'yes' ? 'pet-friendly' : 'no-pets') as 'pet-friendly' | 'no-pets' | 'any',
+        cleanlinessAttitude: (formData.cleanlinessLevel <= 2 ? 'relaxed' : 
                          formData.cleanlinessLevel >= 4 ? 'very-clean' : 'moderate') as 'very-clean' | 'moderate' | 'relaxed',
-        noiseLevel: (formData.noiseLevel === 'very-quiet' ? 'quiet' : 
+        noiseAttitude: (formData.noiseLevel === 'very-quiet' ? 'quiet' : 
                    formData.noiseLevel === 'noisy' ? 'social' : 'moderate') as 'quiet' | 'moderate' | 'social',
         studyHabits: (formData.workSchedule.includes('work-from-home') ? 'quiet-study' : 'moderate-study') as 'quiet-study' | 'moderate-study' | 'social-study',
-        socialPreference: (formData.socialPreference === 'very-social' ? 'extrovert' : 
+        socialAttitude: (formData.socialPreference === 'very-social' ? 'extrovert' : 
                          formData.socialPreference === 'private' ? 'introvert' : 'ambivert') as 'introvert' | 'ambivert' | 'extrovert',
-        locationPreferences: formData.preferredLocations,
+        locationAreas: formData.preferredLocations,
         mustHaveAmenities: [],
         dealBreakers: [],
+        fullName: formData.fullName,
+        age: formData.age,
+        gender: formData.gender,
+        preferredGenderArr: formData.preferredGender,
+        lookingFor: formData.lookingFor,
+        preferredLocations: formData.preferredLocations,
+        occupation: formData.occupation,
+        occupationOther: formData.occupationOther,
+        workSchedule: formData.workSchedule,
+        smoking: formData.smoking,
+        drinking: formData.drinking,
+        hasPets: formData.hasPets,
+        petType: formData.petType,
+        okayWithPets: formData.okayWithPets,
+        cleanlinessLevelNum: formData.cleanlinessLevel,
+        socialPreferenceRaw: formData.socialPreference,
+        noiseLevelRaw: formData.noiseLevel,
+        sleepSchedule: formData.sleepSchedule,
+        visitorsOften: formData.visitorsOften,
+        languages: formData.languages,
+        culturalBackground: formData.culturalBackground,
+        hobbies: formData.hobbies,
+        bio: formData.bio,
       };
 
       // Handle photo upload if a profile picture is selected

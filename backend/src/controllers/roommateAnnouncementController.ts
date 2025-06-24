@@ -28,20 +28,46 @@ export const createAnnouncement = async (req: AuthenticatedRequest, res: Respons
       moveInDate,
       leaseDuration,
       preferredGender,
-      preferredOccupation,
-      preferredAgeMin,
-      preferredAgeMax,
-      smokingPreference,
-      petPreference,
-      cleanlinessLevel,
-      noiseLevel,
+      userOccupation,
+      userAgeMin,
+      userAgeMax,
+      smokingStatus,
+      petStatus,
+      cleanlinessAttitude,
+      noiseAttitude,
       studyHabits,
-      socialPreference,
-      locationPreferences,
+      socialAttitude,
+      locationAreas,
       mustHaveAmenities,
       dealBreakers,
+      // New fields from form
+      fullName,
+      age,
+      gender,
+      preferredGenderArr,
+      lookingFor,
+      preferredLocations,
+      occupation,
+      occupationOther,
+      workSchedule,
+      smoking,
+      drinking,
+      hasPets,
+      petType,
+      okayWithPets,
+      cleanlinessLevelNum,
+      socialPreferenceRaw,
+      noiseLevelRaw,
+      sleepSchedule,
+      visitorsOften,
+      languages,
+      culturalBackground,
+      hobbies,
+      bio,
       photos = [],
     } = req.body;
+
+    console.log('Received roommate announcement request body:', req.body);
 
     // Set expiration date to 3 months from now
     const expiresAt = new Date();
@@ -56,20 +82,46 @@ export const createAnnouncement = async (req: AuthenticatedRequest, res: Respons
       moveInDate,
       leaseDuration,
       preferredGender,
-      preferredOccupation,
-      preferredAgeMin,
-      preferredAgeMax,
-      smokingPreference,
-      petPreference,
-      cleanlinessLevel,
-      noiseLevel,
+      userOccupation,
+      userAgeMin,
+      userAgeMax,
+      smokingStatus,
+      petStatus,
+      cleanlinessAttitude,
+      noiseAttitude,
       studyHabits,
-      socialPreference,
-      locationPreferences: JSON.stringify(locationPreferences),
+      socialAttitude,
+      locationAreas: JSON.stringify(locationAreas),
       mustHaveAmenities: JSON.stringify(mustHaveAmenities),
       dealBreakers: JSON.stringify(dealBreakers),
       expiresAt,
+      // New fields
+      fullName,
+      age,
+      gender,
+      preferredGenderArr: JSON.stringify(preferredGenderArr),
+      lookingFor,
+      preferredLocations: JSON.stringify(preferredLocations),
+      occupation,
+      occupationOther,
+      workSchedule: JSON.stringify(workSchedule),
+      smoking,
+      drinking,
+      hasPets,
+      petType,
+      okayWithPets,
+      cleanlinessLevelNum,
+      socialPreferenceRaw,
+      noiseLevelRaw,
+      sleepSchedule,
+      visitorsOften,
+      languages: JSON.stringify(languages),
+      culturalBackground,
+      hobbies: JSON.stringify(hobbies),
+      bio,
     });
+
+    console.log('Created roommate announcement:', announcement.toJSON());
 
     // Save photos in Photo table
     if (photos && Array.isArray(photos)) {
@@ -149,26 +201,15 @@ export const getAnnouncements = async (req: Request, res: Response) => {
       // Always provide photos as an array
       (ann as any).photos = Array.isArray((ann as any).Photos) ? (ann as any).Photos : ((ann as any).Photos ? [(ann as any).Photos] : []);
       delete (ann as any).Photos;
-      try {
-        (ann as any).locationPreferences = Array.isArray(ann.locationPreferences)
-          ? ann.locationPreferences
-          : JSON.parse(ann.locationPreferences || "[]");
-      } catch {
-        (ann as any).locationPreferences = [] as string[];
-      }
-      try {
-        (ann as any).mustHaveAmenities = Array.isArray(ann.mustHaveAmenities)
-          ? ann.mustHaveAmenities
-          : JSON.parse(ann.mustHaveAmenities || "[]");
-      } catch {
-        (ann as any).mustHaveAmenities = [] as string[];
-      }
-      try {
-        (ann as any).dealBreakers = Array.isArray(ann.dealBreakers)
-          ? ann.dealBreakers
-          : JSON.parse(ann.dealBreakers || "[]");
-      } catch {
-        (ann as any).dealBreakers = [] as string[];
+      // Parse all JSON fields
+      const jsonFields = [
+        'locationAreas', 'mustHaveAmenities', 'dealBreakers',
+        'preferredGenderArr', 'preferredLocations', 'workSchedule', 'languages', 'hobbies'
+      ];
+      for (const field of jsonFields) {
+        if (typeof (ann as any)[field] === 'string') {
+          try { (ann as any)[field] = JSON.parse((ann as any)[field]); } catch { (ann as any)[field] = []; }
+        }
       }
       return ann;
     });
@@ -221,6 +262,17 @@ export const getAnnouncementById = async (req: Request, res: Response) => {
     const ann = (announcement as any).toJSON();
     (ann as any).photos = Array.isArray((ann as any).Photos) ? (ann as any).Photos : ((ann as any).Photos ? [(ann as any).Photos] : []);
     delete (ann as any).Photos;
+    // Parse all JSON fields
+    const jsonFields = [
+      'locationAreas', 'mustHaveAmenities', 'dealBreakers',
+      'locationPreferences', 'mustHaveAmenities', 'dealBreakers',
+      'preferredGenderArr', 'preferredLocations', 'workSchedule', 'languages', 'hobbies'
+    ];
+    for (const field of jsonFields) {
+      if (typeof (ann as any)[field] === 'string') {
+        try { (ann as any)[field] = JSON.parse((ann as any)[field]); } catch { (ann as any)[field] = []; }
+      }
+    }
 
     res.json({
       success: true,
@@ -356,26 +408,15 @@ export const getUserAnnouncements = async (req: AuthenticatedRequest, res: Respo
       // Always provide photos as an array
       (ann as any).photos = Array.isArray((ann as any).Photos) ? (ann as any).Photos : ((ann as any).Photos ? [(ann as any).Photos] : []);
       delete (ann as any).Photos;
-      try {
-        (ann as any).locationPreferences = Array.isArray(ann.locationPreferences)
-          ? ann.locationPreferences
-          : JSON.parse(ann.locationPreferences || "[]");
-      } catch {
-        (ann as any).locationPreferences = [] as string[];
-      }
-      try {
-        (ann as any).mustHaveAmenities = Array.isArray(ann.mustHaveAmenities)
-          ? ann.mustHaveAmenities
-          : JSON.parse(ann.mustHaveAmenities || "[]");
-      } catch {
-        (ann as any).mustHaveAmenities = [] as string[];
-      }
-      try {
-        (ann as any).dealBreakers = Array.isArray(ann.dealBreakers)
-          ? ann.dealBreakers
-          : JSON.parse(ann.dealBreakers || "[]");
-      } catch {
-        (ann as any).dealBreakers = [] as string[];
+      // Parse all JSON fields
+      const jsonFields = [
+        'locationPreferences', 'mustHaveAmenities', 'dealBreakers',
+        'preferredGenderArr', 'preferredLocations', 'workSchedule', 'languages', 'hobbies'
+      ];
+      for (const field of jsonFields) {
+        if (typeof (ann as any)[field] === 'string') {
+          try { (ann as any)[field] = JSON.parse((ann as any)[field]); } catch { (ann as any)[field] = []; }
+        }
       }
       return ann;
     });

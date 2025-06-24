@@ -20,8 +20,8 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
 
   // Calculate age if possible
   const getAge = () => {
-    if (announcement.preferredAgeMin && announcement.preferredAgeMax) {
-      return `${announcement.preferredAgeMin} - ${announcement.preferredAgeMax}`;
+    if (announcement.userAgeMin && announcement.userAgeMax) {
+      return `${announcement.userAgeMin} - ${announcement.userAgeMax}`;
     }
     return 'N/A';
   };
@@ -73,7 +73,11 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
         </div>
         <div className="info-row">
           <span className="info-label">Occupation:</span>
-          <span className="info-value">{announcement.preferredOccupation}</span>
+          <span className="info-value">{announcement.userOccupation}</span>
+        </div>
+        <div className="info-row">
+          <span className="info-label">Preferred Cities:</span>
+          <span className="info-value">{announcement.locationAreas && announcement.locationAreas.length > 0 ? announcement.locationAreas.join(', ') : 'N/A'}</span>
         </div>
       </div>
     </div>
