@@ -48,6 +48,8 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         if (data.userId) localStorage.setItem("userId", data.userId.toString());
         setIsLoggedIn(true);
         setLoginModalOpen(false);
+        // Dispatch a custom event to notify components about the login
+        window.dispatchEvent(new CustomEvent('user-login'));
         // Only redirect if we're on the CreateAccount page
         if (window.location.pathname === '/createaccount') {
           window.location.href = '/';

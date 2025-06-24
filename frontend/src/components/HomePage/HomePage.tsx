@@ -4,6 +4,8 @@ import SearchBar from "./SearchBar";
 import ListingsGrid from "./ListingsGrid";
 import MapComponent, { CityCoordinates } from "../Map/MapComponent";
 import { PostListingFormData } from "../PostListing/types";
+import SidebarMenu, { MenuSection } from "./SidebarMenu";
+import Recommendations from "../../components/Recommendations/Recommendations";
 
 export interface FilterCriteria {
   city?: string;
@@ -37,6 +39,8 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useMapBounds, setUseMapBounds] = useState(false);
+  const [section, setSection] = useState<MenuSection>("listings-all");
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchListings = useCallback(async () => {
@@ -49,21 +53,40 @@ const HomePage: React.FC = () => {
         Object.assign(queryParams, mapBounds);
         console.log("[HomePage] Using map bounds for filtering:", mapBounds);
       }
-      const query = objectToQueryString(queryParams);
-      const url = `http://localhost:5000/api/listings${query}`;
+      let url = "";
+      if (section === "listings-all") {
+        const query = objectToQueryString(queryParams);
+        url = `http://localhost:5000/api/listings${query}`;
+      } else if (section === "listings-recommended") {
+        // For recommendations, pass filters as query params if needed
+        const query = objectToQueryString(queryParams);
+        url = `http://localhost:5000/api/recommendations${query}`;
+      }
       console.log("[HomePage] Fetching listings from:", url);
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: section === "listings-recommended" ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : undefined
+      });
       if (!res.ok) throw new Error('Failed to fetch listings');
-      const data: PostListingFormData[] = await res.json();
-      console.log("[HomePage] Received listings:", data.length);
+      let data: any = await res.json();
+      // If recommendations, extract listings from the response
+      if (section === "listings-recommended") {
+        if (Array.isArray(data.recommendations)) {
+          // Optionally, you may want to fetch full listing details for each recommended listing
+          // For now, assume recommendations already contain listing details
+          data = data.recommendations;
+        } else {
+          data = [];
+        }
+      }
       setListings(data);
+      console.log("[HomePage] Received listings:", data.length);
     } catch (err: any) {
       setError(err.message);
       setListings([]);
     } finally {
       setIsLoading(false);
     }
-  }, [filters, mapBounds, useMapBounds]);
+  }, [filters, mapBounds, useMapBounds, section]);
 
   useEffect(() => {
     fetchListings();
@@ -114,39 +137,44 @@ const HomePage: React.FC = () => {
     }, 500); // 500ms delay
   };
 
-  const mapListings = listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number');
-
   return (
     <div style={{ 
       display: "flex",
-      flexDirection: "column",
+      flexDirection: "row",
       height: "calc(100vh + 100px)",
       marginTop: "56px",
     }}>
-      <SearchBar onSearch={applyFilters} />
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Left side: Listings */}
-        <div style={{ flex: "2 1 0", overflowY: "auto", padding: "1rem" }}>
-          {isLoading ? (
-            <p>Loading...</p>
-          ) : error ? (
-            <p className="text-danger">Error: {error}</p>
-          ) : listings.length === 0 ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-              <p className="text-muted text-center">No listings found.</p>
-            </div>
-          ) : (
-            <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
-          )}
-        </div>
+      {/* Sidebar */}
+      <SidebarMenu selected={section} onSelect={setSection} expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(e => !e)} />
+      {/* Main content */}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+        <SearchBar onSearch={applyFilters} />
+        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          {/* Left side: Listings or Recommendations */}
+          <div style={{ flex: "2 1 0", overflowY: "auto", padding: "1rem" }}>
+            {section === "listings-recommended" ? (
+              <Recommendations />
+            ) : isLoading ? (
+              <p>Loading...</p>
+            ) : error ? (
+              <p className="text-danger">Error: {error}</p>
+            ) : listings.length === 0 ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                <p className="text-muted text-center">No listings found.</p>
+              </div>
+            ) : (
+              <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
+            )}
+          </div>
 
-        {/* Right side: Map */}
-        <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
-          <MapComponent 
-            listings={mapListings as any} 
-            onBoundsChange={handleMapChange}
-            center={mapCenter}
-          />
+          {/* Right side: Map */}
+          <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
+            <MapComponent 
+              listings={listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number') as any} 
+              onBoundsChange={handleMapChange}
+              center={mapCenter}
+            />
+          </div>
         </div>
       </div>
     </div>

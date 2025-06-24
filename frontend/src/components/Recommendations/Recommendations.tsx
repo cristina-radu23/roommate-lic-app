@@ -26,8 +26,17 @@ interface RecommendationScore {
 }
 
 const Recommendations: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const { recommendations, loading, error, refetch } = useRecommendations(10);
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
+
+  useEffect(() => {
+    console.log('[Recommendations] Rendered. isLoggedIn:', isLoggedIn);
+  });
+
+  useEffect(() => {
+    console.log('[Recommendations] isLoggedIn changed:', isLoggedIn);
+  }, [isLoggedIn]);
 
   // Fetch listing details for recommended listings
   useEffect(() => {
@@ -53,6 +62,61 @@ const Recommendations: React.FC = () => {
       fetchListings();
     }
   }, [recommendations]);
+
+  // Seamlessly update recommendations on login/logout
+  useEffect(() => {
+    const handleLogout = () => {
+      setIsLoggedIn(false);
+      console.log('[Recommendations] user-logout event. Calling refetch()');
+      refetch();
+    };
+    const handleLogin = () => {
+      setIsLoggedIn(true);
+      console.log('[Recommendations] user-login event. Will call refetch() after 200ms');
+      setTimeout(() => {
+        console.log('[Recommendations] Calling refetch() after login');
+        refetch();
+      }, 200);
+    };
+    window.addEventListener('user-logout', handleLogout);
+    window.addEventListener('user-login', handleLogin);
+    return () => {
+      window.removeEventListener('user-logout', handleLogout);
+      window.removeEventListener('user-login', handleLogin);
+    };
+  }, [refetch]);
+
+  useEffect(() => {
+    console.log('[Recommendations] recommendations:', recommendations);
+    console.log('[Recommendations] error:', error);
+  }, [recommendations, error]);
+
+  // Show login/register prompt if not logged in
+  if (!isLoggedIn || error === 'Authentication required') {
+    return (
+      <div className="recommendations-container">
+        <div className="recommendations-header">
+          <h2>Recommended for You</h2>
+        </div>
+        <div className="no-recommendations" style={{textAlign: 'center', marginTop: 32}}>
+          <p style={{ fontSize: '1.1rem', color: '#444', marginBottom: 16 }}>
+            <b>Log in</b> or <b>Create Account</b> to find listings recommended for you!
+          </p>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+            <a
+              href="#"
+              className="browse-button"
+              style={{ minWidth: 120, background: '#ff4081', color: '#fff', border: 'none', boxShadow: '0 2px 8px rgba(255,64,129,0.08)', fontWeight: 600 }}
+              onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-login-modal')); }}
+            >
+              Log in
+            </a>
+            <Link to="/createaccount" className="browse-button" style={{ minWidth: 120, background: '#ff4081', color: '#fff', border: 'none', boxShadow: '0 2px 8px rgba(255,64,129,0.08)', fontWeight: 600 }}>Create Account</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
