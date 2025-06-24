@@ -3,7 +3,8 @@ import sequelize from "../config/db";
 
 interface PhotoAttributes {
   photoId: number;
-  listingId: number;
+  listingId?: number;
+  announcementId?: number;
   url: string;
   isCover?: boolean;
   order?: number;
@@ -14,7 +15,8 @@ interface PhotoCreationAttributes extends Optional<PhotoAttributes, "photoId" | 
 
 class Photo extends Model<PhotoAttributes, PhotoCreationAttributes> implements PhotoAttributes {
   public photoId!: number;
-  public listingId!: number;
+  public listingId?: number;
+  public announcementId?: number;
   public url!: string;
   public isCover?: boolean;
   public order?: number;
@@ -30,7 +32,11 @@ Photo.init(
     },
     listingId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    announcementId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     url: {
       type: DataTypes.STRING,

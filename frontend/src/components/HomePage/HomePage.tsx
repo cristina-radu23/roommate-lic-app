@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import SearchBar from "./SearchBar";
 import ListingsGrid from "./ListingsGrid";
@@ -6,6 +7,8 @@ import MapComponent, { CityCoordinates } from "../Map/MapComponent";
 import { PostListingFormData } from "../PostListing/types";
 import SidebarMenu, { MenuSection } from "./SidebarMenu";
 import Recommendations from "../../components/Recommendations/Recommendations";
+import RoommateAnnouncementsBrowser from '../RoommateAnnouncements/RoommateAnnouncementsBrowser';
+import RoommateFilterPanel from '../RoommateAnnouncements/RoommateFilterPanel';
 
 export interface FilterCriteria {
   city?: string;
@@ -42,6 +45,9 @@ const HomePage: React.FC = () => {
   const [section, setSection] = useState<MenuSection>("listings-all");
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
+  const [roommateFilters, setRoommateFilters] = useState({});
+  const [preferredCities, setPreferredCities] = useState<any[]>([]);
 
   const fetchListings = useCallback(async () => {
     setIsLoading(true);
@@ -148,12 +154,28 @@ const HomePage: React.FC = () => {
       <SidebarMenu selected={section} onSelect={setSection} expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(e => !e)} />
       {/* Main content */}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-        <SearchBar onSearch={applyFilters} />
+        {(section === "listings-all" || section === "listings-recommended") && (
+          <SearchBar onSearch={applyFilters} />
+        )}
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
           {/* Left side: Listings or Recommendations */}
-          <div style={{ flex: "2 1 0", overflowY: "auto", padding: "1rem" }}>
+          <div style={{ flex: "2 1 0", overflowY: "auto" }}>
             {section === "listings-recommended" ? (
               <Recommendations filters={filters} />
+            ) : section === "roommates-all" ? (
+              <>
+                <SearchBar
+                  isRoommateMode
+                  roommateFilters={roommateFilters}
+                  setRoommateFilters={setRoommateFilters}
+                  preferredCities={preferredCities}
+                  setPreferredCities={setPreferredCities}
+                  onSearch={(criteria) => setRoommateFilters(criteria)}
+                />
+                <RoommateAnnouncementsBrowser
+                  filters={{ ...roommateFilters, preferredCities: preferredCities.map((c: any) => c.value) }}
+                />
+              </>
             ) : isLoading ? (
               <p>Loading...</p>
             ) : error ? (
@@ -168,13 +190,15 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* Right side: Map */}
-          <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
-            <MapComponent 
-              listings={listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number') as any} 
-              onBoundsChange={handleMapChange}
-              center={mapCenter}
-            />
-          </div>
+          {section === "listings-all" && (
+            <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
+              <MapComponent 
+                listings={listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number') as any} 
+                onBoundsChange={handleMapChange}
+                center={mapCenter}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -287,4 +287,12 @@
   .listing-price {
     font-size: 1.3rem;
   }
+}
+
+.recommendations-container .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 } 

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import './Recommendations.css';
 import ListingsGrid from '../HomePage/ListingsGrid';
+import MapComponent, { CityCoordinates } from '../Map/MapComponent';
+import L from 'leaflet';
 
 interface Listing {
   listingId: number;
@@ -36,6 +38,9 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
   const [clearingCache, setClearingCache] = useState(true);
   const [cacheMessage, setCacheMessage] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<CityCoordinates | undefined>(undefined);
+  const [mapBounds, setMapBounds] = useState<any>(null);
+  const [useMapBounds, setUseMapBounds] = useState(false);
 
   useEffect(() => {
     console.log('[Recommendations] Rendered. isLoggedIn:', isLoggedIn);
@@ -135,6 +140,24 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
     return () => { isMounted = false; };
   }, []);
 
+  // Handle map bounds change
+  const handleMapChange = (bounds: L.LatLngBounds) => {
+    const newBoundsFilter = {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+    };
+    setMapBounds(newBoundsFilter);
+    setUseMapBounds(true);
+  };
+
+  // Combine filters and map bounds for filtering
+  const effectiveFilters = { ...filters };
+  if (mapBounds && useMapBounds) {
+    Object.assign(effectiveFilters, mapBounds);
+  }
+
   // Filtering logic matching backend
   function filterListings(listings: any[], filters: any) {
     return listings.filter(listing => {
@@ -192,13 +215,16 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
     .filter(Boolean);
 
   // Apply filters
-  const filteredListings = filterListings(listingsWithMatch, filters);
+  const filteredListings = filterListings(listingsWithMatch, effectiveFilters);
 
   // Sort by matchScore descending
   const sortedListings = [...filteredListings].sort((a, b) => Number(b.matchScore ?? 0) - Number(a.matchScore ?? 0));
 
   // Debug log for sorting
   console.log("Sorted listings by matchScore:", sortedListings.map(l => l.matchScore));
+
+  // Only pass listings with lat/lng to the map
+  const mapListings = sortedListings.filter(l => typeof l.latitude === 'number' && typeof l.longitude === 'number');
 
   // Show login/register prompt if not logged in
   if (!isLoggedIn || error === 'Authentication required') {
@@ -274,35 +300,47 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
     );
   }
 
+  // Layout: map and grid side by side
   return (
-    <div className="recommendations-container">
-      <div className="recommendations-header">
-        <h2>Recommended for You</h2>
-        <p className="recommendations-subtitle">
-          Based on your preferences and similar users
-        </p>
+    <div style={{ display: 'flex', flexDirection: 'row', height: '100vh', overflow: 'hidden' }}>
+      {/* Left: Recommendations Grid */}
+      <div style={{ flex: '2 1 0', overflowY: 'auto', height: '100vh', minHeight: 0 }}>
+        <div className="recommendations-header">
+          <h2>Recommended for You</h2>
+          <p className="recommendations-subtitle">
+            Based on your preferences and similar users
+          </p>
+        </div>
+        <ListingsGrid
+          listings={sortedListings as any}
+          isLoggedIn={!!localStorage.getItem('token')}
+          renderExtra={(listing: any) => (
+            <>
+              <div className="recommendation-score" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
+                <span className="score-badge">
+                  {Math.min(100, Math.round(listing.matchScore))}% match
+                </span>
+              </div>
+              <div className="recommendation-reasons" style={{ marginTop: 12 }}>
+                <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>Why this matches you:</h4>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  {listing.matchReasons && listing.matchReasons.slice(0, 2).map((reason: string, idx: number) => (
+                    <li key={idx} style={{ fontSize: '0.95rem', color: '#2c3e50' }}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        />
       </div>
-      <ListingsGrid
-        listings={sortedListings as any}
-        isLoggedIn={!!localStorage.getItem('token')}
-        renderExtra={(listing: any) => (
-          <>
-            <div className="recommendation-score" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
-              <span className="score-badge">
-                {Math.min(100, Math.round(listing.matchScore))}% match
-              </span>
-            </div>
-            <div className="recommendation-reasons" style={{ marginTop: 12 }}>
-              <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>Why this matches you:</h4>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {listing.matchReasons && listing.matchReasons.slice(0, 2).map((reason: string, idx: number) => (
-                  <li key={idx} style={{ fontSize: '0.95rem', color: '#2c3e50' }}>{reason}</li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-      />
+      {/* Right: Map */}
+      <div style={{ flex: '1 1 0', height: '100vh', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+        <MapComponent
+          listings={mapListings as any}
+          onBoundsChange={handleMapChange}
+          center={mapCenter}
+        />
+      </div>
     </div>
   );
 };

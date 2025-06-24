@@ -29,6 +29,8 @@ import matchRoutes from './routes/match';
 import messageRoutes from './routes/messageRoutes';
 import notificationRoutes from "./routes/notificationRoutes";
 import recommendationRoutes from "./routes/recommendations";
+import roommateAnnouncementRoutes from "./routes/roommateAnnouncement";
+import userProfileRoutes from "./routes/userProfile";
 
 // Only a few cities shown for brevity — add the full list
 const cities: { countyId: string; cityName: string }[] = [
@@ -121,6 +123,8 @@ app.use("/api/match", matchRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/roommate-announcements", roommateAnnouncementRoutes);
+app.use("/api/user-profiles", userProfileRoutes);
 
 
 // ✅ County seeding function

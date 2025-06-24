@@ -116,11 +116,23 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ selected, onSelect, expanded,
             </li>
           </ul>
         </div>
-        <div style={{ opacity: 0.5 }}>
+        <div>
           <h4 style={{ margin: '0 0 0.5rem 0', fontWeight: 700 }}>Roommates</h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            <li style={{ padding: '0.5rem 0', cursor: 'not-allowed' }}>Browse All</li>
-            <li style={{ padding: '0.5rem 0', cursor: 'not-allowed' }}>Recommended for you <span style={{fontSize: '0.8em', color: '#aaa'}}>*to be implemented*</span></li>
+            <li
+              style={{
+                padding: '0.5rem 0',
+                cursor: 'pointer',
+                fontWeight: selected === 'roommates-all' ? 700 : 400,
+                color: selected === 'roommates-all' ? '#007b8a' : '#222',
+              }}
+              onClick={() => onSelect('roommates-all')}
+            >
+              Browse All
+            </li>
+            <li style={{ padding: '0.5rem 0', cursor: 'not-allowed', opacity: 0.5 }}>
+              Recommended for you <span style={{fontSize: '0.8em', color: '#aaa'}}>*to be implemented*</span>
+            </li>
           </ul>
         </div>
       </nav>

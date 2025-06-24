@@ -7,10 +7,14 @@ import PostListing from '../PostListing/PostListing';
 import HomePage from '../HomePage/HomePage';
 import ListingPage from '../ListingPage';
 import Inbox from '../Inbox/Inbox';
-import MyListings from '../MyListings/MyListings';
+import MyPosts from '../MyListings/MyListings';
 import AccountInfo from '../AccountInfo/AccountInfo';
 import Favourites from '../Favourites';
 import Recommendations from '../Recommendations/Recommendations';
+import RoommateAnnouncements from '../RoommateAnnouncements/RoommateAnnouncements';
+import CreateRoommateAnnouncement from '../CreateRoommateAnnouncement/CreateRoommateAnnouncement';
+import AnnouncementSuccess from '../CreateRoommateAnnouncement/AnnouncementSuccess';
+import RoommateAnnouncementPage from '../RoommateAnnouncements/RoommateAnnouncementPage';
 
 // Add TypeScript declaration for global navigation
 declare global {
@@ -102,11 +106,15 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/listing/:id" element={<ListingPage />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/" element={<HomePage />} />
-        <Route path="/mylistings" element={<MyListings />} />
+        <Route path="/mylistings" element={<MyPosts />} />
         <Route path="/account" element={<AccountInfo />} />
         <Route path="/account/:userId" element={<AccountInfo />} />
         <Route path="/favourites" element={<Favourites />} />
         <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/roommate-announcements" element={<RoommateAnnouncements />} />
+        <Route path="/create-roommate-announcement" element={<CreateRoommateAnnouncement />} />
+        <Route path="/announcement-success" element={<AnnouncementSuccess />} />
+        <Route path="/roommate-announcement/:id" element={<RoommateAnnouncementPage />} />
       </Routes>
     </div>
   );

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { FilterCriteria } from "./HomePage";
 import HomePageFilterPanel from "./HomePageFilterPanel";
+import RoommateFilterPanel from "../RoommateAnnouncements/RoommateFilterPanel";
 import homeBackground from "../../assets/Home.png";
 import ReactDOM from 'react-dom';
 import { FaFilter } from 'react-icons/fa';
@@ -10,6 +11,11 @@ import { CityCoordinates } from "../Map/MapComponent";
 
 interface SearchBarProps {
   onSearch: (criteria: FilterCriteria, coordinates?: CityCoordinates) => void;
+  isRoommateMode?: boolean;
+  roommateFilters?: any;
+  setRoommateFilters?: (filters: any) => void;
+  preferredCities?: any[];
+  setPreferredCities?: (cities: any[]) => void;
 }
 
 interface CityOption {
@@ -19,7 +25,7 @@ interface CityOption {
   longitude?: number;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isRoommateMode, roommateFilters, setRoommateFilters, preferredCities, setPreferredCities }) => {
   const [cities, setCities] = useState<CityOption[]>([]);
   const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -45,18 +51,27 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   }, []);
 
   const handleSearch = () => {
-    const coordinates = selectedCity?.latitude && selectedCity?.longitude 
-      ? { lat: selectedCity.latitude, lng: selectedCity.longitude }
-      : undefined;
-    
-    onSearch({ ...selectedFilters, city: selectedCity?.value }, coordinates);
+    if (isRoommateMode) {
+      onSearch({ ...roommateFilters, preferredCities: preferredCities?.map(c => c.value) });
+    } else {
+      const coordinates = selectedCity?.latitude && selectedCity?.longitude 
+        ? { lat: selectedCity.latitude, lng: selectedCity.longitude }
+        : undefined;
+      onSearch({ ...selectedFilters, city: selectedCity?.value }, coordinates);
+    }
   };
 
   const handleCityChange = (option: CityOption | null) => {
     setSelectedCity(option);
   };
 
-  const hasActiveFilters = Object.keys(selectedFilters).length > 0;
+  const handlePreferredCitiesChange = (newValue: any, _actionMeta: any) => {
+    setPreferredCities && setPreferredCities(newValue);
+  };
+
+  const hasActiveFilters = isRoommateMode
+    ? Object.keys(roommateFilters || {}).length > 0
+    : Object.keys(selectedFilters).length > 0;
 
   return (
     <div className="container-fluid d-flex justify-content-center align-items-center" 
@@ -105,29 +120,56 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           }}
         >
           <div style={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 1000 }}>
-            <Select
-               options={cities}
-               value={selectedCity}
-               onChange={handleCityChange}
-              placeholder="Select a city"
-              classNamePrefix="react-select"
-              styles={{
-                control: (provided) => ({
-                  ...provided,
-                  borderRadius: "50px",
-                  height: "42px",
-                }),
-                menu: (provided) => ({
-                  ...provided,
-                  zIndex: 1000
-                }),
-                menuPortal: (provided) => ({
-                  ...provided,
-                  zIndex: 1000
-                })
-              }}
-              menuPortalTarget={document.body}
-            />
+            {isRoommateMode ? (
+              <Select
+                options={cities}
+                value={preferredCities}
+                onChange={handlePreferredCitiesChange}
+                isMulti
+                placeholder="Select preferred cities"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    borderRadius: "50px",
+                    height: "42px",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    zIndex: 1000
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 1000
+                  })
+                }}
+                menuPortalTarget={document.body}
+              />
+            ) : (
+              <Select
+                options={cities}
+                value={selectedCity}
+                onChange={handleCityChange}
+                placeholder="Select a city"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    borderRadius: "50px",
+                    height: "42px",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    zIndex: 1000
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 1000
+                  })
+                }}
+                menuPortalTarget={document.body}
+              />
+            )}
           </div>
           <button
             className={`btn ${hasActiveFilters ? 'btn-primary' : 'btn-outline-secondary'} ms-3`}
@@ -179,14 +221,25 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                 transform: "translate(-50%, -35%)"
               }}
             >
-              <HomePageFilterPanel 
-                initialFilters={selectedFilters}
-                onApply={(criteria) => {
-                  setSelectedFilters(criteria);
-                  setShowFilters(false);
-                }} 
-                onClose={() => setShowFilters(false)} 
-              />
+              {isRoommateMode ? (
+                <RoommateFilterPanel
+                  initialFilters={roommateFilters || {}}
+                  onApply={filters => {
+                    setRoommateFilters && setRoommateFilters(filters);
+                    setShowFilters(false);
+                  }}
+                  onClose={() => setShowFilters(false)}
+                />
+              ) : (
+                <HomePageFilterPanel 
+                  initialFilters={selectedFilters}
+                  onApply={(criteria) => {
+                    setSelectedFilters(criteria);
+                    setShowFilters(false);
+                  }} 
+                  onClose={() => setShowFilters(false)} 
+                />
+              )}
             </div>
           </>,
           document.body
