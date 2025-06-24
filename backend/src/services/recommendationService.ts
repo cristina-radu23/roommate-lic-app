@@ -48,6 +48,8 @@ export class RecommendationService {
 
       // Get user preferences
       const userPrefs = await this.getUserPreferences(userId);
+      // Debug log: print userId and liked listings
+      console.log(`[RECOMMENDATIONS] userId: ${userId}, likes count: ${userPrefs.likedListings.length}, likedListings:`, userPrefs.likedListings);
       
       // Check minimum likes requirement (recommend at least 3 likes for good recommendations)
       const MIN_LIKES_FOR_RECOMMENDATIONS = 3;

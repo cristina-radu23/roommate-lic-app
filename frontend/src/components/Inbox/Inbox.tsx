@@ -283,7 +283,7 @@ const Inbox: React.FC = () => {
             socket.emit('send_message', {
               chatRoomId,
               content: message
-            });
+          });
           }
           setMessage('');
           setSending(false);
@@ -300,24 +300,24 @@ const Inbox: React.FC = () => {
         setMessage('');
       } else {
         // Fallback to REST API if WebSocket is not available
-        await fetch('http://localhost:5000/api/chat/message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            chatRoomId,
-            userId,
-            content: message
-          })
-        });
-        setMessage('');
+      await fetch('http://localhost:5000/api/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          chatRoomId,
+          userId,
+          content: message
+        })
+      });
+      setMessage('');
         
         // Refresh messages and chat list
-        if (chatRoomId) {
-          const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
-          setMessages(await msgRes.json());
-        }
-        const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
-        setChats(await chatListRes.json());
+      if (chatRoomId) {
+        const msgRes = await fetch(`http://localhost:5000/api/chat/room/${chatRoomId}/messages`);
+        setMessages(await msgRes.json());
+      }
+      const chatListRes = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+      setChats(await chatListRes.json());
       }
     } catch (error) {
       console.error('Error sending message:', error);

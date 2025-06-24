@@ -29,6 +29,8 @@ const Recommendations: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const { recommendations, loading, error, refetch } = useRecommendations(10);
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
+  const [clearingCache, setClearingCache] = useState(true);
+  const [cacheMessage, setCacheMessage] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('[Recommendations] Rendered. isLoggedIn:', isLoggedIn);
@@ -91,6 +93,36 @@ const Recommendations: React.FC = () => {
     console.log('[Recommendations] error:', error);
   }, [recommendations, error]);
 
+  // Automatically clear cache on mount
+  useEffect(() => {
+    let isMounted = true;
+    const clearCache = async () => {
+      setClearingCache(true);
+      setCacheMessage(null);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/api/recommendations/clear-cache', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (res.ok && isMounted) {
+          setCacheMessage(null);
+        } else if (isMounted) {
+          setCacheMessage('Failed to clear cache. Recommendations may be outdated.');
+        }
+      } catch (err) {
+        if (isMounted) setCacheMessage('Error clearing cache. Recommendations may be outdated.');
+      } finally {
+        if (isMounted) setClearingCache(false);
+      }
+    };
+    clearCache();
+    return () => { isMounted = false; };
+  }, []);
+
   // Show login/register prompt if not logged in
   if (!isLoggedIn || error === 'Authentication required') {
     return (
@@ -123,8 +155,9 @@ const Recommendations: React.FC = () => {
       <div className="recommendations-container">
         <div className="recommendations-header">
           <h2>Recommended for You</h2>
-          <div className="loading-spinner">Loading recommendations...</div>
         </div>
+        <div className="loading-spinner">Preparing recommendations...</div>
+        {cacheMessage && <div style={{ marginTop: 8, color: '#888' }}>{cacheMessage}</div>}
       </div>
     );
   }
@@ -182,7 +215,7 @@ const Recommendations: React.FC = () => {
             <div key={rec.listingId} className="recommendation-card">
               <div className="recommendation-score">
                 <span className="score-badge">
-                  {Math.round(rec.score)}% match
+                  {Math.min(100, Math.round(rec.score))}% match
                 </span>
               </div>
               

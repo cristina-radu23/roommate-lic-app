@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { PostListingFormData } from "../PostListing/types";
 import { FaHeart } from 'react-icons/fa';
 import { BsEye } from 'react-icons/bs';
+import './ListingsGrid.css';
+import '../Recommendations/Recommendations.css';
 
 type ListingsGridProps = {
   listings: PostListingFormData[];
@@ -117,13 +119,11 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
   }
 
   return (
-    <div className="container-fluid">
-      <div className="row g-4">
+    <div className="recommendations-grid">
         {listings.map((listing, index) => {
           // Try to get the first photo from the Photo table (listing.Photos)
           // Fallback to listing.photos or default image
           let imageUrl = "https://placehold.co/300x200?text=No+Image&font=roboto";
-          
           // Check if this listing's image has failed to load
           if (!failedImages.has(listing.listingId!)) {
             if ((listing as any).Photos && Array.isArray((listing as any).Photos) && (listing as any).Photos.length > 0) {
@@ -135,26 +135,30 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
               imageUrl = listing.photos[0];
             }
           }
-          
           const isOwnListing = (listing as any).user?.userId === userId || (listing as any).userId === userId;
           return (
-            <div key={index} className="col-12 col-md-6 col-lg-4">
-              <div className="card h-100 shadow-sm" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
-                <img
-                  src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}
-                  className="card-img-top"
-                  alt={listing.title || "Listing"}
-                  style={{ height: "200px", objectFit: "cover" }}
-                  onError={() => handleImageError(listing.listingId!)}
-                />
+          <div key={index} className="recommendation-card" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
+            {/* Delete button for own listing */}
+            {showDeleteButton && isOwnListing && (
+              <button
+                className="btn btn-danger"
+                style={{ position: 'absolute', top: 16, right: 16, zIndex: 3, padding: '4px 12px', fontSize: 14 }}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleDelete(listing.listingId!);
+                }}
+              >
+                Delete
+              </button>
+            )}
                 {/* Heart icon - hidden for owner */}
                 {!isOwnListing && (
                   <span
                     style={{
                       position: 'absolute',
-                      top: 16,
+                  top: showDeleteButton && isOwnListing ? 56 : 16,
                       right: 16,
-                      zIndex: 1,
+                  zIndex: 2,
                       cursor: 'pointer',
                       fontSize: 24,
                       color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
@@ -187,7 +191,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                     position: 'absolute',
                     bottom: 16,
                     right: 16,
-                    zIndex: 1,
+                zIndex: 2,
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -200,47 +204,29 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                   <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 4 }}>{(listing as any).views ?? 0}</span>
                   <BsEye style={{ fontSize: 18, color: '#888' }} />
                 </span>
-                <div className="card-body d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 className="card-title">{listing.title}</h5>
-                    <p className="card-text text-muted">
-                      {(listing.cityName || (listing as any).Address?.City?.cityName || (listing as any).Address?.cityName || "-")}, {listing.streetName || (listing as any).Address?.streetName || "-"} {listing.streetNo || (listing as any).Address?.streetNo || ""}
-                    </p>
+            <div className="listing-image">
+              <img
+                src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}
+                alt={listing.title || "Listing"}
+                style={{ height: "200px", objectFit: "cover", width: '100%' }}
+                onError={() => handleImageError(listing.listingId!)}
+              />
                   </div>
-                  <div>
-                    <p className="fw-bold">
-                      {listing.rent ? `${listing.rent} EUR/month` : "-"}
-                    </p>
-                    <div className="d-flex flex-wrap gap-1">
-                      {listing.propertyType && (
-                        <span className="badge bg-primary">{listing.propertyType}</span>
-                      )}
-                      {listing.listingType && (
-                        <span className="badge bg-secondary">{listing.listingType}</span>
-                      )}
-                      {listing.roomAmenities?.slice(0, 2).map((a, idx) => (
-                        <span key={idx} className="badge bg-light text-dark border">
-                          {a}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                {showDeleteButton && isOwnListing && (
-                  <button
-                    className="btn btn-danger btn-sm"
-                    style={{ position: 'absolute', top: 16, left: 16, zIndex: 1 }}
-                    onClick={e => { e.stopPropagation(); handleDelete(listing.listingId!); }}
-                    title="Delete listing"
-                  >
-                    Delete
-                  </button>
-                )}
+            <div className="listing-info">
+              <h3 className="listing-title">{listing.title}</h3>
+              <p className="listing-location">
+                {(listing as any).Address?.City?.cityName || (listing as any).city || 'Location not specified'}
+              </p>
+              <p className="listing-details">
+                {listing.listingType} • {listing.propertyType} • {(listing.size ?? (listing as any).sizeM2 ?? 0)}m²
+              </p>
+              <p className="listing-price" style={{ color: '#27ae60', fontWeight: 700, fontSize: '1.2rem' }}>
+                €{listing.rent}/month
+              </p>
               </div>
             </div>
           );
         })}
-      </div>
     </div>
   );
 };
