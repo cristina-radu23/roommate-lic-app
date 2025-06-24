@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import './Recommendations.css';
+import ListingsGrid from '../HomePage/ListingsGrid';
 
 interface Listing {
   listingId: number;
@@ -25,7 +26,11 @@ interface RecommendationScore {
   reasons: string[];
 }
 
-const Recommendations: React.FC = () => {
+interface RecommendationsProps {
+  filters?: any;
+}
+
+const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const { recommendations, loading, error, refetch } = useRecommendations(10);
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
@@ -43,20 +48,27 @@ const Recommendations: React.FC = () => {
   // Fetch listing details for recommended listings
   useEffect(() => {
     const fetchListings = async () => {
-      const newListings = new Map<number, Listing>();
-      
-      for (const rec of recommendations) {
-        try {
-          const response = await fetch(`http://localhost:5000/api/listings/${rec.listingId}`);
-          if (response.ok) {
-            const listing: Listing = await response.json();
-            newListings.set(rec.listingId, listing);
+      const results = await Promise.all(
+        recommendations.map(async (rec) => {
+          try {
+            const response = await fetch(`http://localhost:5000/api/listings/${rec.listingId}`);
+            if (response.ok) {
+              const listing: Listing = await response.json();
+              return [rec.listingId, listing];
+            }
+          } catch (error) {
+            console.error(`Error fetching listing ${rec.listingId}:`, error);
           }
-        } catch (error) {
-          console.error(`Error fetching listing ${rec.listingId}:`, error);
+          return null;
+        })
+      );
+      const newListings = new Map<number, Listing>();
+      results.forEach((item) => {
+        if (item) {
+          const [listingId, listing] = item as [number, Listing];
+          newListings.set(listingId, listing);
         }
-      }
-      
+      });
       setListings(newListings);
     };
 
@@ -122,6 +134,71 @@ const Recommendations: React.FC = () => {
     clearCache();
     return () => { isMounted = false; };
   }, []);
+
+  // Filtering logic matching backend
+  function filterListings(listings: any[], filters: any) {
+    return listings.filter(listing => {
+      // minRent / maxRent
+      if (filters.minRent !== undefined && listing.rent < filters.minRent) return false;
+      if (filters.maxRent !== undefined && listing.rent > filters.maxRent) return false;
+      // listingType
+      if (filters.listingType && listing.listingType !== filters.listingType) return false;
+      // propertyType
+      if (filters.propertyType && listing.propertyType !== filters.propertyType) return false;
+      // preferredRoommate
+      if (filters.preferredRoommate === 'female' && (listing.flatmatesMale ?? 0) > 0) return false;
+      if (filters.preferredRoommate === 'male' && (listing.flatmatesFemale ?? 0) > 0) return false;
+      // city
+      if (filters.city && String(listing.Address?.City?.cityId ?? listing.cityId ?? listing.city) !== String(filters.city)) return false;
+      // amenities (property amenities)
+      if (filters.amenities && filters.amenities.length > 0) {
+        const propertyAmenities = (listing.PropertyAmenities || listing.propertyAmenities || []).map((a: any) => a.name);
+        if (!filters.amenities.every((a: string) => propertyAmenities.includes(a))) return false;
+      }
+      // rules (house rules)
+      if (filters.rules && filters.rules.length > 0) {
+        const houseRules = (listing.HouseRules || listing.houseRules || []).map((r: any) => r.name);
+        if (!filters.rules.every((r: string) => houseRules.includes(r))) return false;
+      }
+      // roomAmenities
+      if (filters.roomAmenities && filters.roomAmenities.length > 0) {
+        const roomAmenities = (listing.RoomAmenities || listing.roomAmenities || []).map((a: any) => a.name);
+        if (!filters.roomAmenities.every((a: string) => roomAmenities.includes(a))) return false;
+      }
+      // Geographic bounds
+      if (
+        filters.north !== undefined && filters.south !== undefined &&
+        filters.east !== undefined && filters.west !== undefined
+      ) {
+        const lat = listing.latitude ?? (listing.Address?.latitude);
+        const lng = listing.longitude ?? (listing.Address?.longitude);
+        if (
+          lat === undefined || lng === undefined ||
+          lat < filters.south || lat > filters.north ||
+          lng < filters.west || lng > filters.east
+        ) return false;
+      }
+      return true;
+    });
+  }
+
+  // Map recommendations to listings with match info
+  const listingsWithMatch = recommendations
+    .map(rec => {
+      const listing = listings.get(rec.listingId);
+      if (!listing) return null;
+      return { ...listing, matchScore: rec.score, matchReasons: rec.reasons };
+    })
+    .filter(Boolean);
+
+  // Apply filters
+  const filteredListings = filterListings(listingsWithMatch, filters);
+
+  // Sort by matchScore descending
+  const sortedListings = [...filteredListings].sort((a, b) => Number(b.matchScore ?? 0) - Number(a.matchScore ?? 0));
+
+  // Debug log for sorting
+  console.log("Sorted listings by matchScore:", sortedListings.map(l => l.matchScore));
 
   // Show login/register prompt if not logged in
   if (!isLoggedIn || error === 'Authentication required') {
@@ -205,67 +282,27 @@ const Recommendations: React.FC = () => {
           Based on your preferences and similar users
         </p>
       </div>
-      
-      <div className="recommendations-grid">
-        {recommendations.map((rec) => {
-          const listing = listings.get(rec.listingId);
-          if (!listing) return null;
-
-          return (
-            <div key={rec.listingId} className="recommendation-card">
-              <div className="recommendation-score">
-                <span className="score-badge">
-                  {Math.min(100, Math.round(rec.score))}% match
-                </span>
-              </div>
-              
-              <Link to={`/listing/${rec.listingId}`} className="listing-link">
-                <div className="listing-image">
-                  {listing.photos && listing.photos.length > 0 ? (
-                    <img 
-                      src={listing.photos[0]} 
-                      alt={listing.title}
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                  ) : (
-                    <div className="placeholder-image">
-                      <span>No Image</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="listing-info">
-                  <h3 className="listing-title">{listing.title}</h3>
-                  <p className="listing-location">
-                    {listing.Address?.City?.cityName || 'Location not specified'}
-                  </p>
-                  <p className="listing-details">
-                    {listing.listingType} • {listing.propertyType} • {listing.sizeM2}m²
-                  </p>
-                  <p className="listing-price">€{listing.rent}/month</p>
-                </div>
-              </Link>
-              
-              <div className="recommendation-reasons">
-                <h4>Why this matches you:</h4>
-                <ul>
-                  {rec.reasons.slice(0, 2).map((reason, index) => (
-                    <li key={index}>{reason}</li>
-                  ))}
-                </ul>
-              </div>
+      <ListingsGrid
+        listings={sortedListings as any}
+        isLoggedIn={!!localStorage.getItem('token')}
+        renderExtra={(listing: any) => (
+          <>
+            <div className="recommendation-score" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
+              <span className="score-badge">
+                {Math.min(100, Math.round(listing.matchScore))}% match
+              </span>
             </div>
-          );
-        })}
-      </div>
-      
-      <div className="recommendations-footer">
-        <button onClick={refetch} className="refresh-button">
-          Refresh Recommendations
-        </button>
-      </div>
+            <div className="recommendation-reasons" style={{ marginTop: 12 }}>
+              <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>Why this matches you:</h4>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {listing.matchReasons && listing.matchReasons.slice(0, 2).map((reason: string, idx: number) => (
+                  <li key={idx} style={{ fontSize: '0.95rem', color: '#2c3e50' }}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+      />
     </div>
   );
 };

@@ -153,7 +153,7 @@ const HomePage: React.FC = () => {
           {/* Left side: Listings or Recommendations */}
           <div style={{ flex: "2 1 0", overflowY: "auto", padding: "1rem" }}>
             {section === "listings-recommended" ? (
-              <Recommendations />
+              <Recommendations filters={filters} />
             ) : isLoading ? (
               <p>Loading...</p>
             ) : error ? (

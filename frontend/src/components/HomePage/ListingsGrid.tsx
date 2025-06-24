@@ -10,9 +10,11 @@ type ListingsGridProps = {
   listings: PostListingFormData[];
   isLoggedIn?: boolean;
   showDeleteButton?: boolean;
+  renderExtra?: (listing: PostListingFormData, index: number) => React.ReactNode;
+  renderLikeButton?: (listing: PostListingFormData, index: number, liked: boolean, toggleLike: () => void, likesCount: number) => React.ReactNode;
 };
 
-const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, isLoggedIn = false, showDeleteButton = false }) => {
+const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, isLoggedIn = false, showDeleteButton = false, renderExtra, renderLikeButton }) => {
   const navigate = useNavigate();
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [listings, setListings] = React.useState<PostListingFormData[]>([]);
@@ -20,13 +22,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
   const userId = Number(localStorage.getItem('userId'));
 
   React.useEffect(() => {
-    // Sort listings by creation date in descending order (newest first)
-    const sortedListings = [...initialListings].sort((a, b) => {
-      const dateA = new Date((a as any).createdAt || 0);
-      const dateB = new Date((b as any).createdAt || 0);
-      return dateB.getTime() - dateA.getTime();
-    });
-    setListings(sortedListings);
+    setListings([...initialListings]);
   }, [initialListings]);
 
   React.useEffect(() => {
@@ -136,6 +132,8 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
             }
           }
           const isOwnListing = (listing as any).user?.userId === userId || (listing as any).userId === userId;
+          const liked = likedIds.includes(listing.listingId!);
+          const likesCount = (listing as any).likesCount ?? 0;
           return (
           <div key={index} className="recommendation-card" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
             {/* Delete button for own listing */}
@@ -151,59 +149,59 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                 Delete
               </button>
             )}
-                {/* Heart icon - hidden for owner */}
-                {!isOwnListing && (
-                  <span
-                    style={{
-                      position: 'absolute',
+            {/* Heart icon - hidden for owner, only if renderLikeButton is not provided */}
+            {!isOwnListing && !renderLikeButton && (
+              <span
+                style={{
+                  position: 'absolute',
                   top: showDeleteButton && isOwnListing ? 56 : 16,
-                      right: 16,
+                  right: 16,
                   zIndex: 2,
-                      cursor: 'pointer',
-                      fontSize: 24,
-                      color: likedIds.includes(listing.listingId!) ? 'red' : '#e74c3c',
-                      filter: likedIds.includes(listing.listingId!) ? '' : 'drop-shadow(0 0 2px #fff)',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      background: 'rgba(255,255,255,0.85)',
-                      borderRadius: 20,
-                      padding: '2px 12px',
-                      gap: 10,
-                    }}
-                    onClick={e => {
-                      e.stopPropagation();
-                      toggleLike(listing.listingId!, likedIds.includes(listing.listingId!));
-                    }}
-                    title={likedIds.includes(listing.listingId!) ? 'Remove from favourites' : 'Add to favourites'}
-                  >
-                    <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 6 }}>{(listing as any).likesCount ?? 0}</span>
-                    {likedIds.includes(listing.listingId!) ? (
-                      <FaHeart fill="red" stroke="#e74c3c" strokeWidth={2} />
-                    ) : (
-                      <FaHeart fill="none" stroke="#e74c3c" strokeWidth={7} />
-                    )}
-                  </span>
+                  cursor: 'pointer',
+                  fontSize: 24,
+                  color: liked ? 'red' : '#e74c3c',
+                  filter: liked ? '' : 'drop-shadow(0 0 2px #fff)',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  background: 'rgba(255,255,255,0.85)',
+                  borderRadius: 20,
+                  padding: '2px 12px',
+                  gap: 10,
+                }}
+                onClick={e => {
+                  e.stopPropagation();
+                  toggleLike(listing.listingId!, liked);
+                }}
+                title={liked ? 'Remove from favourites' : 'Add to favourites'}
+              >
+                <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 6 }}>{likesCount}</span>
+                {liked ? (
+                  <FaHeart fill="red" stroke="#e74c3c" strokeWidth={2} />
+                ) : (
+                  <FaHeart fill="none" stroke="#e74c3c" strokeWidth={7} />
                 )}
-                {/* Views count - always visible */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: 16,
-                    right: 16,
+              </span>
+            )}
+            {/* Views count - always visible */}
+            <span
+              style={{
+                position: 'absolute',
+                bottom: 16,
+                right: 16,
                 zIndex: 2,
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    background: 'rgba(255,255,255,0.85)',
-                    borderRadius: 20,
-                    padding: '2px 12px',
-                    gap: 10,
-                  }}
-                >
-                  <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 4 }}>{(listing as any).views ?? 0}</span>
-                  <BsEye style={{ fontSize: 18, color: '#888' }} />
-                </span>
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                background: 'rgba(255,255,255,0.85)',
+                borderRadius: 20,
+                padding: '2px 12px',
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 4 }}>{(listing as any).views ?? 0}</span>
+              <BsEye style={{ fontSize: 18, color: '#888' }} />
+            </span>
             <div className="listing-image">
               <img
                 src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}
@@ -211,7 +209,7 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
                 style={{ height: "200px", objectFit: "cover", width: '100%' }}
                 onError={() => handleImageError(listing.listingId!)}
               />
-                  </div>
+            </div>
             <div className="listing-info">
               <h3 className="listing-title">{listing.title}</h3>
               <p className="listing-location">
@@ -223,8 +221,12 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
               <p className="listing-price" style={{ color: '#27ae60', fontWeight: 700, fontSize: '1.2rem' }}>
                 €{listing.rent}/month
               </p>
-              </div>
+              {/* Render extra content if provided */}
+              {renderExtra && renderExtra(listing, index)}
+              {/* Render like button in main content if provided */}
+              {!isOwnListing && renderLikeButton && renderLikeButton(listing, index, liked, () => toggleLike(listing.listingId!, liked), likesCount)}
             </div>
+          </div>
           );
         })}
     </div>

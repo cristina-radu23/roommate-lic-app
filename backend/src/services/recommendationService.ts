@@ -50,6 +50,10 @@ export class RecommendationService {
       const userPrefs = await this.getUserPreferences(userId);
       // Debug log: print userId and liked listings
       console.log(`[RECOMMENDATIONS] userId: ${userId}, likes count: ${userPrefs.likedListings.length}, likedListings:`, userPrefs.likedListings);
+      // Log featureNames for consistency check
+      console.log('[RECOMMENDATIONS] featureNames:', this.featureNames);
+      // Log user feature vector
+      console.log('[RECOMMENDATIONS] userPrefs.preferences:', userPrefs.preferences);
       
       // Check minimum likes requirement (recommend at least 3 likes for good recommendations)
       const MIN_LIKES_FOR_RECOMMENDATIONS = 3;
@@ -64,6 +68,9 @@ export class RecommendationService {
       if (allListings.length === 0) {
         return [];
       }
+
+      // Log the first listing's feature vector for comparison
+      console.log('[RECOMMENDATIONS] first listing features:', allListings[0].features);
 
       // Calculate recommendation scores
       const recommendations: RecommendationScore[] = [];
