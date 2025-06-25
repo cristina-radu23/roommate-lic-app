@@ -130,8 +130,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ selected, onSelect, expanded,
             >
               Browse All
             </li>
-            <li style={{ padding: '0.5rem 0', cursor: 'not-allowed', opacity: 0.5 }}>
-              Recommended for you <span style={{fontSize: '0.8em', color: '#aaa'}}>*to be implemented*</span>
+            <li
+              style={{
+                padding: '0.5rem 0',
+                cursor: 'pointer',
+                fontWeight: selected === 'roommates-recommended' ? 700 : 400,
+                color: selected === 'roommates-recommended' ? '#007b8a' : '#222',
+              }}
+              onClick={() => onSelect('roommates-recommended')}
+            >
+              Recommended for you
             </li>
           </ul>
         </div>

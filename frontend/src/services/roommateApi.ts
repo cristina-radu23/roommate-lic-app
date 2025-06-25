@@ -5,7 +5,10 @@ import {
   CreateUserProfileData,
   ApiResponse,
   PaginatedResponse,
-  AnnouncementFilters
+  AnnouncementFilters,
+  IdealRoommatePreference,
+  CreateIdealRoommatePreferenceData,
+  PreferencesStatus
 } from '../types/roommate';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -160,5 +163,36 @@ export const userProfileApi = {
   // Check profile completion (authenticated)
   checkProfileCompletion: async (): Promise<ApiResponse<{ hasProfile: boolean; isComplete: boolean }>> => {
     return makeAuthenticatedRequest(`${API_BASE_URL}/user-profiles/me/completion`);
+  },
+};
+
+// Ideal Roommate Preferences API
+export const idealRoommatePreferenceApi = {
+  // Create or update ideal roommate preferences
+  createOrUpdatePreferences: async (data: CreateIdealRoommatePreferenceData): Promise<ApiResponse<IdealRoommatePreference>> => {
+    return makeAuthenticatedRequest(`${API_BASE_URL}/ideal-roommate-preferences`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Get user's ideal roommate preferences
+  getUserPreferences: async (): Promise<ApiResponse<IdealRoommatePreference>> => {
+    return makeAuthenticatedRequest(`${API_BASE_URL}/ideal-roommate-preferences/me`);
+  },
+
+  // Check preferences status
+  checkPreferencesStatus: async (): Promise<ApiResponse<PreferencesStatus>> => {
+    return makeAuthenticatedRequest(`${API_BASE_URL}/ideal-roommate-preferences/status`);
+  },
+
+  // Get recommended roommate announcements
+  getRecommendedAnnouncements: async (page = 1, limit = 10): Promise<PaginatedResponse<RoommateAnnouncement>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    return makeAuthenticatedRequest(`${API_BASE_URL}/ideal-roommate-preferences/recommendations?${params}`);
   },
 }; 

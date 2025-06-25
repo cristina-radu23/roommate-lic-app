@@ -9,6 +9,7 @@ import SidebarMenu, { MenuSection } from "./SidebarMenu";
 import Recommendations from "../../components/Recommendations/Recommendations";
 import RoommateAnnouncementsBrowser from '../RoommateAnnouncements/RoommateAnnouncementsBrowser';
 import RoommateFilterPanel from '../RoommateAnnouncements/RoommateFilterPanel';
+import RoommateRecommendations from '../RoommateRecommendations/RoommateRecommendations';
 
 export interface FilterCriteria {
   city?: string;
@@ -173,9 +174,11 @@ const HomePage: React.FC = () => {
                   onSearch={(criteria) => setRoommateFilters(criteria)}
                 />
                 <RoommateAnnouncementsBrowser
-                  filters={{ ...roommateFilters, preferredCities: preferredCities.map((c: any) => c.value) }}
+                  filters={roommateFilters}
                 />
               </>
+            ) : section === "roommates-recommended" ? (
+              <RoommateRecommendations />
             ) : isLoading ? (
               <p>Loading...</p>
             ) : error ? (

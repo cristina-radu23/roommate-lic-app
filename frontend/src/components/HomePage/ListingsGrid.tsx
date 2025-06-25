@@ -115,7 +115,16 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
   }
 
   return (
-    <div className="recommendations-grid">
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 25,
+        marginTop: 50,
+        padding: '0 20px',
+      }}
+    >
         {listings.map((listing, index) => {
           // Try to get the first photo from the Photo table (listing.Photos)
           // Fallback to listing.photos or default image
@@ -135,7 +144,31 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
           const liked = likedIds.includes(listing.listingId!);
           const likesCount = (listing as any).likesCount ?? 0;
           return (
-          <div key={index} className="recommendation-card" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/listing/${listing.listingId}`)}>
+          <div
+            key={index}
+            style={{
+              width: 350,
+              height: 420,
+              background: 'white',
+              borderRadius: 12,
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+            }}
+            onClick={() => navigate(`/listing/${listing.listingId}`)}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = '';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            }}
+          >
             {/* Delete button for own listing */}
             {showDeleteButton && isOwnListing && (
               <button
@@ -202,23 +235,23 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
               <span style={{ fontSize: 16, color: '#333', minWidth: 5, textAlign: 'center', fontWeight: 500, marginRight: 4 }}>{(listing as any).views ?? 0}</span>
               <BsEye style={{ fontSize: 18, color: '#888' }} />
             </span>
-            <div className="listing-image">
+            <div style={{ width: '100%', height: 200, flexShrink: 0, overflow: 'hidden' }}>
               <img
                 src={imageUrl || "https://placehold.co/300x200?text=No+Image&font=roboto"}
                 alt={listing.title || "Listing"}
-                style={{ height: "200px", objectFit: "cover", width: '100%' }}
+                style={{ height: '100%', width: '100%', objectFit: 'cover' }}
                 onError={() => handleImageError(listing.listingId!)}
               />
             </div>
-            <div className="listing-info">
-              <h3 className="listing-title">{listing.title}</h3>
-              <p className="listing-location">
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 600, color: '#2c3e50', margin: '0 0 8px 0', lineHeight: 1.3 }}>{listing.title}</h3>
+              <p style={{ fontSize: '0.95rem', color: '#7f8c8d', margin: '0 0 8px 0', display: 'flex', alignItems: 'center' }}>
                 {(listing as any).Address?.City?.cityName || (listing as any).city || 'Location not specified'}
               </p>
-              <p className="listing-details">
+              <p style={{ color: '#5a6c7d', fontSize: '0.9rem', margin: '0 0 12px 0', textTransform: 'capitalize' }}>
                 {listing.listingType} • {listing.propertyType} • {(listing.size ?? (listing as any).sizeM2 ?? 0)}m²
               </p>
-              <p className="listing-price" style={{ color: '#27ae60', fontWeight: 700, fontSize: '1.2rem' }}>
+              <p style={{ color: '#27ae60', fontWeight: 700, fontSize: '1.2rem', margin: 0 }}>
                 €{listing.rent}/month
               </p>
               {/* Render extra content if provided */}

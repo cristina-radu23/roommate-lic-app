@@ -1,0 +1,298 @@
+/* Import the recommendations styles */
+@import '../Recommendations/Recommendations.css';
+
+/* Override specific styles for roommate recommendations */
+.recommendations-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.recommendations-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+}
+
+.recommendations-header h2 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.recommendations-subtitle {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.recommendation-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.recommendation-score {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.score-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.listing-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+
+.listing-image {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.listing-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.listing-link:hover .listing-image img {
+  transform: scale(1.05);
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f8c8d;
+  font-size: 3rem;
+}
+
+.listing-info {
+  padding: 20px;
+}
+
+.listing-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.listing-location {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.listing-details {
+  color: #5a6c7d;
+  font-size: 0.9rem;
+  margin: 0 0 12px 0;
+  text-transform: capitalize;
+}
+
+.listing-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #27ae60;
+  margin: 0;
+}
+
+.recommendation-reasons {
+  padding: 0 20px 20px 20px;
+  border-top: 1px solid #ecf0f1;
+  margin-top: 15px;
+  padding-top: 15px;
+}
+
+.recommendation-reasons h4 {
+  font-size: 1rem;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.recommendation-reasons ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recommendation-reasons li {
+  color: #5a6c7d;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.4;
+}
+
+.recommendation-reasons li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: #e74c3c;
+}
+
+.retry-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 15px;
+  transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #2980b9;
+}
+
+.no-recommendations {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+}
+
+.browse-button {
+  display: inline-block;
+  background: #27ae60;
+  color: white;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.browse-button:hover {
+  background: #229954;
+  color: white;
+}
+
+.recommendations-footer {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.refresh-button {
+  background: #9b59b6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.refresh-button:hover {
+  background: #8e44ad;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .recommendations-container {
+    padding: 15px;
+  }
+  
+  .recommendations-header h2 {
+    font-size: 2rem;
+  }
+  
+  .recommendations-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .recommendation-card {
+    margin-bottom: 20px;
+  }
+  
+  .listing-info {
+    padding: 15px;
+  }
+  
+  .recommendation-reasons {
+    padding: 0 15px 15px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recommendations-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .recommendations-subtitle {
+    font-size: 1rem;
+  }
+  
+  .listing-title {
+    font-size: 1.2rem;
+  }
+  
+  .listing-price {
+    font-size: 1.3rem;
+  }
+} 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { RoommateAnnouncement } from '../../types/roommate';
 import './AnnouncementCard.css';
+import '../RoommateRecommendations/RoommateRecommendations.css';
 import { useNavigate } from 'react-router-dom';
 
 interface AnnouncementCardProps {
@@ -26,58 +27,66 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
     return 'N/A';
   };
 
+  // Main image logic
+  let mainImage = '';
+  if (announcement.photos && announcement.photos.length > 0) {
+    mainImage = announcement.photos[0].url.startsWith('http')
+      ? announcement.photos[0].url
+      : `http://localhost:5000${announcement.photos[0].url}`;
+  } else if (announcement.user?.profilePicture) {
+    mainImage = announcement.user.profilePicture.startsWith('http')
+      ? announcement.user.profilePicture
+      : `http://localhost:5000${announcement.user.profilePicture}`;
+  }
+
   return (
-    <div className="announcement-card horizontal-card modern-roommate-card" onClick={() => navigate(`/roommate-announcement/${announcement.announcementId}`)} style={{ cursor: 'pointer' }}>
-      <div className="card-photo-section">
-        {announcement.photos && announcement.photos.length > 0 ? (
-          <div className="main-announcement-photo-wrapper">
-            <img
-              src={announcement.photos[0].url.startsWith('http') ? announcement.photos[0].url : `http://localhost:5000${announcement.photos[0].url}`}
-              alt="Announcement Photo"
-              className="main-announcement-photo"
-            />
-            {announcement.user?.profilePicture && (
+    <div
+      className="recommendation-card"
+      style={{ cursor: 'pointer', minHeight: 380 }}
+      onClick={() => navigate(`/roommate-announcement/${announcement.announcementId}`)}
+    >
+      <div className="listing-link">
+        <div className="listing-image" style={{ height: 220, position: 'relative' }}>
+          {mainImage ? (
+            <img src={mainImage} alt="Main" />
+          ) : (
+            <div className="placeholder-image">👤</div>
+          )}
+        </div>
+        <div className="listing-info" style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
+          {/* Profile picture as circle */}
+          <div style={{ minWidth: 56, marginTop: 2 }}>
+            {announcement.user?.profilePicture ? (
               <img
                 src={announcement.user.profilePicture.startsWith('http') ? announcement.user.profilePicture : `http://localhost:5000${announcement.user.profilePicture}`}
                 alt="Profile"
-                className="profile-picture-overlay"
+                style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0' }}
               />
+            ) : (
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#c3cfe2', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 600, border: '2px solid #e0e0e0' }}>
+                {announcement.user?.userFirstName?.[0] || 'U'}
+              </div>
             )}
           </div>
-        ) : announcement.user?.profilePicture ? (
-          <img
-            src={announcement.user.profilePicture.startsWith('http') ? announcement.user.profilePicture : `http://localhost:5000${announcement.user.profilePicture}`}
-            alt="Profile"
-            className="main-announcement-photo"
-          />
-        ) : (
-          <div className="profile-picture-placeholder large">
-            {announcement.user?.userFirstName?.[0] || 'U'}
+          <div style={{ flex: 1 }}>
+            <h3 className="listing-title">
+              {announcement.user?.userFirstName} {announcement.user?.userLastName}
+            </h3>
+            <p className="listing-location">
+              {announcement.locationAreas && announcement.locationAreas.length > 0
+                ? announcement.locationAreas.join(', ')
+                : 'Location not specified'}
+            </p>
+            <p className="listing-details">
+              Age: {getAge()} &nbsp;|&nbsp; Gender: {announcement.preferredGender}
+            </p>
+            <p className="listing-details">
+              Occupation: {announcement.userOccupation}
+            </p>
+            <p className="listing-details">
+              Budget: €{announcement.budgetMin} - €{announcement.budgetMax}/month
+            </p>
           </div>
-        )}
-      </div>
-      <div className="card-info-section">
-        <div className="info-row">
-          <span className="info-label">Age:</span>
-          <span className="info-value">{getAge()}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Budget:</span>
-          <span className="info-value">
-            €{announcement.budgetMin} - €{announcement.budgetMax}/month
-          </span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Preferred Gender:</span>
-          <span className="info-value">{announcement.preferredGender}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Occupation:</span>
-          <span className="info-value">{announcement.userOccupation}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Preferred Cities:</span>
-          <span className="info-value">{announcement.locationAreas && announcement.locationAreas.length > 0 ? announcement.locationAreas.join(', ') : 'N/A'}</span>
         </div>
       </div>
     </div>

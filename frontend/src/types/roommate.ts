@@ -156,4 +156,70 @@ export interface AnnouncementFilters {
   budgetMin?: number;
   budgetMax?: number;
   locationAreas?: string[];
+}
+
+// Ideal Roommate Preference Types
+export interface IdealRoommatePreference {
+  preferenceId: number;
+  userId: number;
+  preferredAgeMin: number;
+  preferredAgeMax: number;
+  preferredGender: "male" | "female" | "non-binary" | "no-preference";
+  arrangementTypes: string[];
+  moveInDate: string;
+  budgetMin: number;
+  budgetMax: number;
+  preferredLocations: string[];
+  preferredOccupationTypes: string[];
+  preferredWorkSchedules: string[];
+  smokingPreference: "yes" | "no" | "doesnt-matter";
+  petPreference: "yes" | "no" | "depends";
+  cleanlinessPreference: number;
+  sociabilityPreference: "very-social" | "friendly-private" | "quiet-independent" | "no-preference";
+  noiseLevelPreference: number;
+  sleepSchedulePreference: "early-bird" | "night-owl" | "doesnt-matter";
+  guestPreference: "yes" | "no" | "sometimes";
+  preferredLanguages: string[];
+  openToAnyBackground: boolean;
+  culturalComments?: string;
+  sharedInterests: string[];
+  additionalRequirements?: string;
+  isComplete: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    userId: number;
+    userFirstName: string;
+    userLastName: string;
+  };
+}
+
+export interface CreateIdealRoommatePreferenceData {
+  preferredAgeMin: number;
+  preferredAgeMax: number;
+  preferredGender: "male" | "female" | "non-binary" | "no-preference";
+  arrangementTypes: string;
+  moveInDate: string;
+  budgetMin: number;
+  budgetMax: number;
+  preferredLocations: string;
+  preferredOccupationTypes: string;
+  preferredWorkSchedules: string;
+  smokingPreference: "yes" | "no" | "doesnt-matter";
+  petPreference: "yes" | "no" | "depends";
+  cleanlinessPreference: number;
+  sociabilityPreference: "very-social" | "friendly-private" | "quiet-independent" | "no-preference";
+  noiseLevelPreference: number;
+  sleepSchedulePreference: "early-bird" | "night-owl" | "doesnt-matter";
+  guestPreference: "yes" | "no" | "sometimes";
+  preferredLanguages: string;
+  openToAnyBackground: boolean;
+  culturalComments?: string;
+  sharedInterests: string;
+  additionalRequirements?: string;
+}
+
+export interface PreferencesStatus {
+  hasPreferences: boolean;
+  isComplete: boolean;
 } 

@@ -191,6 +191,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                       <li><Link className="dropdown-item" to="/postListing">Add listing</Link></li>
                       <li><hr className="dropdown-divider" /></li>
                       <li><Link className="dropdown-item" to="/roommate-announcements">Find Roommates</Link></li>
+                      <li><Link className="dropdown-item" to="/roommate-recommendations">Recommended for You</Link></li>
                       <li><Link className="dropdown-item" to="/create-roommate-announcement">Create Roommate Announcement</Link></li>
                       <li><button className="dropdown-item" onClick={onLogout}>Logout</button></li>
                     </ul>

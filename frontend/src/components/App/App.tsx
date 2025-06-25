@@ -15,6 +15,8 @@ import RoommateAnnouncements from '../RoommateAnnouncements/RoommateAnnouncement
 import CreateRoommateAnnouncement from '../CreateRoommateAnnouncement/CreateRoommateAnnouncement';
 import AnnouncementSuccess from '../CreateRoommateAnnouncement/AnnouncementSuccess';
 import RoommateAnnouncementPage from '../RoommateAnnouncements/RoommateAnnouncementPage';
+import RoommateRecommendations from '../RoommateRecommendations/RoommateRecommendations';
+import IdealRoommateForm from '../IdealRoommateForm/IdealRoommateForm';
 
 // Add TypeScript declaration for global navigation
 declare global {
@@ -115,6 +117,8 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/create-roommate-announcement" element={<CreateRoommateAnnouncement />} />
         <Route path="/announcement-success" element={<AnnouncementSuccess />} />
         <Route path="/roommate-announcement/:id" element={<RoommateAnnouncementPage />} />
+        <Route path="/roommate-recommendations" element={<RoommateRecommendations />} />
+        <Route path="/ideal-roommate-form" element={<IdealRoommateForm />} />
       </Routes>
     </div>
   );
