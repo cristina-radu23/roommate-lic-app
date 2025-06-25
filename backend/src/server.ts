@@ -120,7 +120,7 @@ app.use("/api/users", userRoutes); // and userRoutes defines POST /register
 
 app.use("/api/chat", chatRoutes);
 app.use("/api/likes", likeRoutes);
-app.use("/api/match", matchRoutes);
+app.use("/api/matches", matchRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recommendations", recommendationRoutes);

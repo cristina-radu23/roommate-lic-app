@@ -5,10 +5,12 @@ interface MatchAttributes {
   matchId: number;
   userAId: number;
   userBId: number;
-  listingId: number;
+  listingId: number | null;
+  announcementId: number | null;
   isMatch: boolean;
   userAConfirmed: boolean;
   userBConfirmed: boolean;
+  initiatorId: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -19,10 +21,12 @@ class Match extends Model<MatchAttributes, MatchCreationAttributes> implements M
   public matchId!: number;
   public userAId!: number;
   public userBId!: number;
-  public listingId!: number;
+  public listingId!: number | null;
+  public announcementId!: number | null;
   public isMatch!: boolean;
   public userAConfirmed!: boolean;
   public userBConfirmed!: boolean;
+  public initiatorId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -44,7 +48,11 @@ Match.init(
     },
     listingId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    announcementId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     isMatch: {
       type: DataTypes.BOOLEAN,
@@ -60,6 +68,10 @@ Match.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    initiatorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {

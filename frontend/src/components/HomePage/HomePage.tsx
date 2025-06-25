@@ -156,7 +156,7 @@ const HomePage: React.FC = () => {
       {/* Main content */}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
         {(section === "listings-all" || section === "listings-recommended") && (
-          <SearchBar onSearch={applyFilters} />
+        <SearchBar onSearch={applyFilters} />
         )}
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
           {/* Left side: Listings or Recommendations */}

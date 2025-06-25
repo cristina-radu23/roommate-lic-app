@@ -1,18 +1,14 @@
 import express from "express";
-import {
-  createChatRoom,
-  consentToChat,
-  sendMessage,
-  getUserChatRooms,
-  getChatRoomMessages,
-} from "../controllers/chatController";
+import * as chatController from "../controllers/chatController";
 
 const router = express.Router();
 
-router.post("/create", createChatRoom);
-router.post("/consent", consentToChat);
-router.post("/message", sendMessage);
-router.get("/user/:userId", getUserChatRooms);
-router.get("/room/:chatRoomId/messages", getChatRoomMessages);
+router.post("/create", chatController.createChatRoom);
+router.post("/consent", chatController.consentToChat);
+router.post("/message", chatController.sendMessage);
+router.get("/user/:userId", chatController.getUserChatRooms);
+router.get("/room/:chatRoomId/messages", chatController.getChatRoomMessages);
+// @ts-ignore
+router.post("/from-match", chatController.getOrCreateChatRoomFromMatch);
 
 export default router; 

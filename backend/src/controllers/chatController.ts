@@ -5,6 +5,7 @@ import Message from "../models/Message";
 import Like from "../models/Like";
 import User from "../models/User";
 import { Op } from 'sequelize';
+import Match from "../models/Match";
 
 interface MessageWithUser {
   messageId: number;
@@ -226,5 +227,32 @@ export const getChatRoomMessages = async (req: Request, res: Response) => {
     res.json(processedMessages);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch messages" });
+  }
+};
+
+// Get or create a chat room from a match
+export const getOrCreateChatRoomFromMatch = async (req: Request, res: Response) => {
+  try {
+    const { matchId, userId } = req.body;
+    if (!matchId || !userId) return res.status(400).json({ error: "matchId and userId required" });
+    const match = await Match.findByPk(matchId);
+    if (!match) return res.status(404).json({ error: "Match not found" });
+    // Find existing chat room for this match
+    let chatRoom = await ChatRoom.findOne({ where: { matchId: match.matchId } });
+    if (!chatRoom) {
+      chatRoom = await ChatRoom.create({
+        matchId: match.matchId,
+        listingId: match.listingId || null,
+        announcementId: match.announcementId || null,
+        isMatchmaking: true
+      });
+      await Promise.all([
+        ChatRoomUser.create({ chatRoomId: chatRoom.chatRoomId, userId: match.userAId, hasConsented: true, isChatVisible: true }),
+        ChatRoomUser.create({ chatRoomId: chatRoom.chatRoomId, userId: match.userBId, hasConsented: true, isChatVisible: true })
+      ]);
+    }
+    return res.json({ chatRoomId: chatRoom.chatRoomId });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get or create chat room from match" });
   }
 }; 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import profileIcon from '../../assets/profileIcon.png';
 import './Inbox.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
 
 interface ChatRoom {
@@ -48,6 +48,7 @@ function getProfilePictureUrl(profilePicture?: string) {
 // }
 
 const Inbox: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [chats, setChats] = useState<ChatRoom[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,6 +87,16 @@ const Inbox: React.FC = () => {
     }
     // eslint-disable-next-line
   }, [receiverId, receiverName, listingId]);
+
+  // Auto-select chat if chatRoomId is present in the URL
+  useEffect(() => {
+    const chatRoomIdParam = searchParams.get('chatRoomId');
+    if (chatRoomIdParam && chats.length > 0) {
+      const chatRoomId = Number(chatRoomIdParam);
+      const found = chats.find(chat => (chat.ChatRoom?.chatRoomId || chat.chatRoomId) === chatRoomId);
+      if (found) setSelectedChat(found);
+    }
+  }, [searchParams, chats]);
 
   // Fetch chat list
   useEffect(() => {

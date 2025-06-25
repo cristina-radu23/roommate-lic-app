@@ -38,6 +38,10 @@ const AccountInfo: React.FC = () => {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [matchStatus, setMatchStatus] = useState<'none' | 'pending' | 'confirm' | 'matched'>("none");
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchedUserId, setMatchedUserId] = useState<number | null>(null);
+  const [currentMatch, setCurrentMatch] = useState<any>(null);
   const navigate = useNavigate();
   const { userId } = useParams();
   const location = useLocation();
@@ -101,6 +105,56 @@ const AccountInfo: React.FC = () => {
     };
     fetchUserInfo();
   }, [navigate, userId, isViewingOtherProfile]);
+
+  // Check for pending/confirmed match if viewing another profile
+  useEffect(() => {
+    const checkMatch = async () => {
+      if (!isViewingOtherProfile || !userId) return;
+      const currentUserId = localStorage.getItem('userId');
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/matches/user/${currentUserId}`);
+        if (!res.ok) return;
+        const matches = await res.json();
+        const found = matches.find((m: any) =>
+          ((m.userAId == currentUserId && m.userBId == userId) ||
+           (m.userBId == currentUserId && m.userAId == userId))
+        );
+        setCurrentMatch(found || null);
+        if (found) {
+          // Debug log for matching details
+          console.log('[MATCH DEBUG]', {
+            currentUserId,
+            viewingProfileUserId: userId,
+            matchId: found.matchId,
+            userAId: found.userAId,
+            userBId: found.userBId,
+            userAConfirmed: found.userAConfirmed,
+            userBConfirmed: found.userBConfirmed,
+            isMatch: found.isMatch,
+            initiatorId: found.initiatorId
+          });
+          setMatchedUserId(found.matchId);
+          // Explicit button logic:
+          if (found.isMatch) {
+            setMatchStatus('matched');
+          } else if (
+            (found.userAId == currentUserId && !found.userAConfirmed) ||
+            (found.userBId == currentUserId && !found.userBConfirmed)
+          ) {
+            setMatchStatus('confirm');
+          } else {
+            setMatchStatus('pending');
+          }
+        } else {
+          setMatchStatus('none');
+        }
+      } catch (err) {
+        setMatchStatus('none');
+      }
+    };
+    checkMatch();
+  }, [isViewingOtherProfile, userId]);
 
   useEffect(() => {
     setImgError(false); // Reset image error when profilePicture changes
@@ -274,6 +328,66 @@ const AccountInfo: React.FC = () => {
     }
   };
 
+  // Handler for confirming match
+  const handleConfirmMatch = async () => {
+    setMatchLoading(true);
+    const currentUserId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    if (!currentUserId || !userId || !token || !currentMatch) return;
+    try {
+      const response = await fetch('http://localhost:5000/api/matches/roommate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userAId: currentMatch.userAId,
+          userBId: currentMatch.userBId,
+          announcementId: currentMatch.listingId,
+          actingUserId: currentUserId
+        })
+      });
+      if (response.ok) {
+        const matchData = await response.json();
+        setMatchStatus('matched');
+        alert('Match confirmed! You can now send messages to each other.');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to confirm match.');
+      }
+    } catch (err) {
+      alert('Failed to confirm match. Please try again.');
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  // Handler for sending message (redirect to chat)
+  const handleSendMessage = async () => {
+    if (!matchedUserId) return;
+    const currentUserId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/from-match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ matchId: matchedUserId, userId: currentUserId })
+      });
+      if (!res.ok) throw new Error('Failed to create/find chat room');
+      const { chatRoomId } = await res.json();
+      navigate(`/inbox?chatRoomId=${chatRoomId}`);
+    } catch (err) {
+      alert('Failed to start chat.');
+    }
+  };
+
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) {
       return 'Not specified';
@@ -408,6 +522,24 @@ const AccountInfo: React.FC = () => {
           )}
           {/* Main content area */}
           <div style={{ flex: 1 }}>
+            {/* Match/Confirm/Send Message button for other profiles */}
+            {isViewingOtherProfile && (
+              <div className="mb-4" style={{ textAlign: 'right' }}>
+                {matchStatus === 'confirm' && (
+                  <button className="btn btn-primary" onClick={handleConfirmMatch} disabled={matchLoading}>
+                    {matchLoading ? 'Confirming...' : 'Confirm Match'}
+                  </button>
+                )}
+                {matchStatus === 'matched' && (
+                  <button className="btn btn-success" onClick={handleSendMessage}>
+                    Send Message
+                  </button>
+                )}
+                {matchStatus === 'pending' && (
+                  <span className="text-muted">Waiting for other user to confirm match...</span>
+                )}
+              </div>
+            )}
             {selectedMenu === 'profile' && (
               <form onSubmit={handleSave}>
                 <h4 className="mb-4">Profile</h4>

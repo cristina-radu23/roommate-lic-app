@@ -7,6 +7,20 @@ const RoommateAnnouncementPage: React.FC = () => {
   const [announcement, setAnnouncement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [hasPendingMatch, setHasPendingMatch] = useState(false);
+  const [matchId, setMatchId] = useState<number | null>(null);
+  const [matchStatus, setMatchStatus] = useState<'none' | 'pending' | 'matched'>('none');
+
+  // Check authentication status
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    setIsAuthenticated(!!token);
+    setCurrentUserId(userId ? parseInt(userId) : null);
+  }, []);
 
   useEffect(() => {
     const fetchAnnouncement = async () => {
@@ -24,6 +38,161 @@ const RoommateAnnouncementPage: React.FC = () => {
     fetchAnnouncement();
   }, [id]);
 
+  // Check if a match exists between current user and announcement owner
+  useEffect(() => {
+    const checkMatch = async () => {
+      if (!currentUserId || !announcement?.user?.userId) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/matches/user/${currentUserId}`);
+        if (!res.ok) return;
+        const matches = await res.json();
+        const found = matches.find((m: any) =>
+          ((m.userAId === currentUserId && m.userBId === announcement.user.userId) ||
+           (m.userBId === currentUserId && m.userAId === announcement.user.userId)) &&
+          Number(m.announcementId) === Number(announcement.announcementId)
+        );
+        console.log('[MATCH DEBUG]', {
+          currentUserId,
+          announcementUserId: announcement.user.userId,
+          announcementId: announcement.announcementId,
+          foundMatch: found
+        });
+        if (found) {
+          setMatchId(found.matchId);
+          if (found.isMatch) {
+            setMatchStatus('matched');
+            setHasPendingMatch(false);
+          } else {
+            setMatchStatus('pending');
+            setHasPendingMatch(true);
+          }
+        } else {
+          setMatchStatus('none');
+          setHasPendingMatch(false);
+          setMatchId(null);
+        }
+      } catch (err) {
+        setMatchStatus('none');
+        setHasPendingMatch(false);
+        setMatchId(null);
+      }
+    };
+    if (announcement && currentUserId) checkMatch();
+  }, [announcement, currentUserId]);
+
+  // Handle match button click
+  const handleMatchClick = async () => {
+    // If not authenticated, open login modal
+    if (!isAuthenticated) {
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+      return;
+    }
+
+    // If authenticated user is the owner, don't allow matching
+    if (currentUserId === announcement.user?.userId) {
+      alert('You cannot match with your own announcement.');
+      return;
+    }
+
+    setMatchLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      // Debug log to verify correct user IDs
+      console.log('Sending match request:', {
+        userAId: currentUserId,
+        userBId: announcement.user?.userId,
+        actingUserId: currentUserId,
+        announcementId: announcement.announcementId
+      });
+      const response = await fetch('http://localhost:5000/api/matches/roommate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userAId: currentUserId, // logged-in user (sender)
+          userBId: announcement.user?.userId, // announcement owner (receiver)
+          announcementId: announcement.announcementId,
+          actingUserId: currentUserId // logged-in user (sender)
+        })
+      });
+
+      if (response.ok) {
+        const matchData = await response.json();
+        setHasPendingMatch(true);
+        setMatchId(matchData.matchId);
+        alert('Match request sent! The announcement owner will be notified.');
+      } else {
+        const errorData = await response.json();
+        if (response.status === 403) {
+          alert('You cannot match with this announcement.');
+        } else {
+          alert(errorData.error || 'Failed to send match request');
+        }
+      }
+    } catch (err) {
+      console.error('Error creating match:', err);
+      alert('Failed to send match request. Please try again.');
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  // Handle cancel match
+  const handleCancelMatch = async () => {
+    if (!currentUserId || !announcement?.user?.userId) return;
+    setMatchLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/matches/', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userAId: currentUserId,
+          userBId: announcement.user.userId,
+          announcementId: announcement.announcementId
+        })
+      });
+      if (response.ok) {
+        setHasPendingMatch(false);
+        setMatchId(null);
+        alert('Match request cancelled.');
+      } else {
+        alert('Failed to cancel match request.');
+      }
+    } catch (err) {
+      alert('Failed to cancel match request.');
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  // Handle send message (redirect to chat)
+  const handleSendMessage = async () => {
+    if (!matchId) return;
+    const currentUserId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/from-match', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ matchId, userId: currentUserId })
+      });
+      if (!res.ok) throw new Error('Failed to create/find chat room');
+      const { chatRoomId } = await res.json();
+      window.location.href = `/inbox?chatRoomId=${chatRoomId}`;
+    } catch (err) {
+      alert('Failed to start chat.');
+    }
+  };
+
   if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
   if (error) return <div style={{ padding: 40, color: 'red' }}>{error}</div>;
   if (!announcement) return <div style={{ padding: 40 }}>Announcement not found.</div>;
@@ -39,21 +208,41 @@ const RoommateAnnouncementPage: React.FC = () => {
     try { announcement.dealBreakers = JSON.parse(announcement.dealBreakers); } catch { announcement.dealBreakers = []; }
   }
 
+  // Check if current user is the announcement owner
+  const isOwner = currentUserId === announcement.user?.userId;
+
+  // Log button rendering logic before return
+  console.log('[BUTTON LOGIC]', { isOwner, matchStatus, hasPendingMatch, matchId });
+
   // TODO: Add user card, match button, and all details
   return (
     <div style={{ display: 'flex', gap: 40, maxWidth: 1200, margin: '40px auto', paddingTop: 100 }}>
       {/* Left: Big photo and user card */}
       <div style={{ flex: '0 0 380px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ width: 360, height: 360, borderRadius: 18, overflow: 'hidden', background: '#eee', boxShadow: '0 2px 16px rgba(0,0,0,0.08)' }}>
-          {announcement.photos && announcement.photos.length > 0 ? (
-            <img
-              src={announcement.photos[0].url.startsWith('http') ? announcement.photos[0].url : `http://localhost:5000${announcement.photos[0].url}`}
-              alt="Announcement Photo"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 32 }}>No Photo</div>
-          )}
+          {/* Main image logic with profile picture fallback */}
+          {(() => {
+            let mainImage = '';
+            if (announcement.photos && announcement.photos.length > 0) {
+              mainImage = announcement.photos[0].url.startsWith('http') 
+                ? announcement.photos[0].url 
+                : `http://localhost:5000${announcement.photos[0].url}`;
+            } else if (announcement.user?.profilePicture) {
+              mainImage = announcement.user.profilePicture.startsWith('http') 
+                ? announcement.user.profilePicture 
+                : `http://localhost:5000${announcement.user.profilePicture}`;
+            }
+            
+            return mainImage ? (
+              <img
+                src={mainImage}
+                alt="Announcement Photo"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 32 }}>No Photo</div>
+            );
+          })()}
         </div>
         {/* User card placeholder */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', padding: 24, textAlign: 'center' }}>
@@ -71,10 +260,77 @@ const RoommateAnnouncementPage: React.FC = () => {
             )}
           </div>
           <div style={{ fontWeight: 700, fontSize: 20 }}>{announcement.user?.userFirstName} {announcement.user?.userLastName}</div>
-          {/* TODO: Add match button here */}
-          <button style={{ marginTop: 18, padding: '10px 28px', borderRadius: 8, background: '#007bff', color: '#fff', border: 'none', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-            Match
-          </button>
+          {/* Match/Cancel/Send Message button - only show if not the owner */}
+          {!isOwner ? (
+            matchStatus === 'matched' ? (
+              <button
+                onClick={handleSendMessage}
+                style={{
+                  marginTop: 18,
+                  padding: '10px 28px',
+                  borderRadius: 8,
+                  background: '#28a745',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: 'pointer'
+                }}
+              >
+                Send Message
+              </button>
+            ) : hasPendingMatch ? (
+              <button
+                onClick={handleCancelMatch}
+                disabled={matchLoading}
+                style={{
+                  marginTop: 18,
+                  padding: '10px 28px',
+                  borderRadius: 8,
+                  background: matchLoading ? '#ccc' : '#dc3545',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: matchLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {matchLoading ? 'Cancelling...' : 'Cancel'}
+              </button>
+            ) : (
+              <button
+                onClick={handleMatchClick}
+                disabled={matchLoading}
+                style={{
+                  marginTop: 18,
+                  padding: '10px 28px',
+                  borderRadius: 8,
+                  background: matchLoading ? '#ccc' : '#007bff',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  cursor: matchLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {matchLoading ? 'Sending...' : 'Match'}
+              </button>
+            )
+          ) : (
+            <div style={{
+              marginTop: 18,
+              padding: '10px 28px',
+              borderRadius: 8,
+              background: '#28a745',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 600,
+              fontSize: 16,
+              textAlign: 'center'
+            }}>
+              Your Announcement
+            </div>
+          )}
         </div>
       </div>
       {/* Right: Details */}
