@@ -16,6 +16,7 @@ import Notification from "./Notification";
 import PendingRegistration from "./PendingRegistration";
 import RoommateAnnouncement from "./RoommateAnnouncement";
 import UserProfile from "./UserProfile";
+import Application from "./Application";
 
 // =======================
 // One-to-Many Associations
@@ -112,4 +113,8 @@ UserProfile.belongsTo(User, { foreignKey: "userId" });
 RoommateAnnouncement.hasMany(Photo, { foreignKey: 'announcementId', onDelete: 'CASCADE' });
 Photo.belongsTo(RoommateAnnouncement, { foreignKey: 'announcementId' });
 
-export { User, Listing, Address, City, County, Photo, RoomAmenity, PropertyAmenity, HouseRule, ChatRoom, ChatRoomUser, Message, Like, Match, Notification, PendingRegistration, RoommateAnnouncement, UserProfile };
+// Application ↔ Listing
+Application.belongsTo(Listing, { foreignKey: "listingId" });
+Listing.hasMany(Application, { foreignKey: "listingId" });
+
+export { User, Listing, Address, City, County, Photo, RoomAmenity, PropertyAmenity, HouseRule, ChatRoom, ChatRoomUser, Message, Like, Match, Notification, PendingRegistration, RoommateAnnouncement, UserProfile, Application };

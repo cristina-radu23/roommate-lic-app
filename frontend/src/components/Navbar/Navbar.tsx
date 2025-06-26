@@ -3,6 +3,7 @@ import { FaUserCircle, FaEnvelope, FaBell } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import NotificationPopup from "./NotificationPopup";
+import ApplicationApprovalModal from "../ApplicationApprovalModal/ApplicationApprovalModal";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -25,6 +26,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   const [hasUnread, setHasUnread] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | undefined>();
   const userId = Number(localStorage.getItem('userId'));
   const location = useLocation();
 
@@ -142,6 +145,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                       onClose={() => setShowNotifications(false)}
                       userId={userId}
                       onAnyUnread={setHasNotifications}
+                      onApplicationModalOpen={(applicationId: number) => {
+                        setSelectedApplicationId(applicationId);
+                        setShowApplicationModal(true);
+                      }}
                     />
                   )}
                 </li>
@@ -202,6 +209,14 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
           </ul>
         </div>
       </div>
+      <ApplicationApprovalModal
+        show={showApplicationModal}
+        onHide={() => {
+          setShowApplicationModal(false);
+          setSelectedApplicationId(undefined);
+        }}
+        applicationId={selectedApplicationId}
+      />
     </nav>
   );
 };

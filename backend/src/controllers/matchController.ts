@@ -177,7 +177,11 @@ export const getUserMatches = async (req: Request, res: Response) => {
           { userAId: userId },
           { userBId: userId }
         ]
-      }
+      },
+      include: [
+        { model: User, as: 'UserA', attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture'] },
+        { model: User, as: 'UserB', attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture'] }
+      ]
     });
     res.json(matches);
   } catch (err) {

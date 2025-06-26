@@ -5,6 +5,7 @@ import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
 import { FaUserCircle, FaHeart, FaEdit, FaSave, FaTimes, FaEllipsisV, FaTrash } from 'react-icons/fa';
 import LikesList from '../LikesList/LikesList';
+import ApplyToListingModal from '../ApplyToListingModal/ApplyToListingModal';
 
 interface ListingData {
   listingId: number;
@@ -105,6 +106,9 @@ const ListingPage: React.FC = () => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
+  // Application modal state
+  const [showApplyModal, setShowApplyModal] = useState(false);
+
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
@@ -185,22 +189,13 @@ const ListingPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleApplyToListing = () => {
     if (!userId) {
       // Show login modal for unauthenticated users
       window.dispatchEvent(new CustomEvent('open-login-modal'));
       return;
     }
-    // Navigate to inbox with the receiver's information
-    if (listing?.user) {
-      navigate('/inbox', {
-        state: {
-          receiverId: listing.user.userId,
-          receiverName: listing.user.name,
-          listingId: listing.listingId
-        }
-      });
-    }
+    setShowApplyModal(true);
   };
 
   const fetchLikedUsers = async () => {
@@ -1453,9 +1448,9 @@ const ListingPage: React.FC = () => {
                   <button
                     className="btn btn-primary mt-2 w-100"
                     style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
-                    onClick={handleSendMessage}
+                    onClick={handleApplyToListing}
                   >
-                    Send message
+                    Apply to Listing
                   </button>
                 )}
               </div>
@@ -1582,6 +1577,15 @@ const ListingPage: React.FC = () => {
         users={likedUsers}
         listingId={listing?.listingId}
         listingOwnerId={listing?.user?.userId}
+      />
+      
+      {/* Add ApplyToListingModal */}
+      <ApplyToListingModal
+        show={showApplyModal}
+        onHide={() => setShowApplyModal(false)}
+        listingTitle={listing?.title || 'Apartment Listing'}
+        listingId={listing?.listingId || 0}
+        currentUserId={userId}
       />
     </div>
   );

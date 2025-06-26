@@ -6,7 +6,12 @@ import { useSocket } from '../../hooks/useSocket';
 
 interface ChatRoom {
   chatRoomId: number;
-  ChatRoom: { chatRoomId: number; listingId: number; isMatchmaking: boolean };
+  ChatRoom: {
+    chatRoomId: number;
+    listingId: number;
+    isMatchmaking: boolean;
+    ChatRoomUsers?: any[];
+  };
   // ...other fields as needed
   users?: { userId: number; name: string; avatar?: string }[];
   unreadCount?: number;
@@ -382,7 +387,17 @@ const Inbox: React.FC = () => {
     <div className="inbox-list">
       {loadingChats ? <div style={{ padding: 16 }}>Loading...</div> : null}
       {chats.map((chat) => {
-        const otherUser = getOtherUser(chat, userId);
+        // Group chat preview logic
+        const participants = (chat.ChatRoom.ChatRoomUsers || [])
+          .map((cru: any) => cru.User)
+          .filter((u: any) => u && u.userId !== userId);
+        const isGroup = participants.length > 1;
+        const firstNames = participants.map((u: any) => u.userFirstName);
+        const allNames = participants.map((u: any) => `${u.userFirstName} ${u.userLastName}`).join(', ');
+        const displayNames = firstNames.join(', ');
+        const maxAvatars = 3;
+        const avatarsToShow = participants.slice(0, maxAvatars);
+        const extraCount = participants.length - maxAvatars;
         const lastMsg = (chat as any).lastMessage;
         let lastMsgContent = '';
         if (lastMsg) {
@@ -397,17 +412,66 @@ const Inbox: React.FC = () => {
             key={chat.ChatRoom.chatRoomId}
             className={`inbox-list-item${selectedChat?.ChatRoom.chatRoomId === chat.ChatRoom.chatRoomId ? ' selected' : ''}`}
             onClick={() => handleChatClick(chat)}
+            title={isGroup ? allNames : undefined}
           >
-            <img 
-              src={otherUser?.profilePicture ? getProfilePictureUrl(otherUser.profilePicture) : profileIcon} 
-              alt="avatar" 
-              className="inbox-avatar" 
-            />
-            <div className="inbox-list-info">
-              <div className="inbox-list-name">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${chat.ChatRoom.chatRoomId}`}</div>
-              {otherUser && !otherUser.isActive && (
-                <div className="inbox-list-status" style={{ color: '#dc3545', fontSize: '0.85rem' }}>Inactive user</div>
-              )}
+            {isGroup ? (
+              <div style={{ display: 'flex', alignItems: 'center', minWidth: 48, position: 'relative' }}>
+                {avatarsToShow.map((u: any, idx: number) => (
+                  <img
+                    key={u.userId}
+                    src={u.profilePicture ? getProfilePictureUrl(u.profilePicture) : profileIcon}
+                    alt="avatar"
+                    className="inbox-avatar"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      marginLeft: idx > 0 ? -12 : 0,
+                      border: '2px solid #fff',
+                      zIndex: 10 - idx,
+                      objectFit: 'cover',
+                      background: '#eee',
+                    }}
+                  />
+                ))}
+                {extraCount > 0 && (
+                  <span style={{
+                    width: 28,
+                    height: 28,
+                    marginLeft: -12,
+                    borderRadius: '50%',
+                    background: '#bbb',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    border: '2px solid #fff',
+                    zIndex: 1,
+                  }}>+{extraCount}</span>
+                )}
+              </div>
+            ) : (
+              <img
+                src={participants[0]?.profilePicture ? getProfilePictureUrl(participants[0].profilePicture) : profileIcon}
+                alt="avatar"
+                className="inbox-avatar"
+              />
+            )}
+            <div className="inbox-list-info" style={{ minWidth: 0 }}>
+              <div
+                className="inbox-list-name"
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: 140,
+                  fontWeight: 600,
+                }}
+                title={isGroup ? allNames : undefined}
+              >
+                {isGroup ? displayNames : (participants[0] ? `${participants[0].userFirstName} ${participants[0].userLastName}` : `Chat #${chat.ChatRoom.chatRoomId}`)}
+              </div>
               <div className="inbox-list-last" style={{ color: '#888' }}>{lastMsgContent}</div>
             </div>
             {unread > 0 && (
@@ -466,22 +530,39 @@ const Inbox: React.FC = () => {
     }
     // Existing chat
     if (selectedChat) {
-      const otherUser = getOtherUser(selectedChat, userId);
-      const isOtherUserInactive = otherUser && !otherUser.isActive;
-      
+      // Get all participants except the current user
+      const participants = (selectedChat.ChatRoom.ChatRoomUsers || [])
+        .map((cru: any) => cru.User)
+        .filter((u: any) => u && u.userId !== userId);
+      const isGroup = participants.length > 1;
+      const groupNames = participants.map((u: any) => `${u.userFirstName} ${u.userLastName}`).join(', ');
+      const groupAvatars = participants.map((u: any, idx: number) => (
+        <img
+          key={u.userId}
+          src={u.profilePicture ? getProfilePictureUrl(u.profilePicture) : profileIcon}
+          alt="avatar"
+          className="inbox-avatar-large"
+          style={{ marginLeft: idx > 0 ? -16 : 0, border: '2px solid #fff', zIndex: 10 - idx }}
+        />
+      ));
       return (
         <div className="inbox-chat">
-          <div className="inbox-chat-header">
-            <img 
-              src={otherUser?.profilePicture ? getProfilePictureUrl(otherUser.profilePicture) : profileIcon} 
-              alt="avatar" 
-              className="inbox-avatar-large" 
-            />
+          <div className="inbox-chat-header" style={{ display: 'flex', alignItems: 'center' }}>
+            {isGroup ? (
+              <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minWidth: 60 }}>
+                {groupAvatars}
+              </div>
+            ) : (
+              <img
+                src={participants[0]?.profilePicture ? getProfilePictureUrl(participants[0].profilePicture) : profileIcon}
+                alt="avatar"
+                className="inbox-avatar-large"
+              />
+            )}
             <div>
-              <span className="inbox-chat-username">{otherUser ? otherUser.userFirstName + ' ' + otherUser.userLastName : `Chat #${selectedChat.ChatRoom.chatRoomId}`}</span>
-              {isOtherUserInactive && (
-                <div style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: 2 }}>Inactive user</div>
-              )}
+              <span className="inbox-chat-username">
+                {isGroup ? groupNames : (participants[0] ? `${participants[0].userFirstName} ${participants[0].userLastName}` : `Chat #${selectedChat.ChatRoom.chatRoomId}`)}
+              </span>
               <div style={{ fontSize: '0.75rem', marginTop: 2 }}>
                 <span style={{ color: isConnected ? '#28a745' : '#dc3545' }}>
                   ● {isConnected ? 'Connected' : 'Disconnected'}
@@ -521,18 +602,7 @@ const Inbox: React.FC = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-          {isOtherUserInactive ? (
-            <div className="inbox-chat-input" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              padding: '12px',
-              backgroundColor: '#f8f9fa',
-              borderTop: '1px solid #dee2e6'
-            }}>
-              <span style={{ color: '#dc3545' }}>Cannot send messages to inactive users</span>
-            </div>
-          ) : (
+          {participants.length > 0 && participants[0].isActive ? (
             <div className="inbox-chat-input">
               <input
                 type="text"
@@ -551,6 +621,17 @@ const Inbox: React.FC = () => {
                 }}
               />
               <button onClick={handleSend} disabled={sending || !message.trim()}>Send</button>
+            </div>
+          ) : (
+            <div className="inbox-chat-input" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderTop: '1px solid #dee2e6'
+            }}>
+              <span style={{ color: '#dc3545' }}>Cannot send messages to inactive users</span>
             </div>
           )}
         </div>

@@ -15,15 +15,17 @@ interface Props {
   onClose: () => void;
   userId: number;
   onAnyUnread: (hasUnread: boolean) => void;
+  onApplicationModalOpen: (applicationId: number) => void;
+  applicationModalOpen?: boolean;
 }
 
-const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread }) => {
+const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread, onApplicationModalOpen }) => {
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
-
+  
   // Handle clicks outside the popup
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,6 +61,7 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
   const handleNotificationClick = (notification: Notification) => {
     console.log('Notification clicked:', notification);
     console.log('Notification link:', notification.link);
+    console.log('Notification type:', notification.type);
     
     if (!notification.read) {
       fetch(`http://localhost:5000/api/notifications/${userId}/${notification.notificationId}/read`, { method: 'POST' })
@@ -71,8 +74,34 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
           onAnyUnread(notifications.some((n) => n.notificationId !== notification.notificationId && !n.read));
         });
     }
+    
+    // Handle application notifications
+    if (notification.type === 'application_received' && notification.link) {
+      // Extract application ID from link like "/applications/123"
+      const applicationId = notification.link.split('/').pop();
+      console.log('Extracted applicationId:', applicationId);
+      if (applicationId && !isNaN(Number(applicationId))) {
+        console.log('Calling onApplicationModalOpen for applicationId:', applicationId);
+        onApplicationModalOpen(Number(applicationId));
+        onClose();
+        return;
+      } else {
+        console.log('Invalid applicationId extracted:', applicationId);
+      }
+    }
+    
     if (notification.link) {
       console.log('Navigating to:', notification.link);
+      // Special handling for application_approved with chatRoomId in link
+      if (notification.type === 'application_approved' && notification.link.includes('chatRoomId=')) {
+        const url = new URL('http://dummy' + notification.link); // dummy base for parsing
+        const chatRoomId = url.searchParams.get('chatRoomId');
+        if (chatRoomId) {
+          navigate('/inbox', { state: { chatRoomId: Number(chatRoomId) } });
+          onClose();
+          return;
+        }
+      }
       navigate(notification.link);
       onClose();
     } else {

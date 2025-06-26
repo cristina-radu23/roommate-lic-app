@@ -32,6 +32,7 @@ import recommendationRoutes from "./routes/recommendations";
 import roommateAnnouncementRoutes from "./routes/roommateAnnouncement";
 import userProfileRoutes from "./routes/userProfile";
 import idealRoommatePreferenceRoutes from "./routes/idealRoommatePreference";
+import applicationRoutes from "./routes/application";
 
 // Only a few cities shown for brevity — add the full list
 const cities: { countyId: string; cityName: string }[] = [
@@ -127,6 +128,7 @@ app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/roommate-announcements", roommateAnnouncementRoutes);
 app.use("/api/user-profiles", userProfileRoutes);
 app.use("/api/ideal-roommate-preferences", idealRoommatePreferenceRoutes);
+app.use("/api/applications", applicationRoutes);
 
 
 // ✅ County seeding function
