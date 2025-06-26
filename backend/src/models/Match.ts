@@ -5,7 +5,8 @@ interface MatchAttributes {
   matchId: number;
   userAId: number;
   userBId: number;
-  listingId: number;
+  listingId?: number | null;
+  announcementId?: number | null;
   isMatch: boolean;
   userAConfirmed: boolean;
   userBConfirmed: boolean;
@@ -13,13 +14,14 @@ interface MatchAttributes {
   updatedAt?: Date;
 }
 
-interface MatchCreationAttributes extends Optional<MatchAttributes, "matchId" | "isMatch" | "userAConfirmed" | "userBConfirmed" | "createdAt" | "updatedAt"> {}
+interface MatchCreationAttributes extends Optional<MatchAttributes, "matchId" | "isMatch" | "userAConfirmed" | "userBConfirmed" | "createdAt" | "updatedAt" | "listingId" | "announcementId"> {}
 
 class Match extends Model<MatchAttributes, MatchCreationAttributes> implements MatchAttributes {
   public matchId!: number;
   public userAId!: number;
   public userBId!: number;
-  public listingId!: number;
+  public listingId?: number | null;
+  public announcementId?: number | null;
   public isMatch!: boolean;
   public userAConfirmed!: boolean;
   public userBConfirmed!: boolean;
@@ -44,7 +46,11 @@ Match.init(
     },
     listingId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    announcementId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     isMatch: {
       type: DataTypes.BOOLEAN,

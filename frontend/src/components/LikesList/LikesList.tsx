@@ -63,7 +63,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
     }
     setPending(userId);
     setPendingMatchUserId(userId);
-    await fetch('http://localhost:5000/api/match', {
+    await fetch('http://localhost:5000/api/matches', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
     }
     setPending(userId);
     setPendingMatchUserId(null);
-    await fetch('http://localhost:5000/api/match', {
+    await fetch('http://localhost:5000/api/matches', {
       method: 'DELETE',
       headers: { 
         'Content-Type': 'application/json',

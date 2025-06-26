@@ -38,10 +38,16 @@ const AccountInfo: React.FC = () => {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [match, setMatch] = useState<any>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchError, setMatchError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { userId } = useParams();
   const location = useLocation();
   const isViewingOtherProfile = userId !== undefined && userId !== localStorage.getItem('userId');
+  const authUserId = localStorage.getItem('userId');
+
+  console.log('[ProfilePage] Viewing profile userId:', userId, 'authUserId:', authUserId);
 
   useEffect(() => {
     // Set the active submenu from navigation state if available
@@ -105,6 +111,18 @@ const AccountInfo: React.FC = () => {
   useEffect(() => {
     setImgError(false); // Reset image error when profilePicture changes
   }, [user?.profilePicture]);
+
+  // Fetch match info if viewing another profile
+  useEffect(() => {
+    if (!isViewingOtherProfile || !authUserId || !userId) return;
+    setMatchLoading(true);
+    setMatchError(null);
+    fetch(`http://localhost:5000/api/matches/user-pair-match?userId=${authUserId}&otherUserId=${userId}`)
+      .then(res => res.json())
+      .then(data => setMatch(data))
+      .catch(() => setMatchError('Failed to fetch match info'))
+      .finally(() => setMatchLoading(false));
+  }, [isViewingOtherProfile, authUserId, userId]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -306,6 +324,81 @@ const AccountInfo: React.FC = () => {
       day: 'numeric',
       timeZone: 'UTC' // using UTC to avoid timezone issues from browser
     });
+  };
+
+  const handleCancelMatch = async () => {
+    if (!match || match.userAId === match.userBId) {
+      setMatchError('Invalid match object');
+      return;
+    }
+    setMatchLoading(true);
+    setMatchError(null);
+    try {
+      console.log('[CancelMatch] match:', match);
+      await fetch('http://localhost:5000/api/matches', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAId: match.userAId,
+          userBId: match.userBId,
+          listingId: match.listingId,
+          announcementId: match.announcementId
+        })
+      });
+      setMatch(null);
+    } catch (err) {
+      setMatchError('Failed to cancel match');
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  const handleConfirmMatch = async () => {
+    if (!match) return;
+    setMatchLoading(true);
+    setMatchError(null);
+    try {
+      console.log('[ConfirmMatch] match:', match);
+      console.log('[ConfirmMatch] userAId:', match.userAId, 'userBId:', match.userBId, 'actingUserId:', authUserId);
+      const res = await fetch('http://localhost:5000/api/matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAId: match.userAId,
+          userBId: match.userBId,
+          listingId: match.listingId,
+          announcementId: match.announcementId,
+          actingUserId: Number(authUserId)
+        })
+      });
+      const data = await res.json();
+      console.log('[ConfirmMatch] Backend response:', data);
+      setMatch(data);
+      console.log('[ConfirmMatch] Updated match state:', data);
+    } catch (err) {
+      setMatchError('Failed to confirm match');
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!userId || !authUserId) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: [Number(authUserId), Number(userId)] })
+      });
+      const data = await res.json();
+      if (data.chatRoomId) {
+        navigate('/inbox', { state: { chatRoomId: data.chatRoomId } });
+      } else {
+        navigate('/inbox');
+      }
+    } catch (err) {
+      navigate('/inbox');
+    }
   };
 
   if (loading) {
@@ -645,6 +738,31 @@ const AccountInfo: React.FC = () => {
                     Delete Account
                   </button>
                 </div>
+              </div>
+            )}
+            {isViewingOtherProfile && match && match.userAId !== match.userBId && (
+              <div className="mb-3">
+                {matchLoading && <div>Loading match info...</div>}
+                {matchError && <div className="text-danger">{matchError}</div>}
+                {match && !match.isMatch && (
+                  <>
+                    {(authUserId == match.userAId && match.userAConfirmed && !match.userBConfirmed) && (
+                      <button className="btn btn-outline-danger me-2" onClick={handleCancelMatch} disabled={matchLoading}>
+                        Cancel
+                      </button>
+                    )}
+                    {(authUserId == match.userBId && match.userAConfirmed && !match.userBConfirmed) && (
+                      <button className="btn btn-success me-2" onClick={handleConfirmMatch} disabled={matchLoading}>
+                        Confirm Match
+                      </button>
+                    )}
+                  </>
+                )}
+                {match && match.isMatch && (
+                  <button className="btn btn-primary me-2" onClick={handleSendMessage}>
+                    Send Message
+                  </button>
+                )}
               </div>
             )}
           </div>

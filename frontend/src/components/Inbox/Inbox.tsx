@@ -129,6 +129,21 @@ const Inbox: React.FC = () => {
     }
   }, [pendingChat, chats, userId]);
 
+  // Auto-select chat if chatRoomId is present in location.state
+  useEffect(() => {
+    if (location.state && location.state.chatRoomId && chats.length > 0) {
+      console.log('[Inbox] Attempting to auto-select chatRoomId:', location.state.chatRoomId);
+      console.log('[Inbox] Current chats:', chats.map(c => c.ChatRoom.chatRoomId));
+      const chat = chats.find(c => c.ChatRoom.chatRoomId === location.state.chatRoomId);
+      console.log('[Inbox] Found chat:', chat);
+      if (chat) {
+        setSelectedChat(chat);
+        // Optionally clear the chatRoomId from state
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [location.state, chats]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {

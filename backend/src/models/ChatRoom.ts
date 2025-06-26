@@ -28,7 +28,7 @@ ChatRoom.init(
     },
     listingId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     isMatchmaking: {
       type: DataTypes.BOOLEAN,

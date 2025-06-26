@@ -57,6 +57,9 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
 
   // Mark as read in backend
   const handleNotificationClick = (notification: Notification) => {
+    console.log('Notification clicked:', notification);
+    console.log('Notification link:', notification.link);
+    
     if (!notification.read) {
       fetch(`http://localhost:5000/api/notifications/${userId}/${notification.notificationId}/read`, { method: 'POST' })
         .then(() => {
@@ -69,8 +72,11 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
         });
     }
     if (notification.link) {
+      console.log('Navigating to:', notification.link);
       navigate(notification.link);
       onClose();
+    } else {
+      console.log('No link found for notification');
     }
   };
 

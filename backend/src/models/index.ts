@@ -94,6 +94,7 @@ City.hasMany(Address, { foreignKey: "cityId" });
 Match.belongsTo(User, { as: 'UserA', foreignKey: 'userAId' });
 Match.belongsTo(User, { as: 'UserB', foreignKey: 'userBId' });
 Match.belongsTo(Listing, { foreignKey: 'listingId' });
+Match.belongsTo(RoommateAnnouncement, { foreignKey: 'announcementId' });
 
 // User ↔ Notification
 User.hasMany(Notification, { foreignKey: "userId" });

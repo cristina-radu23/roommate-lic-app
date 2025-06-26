@@ -38,10 +38,15 @@ interface ChatRoomWithUsers {
 // Create a chat room (user-owner or matchmaking)
 export const createChatRoom = async (req: Request, res: Response) => {
   try {
+    console.log('createChatRoom called. Body:', req.body);
     const { listingId, userIds, isMatchmaking } = req.body;
-    if (!listingId || !Array.isArray(userIds) || userIds.length < 2) {
-      res.status(400).json({ error: "listingId and at least two userIds required" });
+    if (!Array.isArray(userIds) || userIds.length < 2) {
+      console.log('Invalid input:', { listingId, userIds });
+      res.status(400).json({ error: "at least two userIds required" });
       return;
+    }
+    if (!listingId) {
+      console.log('No listingId provided, creating general chat room.');
     }
     // Check for existing chat room between these users (regardless of listing)
     const existingRooms = await ChatRoom.findAll({
@@ -51,6 +56,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
         required: true
       }]
     });
+    console.log('existingRooms:', existingRooms.map(r => r.toJSON ? r.toJSON() : r));
     // Find a room with exactly these two users
     const foundRoom = existingRooms.find(room => {
       const users = (room as any).ChatRoomUsers || (room as any).chat_room_users || [];
@@ -58,11 +64,14 @@ export const createChatRoom = async (req: Request, res: Response) => {
       return roomUserIds.length === userIds.length &&
         roomUserIds.every((id: number, idx: number) => id === userIds.sort()[idx]);
     });
+    console.log('foundRoom:', foundRoom ? foundRoom.toJSON ? foundRoom.toJSON() : foundRoom : null);
     if (foundRoom) {
+      console.log('Returning existing chat room:', foundRoom.chatRoomId);
       res.status(200).json({ chatRoomId: foundRoom.chatRoomId, existing: true });
       return;
     }
-    const chatRoom = await ChatRoom.create({ listingId, isMatchmaking: !!isMatchmaking });
+    const chatRoom = await ChatRoom.create({ listingId: listingId || null, isMatchmaking: !!isMatchmaking });
+    console.log('Created chatRoom:', chatRoom.toJSON());
     await Promise.all(
       userIds.map((userId: number) =>
         ChatRoomUser.create({ 
@@ -73,9 +82,11 @@ export const createChatRoom = async (req: Request, res: Response) => {
         })
       )
     );
+    console.log('Created ChatRoomUser entries for users:', userIds);
     res.status(201).json({ chatRoomId: chatRoom.chatRoomId });
     return;
   } catch (err) {
+    console.error('Error in createChatRoom:', err);
     res.status(500).json({ error: "Failed to create chat room" });
   }
 };

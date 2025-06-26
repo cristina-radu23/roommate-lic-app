@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 // import LikesList or matching logic as needed
+
+// TODO: Replace this with your actual auth logic
+const getAuthUserId = () => {
+  // For demo, return a hardcoded user ID or get from context/localStorage
+  return Number(localStorage.getItem('userId') || '1');
+};
 
 const RoommateAnnouncementPage: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [announcement, setAnnouncement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matchExists, setMatchExists] = useState(false);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [match, setMatch] = useState<any>(null);
+
+  const authUserId = getAuthUserId();
 
   useEffect(() => {
     const fetchAnnouncement = async () => {
@@ -24,6 +36,81 @@ const RoommateAnnouncementPage: React.FC = () => {
     fetchAnnouncement();
   }, [id]);
 
+  // Check if match exists and get match details
+  useEffect(() => {
+    if (!announcement || !announcement.user) return;
+    if (authUserId === announcement.user.userId) return; // Don't check if owner
+    const checkMatch = async () => {
+      setMatchLoading(true);
+      try {
+        const params = new URLSearchParams({
+          userId: String(authUserId),
+          otherUserId: String(announcement.user.userId)
+        });
+        const res = await fetch(`http://localhost:5000/api/matches/user-pair-match?${params.toString()}`);
+        const data = await res.json();
+        setMatch(data || null);
+      } catch (err) {
+        setMatch(null);
+      } finally {
+        setMatchLoading(false);
+      }
+    };
+    checkMatch();
+  }, [announcement, authUserId]);
+
+  const handleMatch = async () => {
+    if (!announcement || !announcement.user) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAId: authUserId,
+          userBId: announcement.user.userId,
+          announcementId: announcement.announcementId,
+          actingUserId: authUserId
+        })
+      });
+      if (res.ok) {
+        // Refetch match
+        setTimeout(() => window.location.reload(), 500);
+        alert('Match request sent!');
+      } else {
+        const data = await res.json();
+        console.error('Failed to send match request:', data.error || data);
+        alert(data.error || 'Failed to send match request');
+      }
+    } catch (err) {
+      console.error('Failed to send match request:', err);
+      alert('Failed to send match request');
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!match) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/matches', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAId: match.userAId,
+          userBId: match.userBId,
+          announcementId: match.announcementId
+        })
+      });
+      if (res.ok) {
+        setTimeout(() => window.location.reload(), 500);
+        alert('Match request cancelled.');
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to cancel match request');
+      }
+    } catch (err) {
+      alert('Failed to cancel match request');
+    }
+  };
+
   if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
   if (error) return <div style={{ padding: 40, color: 'red' }}>{error}</div>;
   if (!announcement) return <div style={{ padding: 40 }}>Announcement not found.</div>;
@@ -38,6 +125,12 @@ const RoommateAnnouncementPage: React.FC = () => {
   if (typeof announcement.dealBreakers === 'string') {
     try { announcement.dealBreakers = JSON.parse(announcement.dealBreakers); } catch { announcement.dealBreakers = []; }
   }
+
+  // Button logic
+  const isOwner = authUserId === announcement.user?.userId;
+  const isRequester = match && match.userBId === authUserId;
+  const isConfirmed = match && match.isMatch;
+  const isPending = match && !match.isMatch && isRequester;
 
   // TODO: Add user card, match button, and all details
   return (
@@ -71,10 +164,46 @@ const RoommateAnnouncementPage: React.FC = () => {
             )}
           </div>
           <div style={{ fontWeight: 700, fontSize: 20 }}>{announcement.user?.userFirstName} {announcement.user?.userLastName}</div>
-          {/* TODO: Add match button here */}
-          <button style={{ marginTop: 18, padding: '10px 28px', borderRadius: 8, background: '#007bff', color: '#fff', border: 'none', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
-            Match
-          </button>
+          {!isOwner && !match && !matchLoading && (
+            <button
+              style={{ marginTop: 18, padding: '10px 28px', borderRadius: 8, background: '#007bff', color: '#fff', border: 'none', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+              onClick={handleMatch}
+            >
+              Match
+            </button>
+          )}
+          {!isOwner && isPending && (
+            <button
+              style={{ marginTop: 18, padding: '10px 28px', borderRadius: 8, background: '#dc3545', color: '#fff', border: 'none', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+          )}
+          {!isOwner && isConfirmed && (
+            <button
+              style={{ marginTop: 18, padding: '10px 28px', borderRadius: 8, background: '#28a745', color: '#fff', border: 'none', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+              onClick={async () => {
+                try {
+                  const res = await fetch('http://localhost:5000/api/chat/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userIds: [authUserId, announcement.user.userId] })
+                  });
+                  const data = await res.json();
+                  if (data.chatRoomId) {
+                    navigate('/inbox', { state: { chatRoomId: data.chatRoomId } });
+                  } else {
+                    navigate('/inbox');
+                  }
+                } catch (err) {
+                  navigate('/inbox');
+                }
+              }}
+            >
+              Send Message
+            </button>
+          )}
         </div>
       </div>
       {/* Right: Details */}
