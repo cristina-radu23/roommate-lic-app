@@ -170,11 +170,24 @@ export const getAnnouncements = async (req: Request, res: Response) => {
     // Add filters
     if (filters) {
       const filterObj = JSON.parse(filters as string);
+      if (filterObj.locationAreas) {
+        console.log('[Roommate] locationAreas filter:', filterObj.locationAreas);
+      }
       Object.keys(filterObj).forEach((key) => {
         if (filterObj[key] && filterObj[key] !== "any") {
-          whereClause[key] = filterObj[key];
+          if (key === "locationAreas") {
+            const value = filterObj[key];
+            if (Array.isArray(value)) {
+              whereClause.locationAreas = { [Op.or]: value.map(city => ({ [Op.like]: `%${city}%` })) };
+            } else {
+              whereClause.locationAreas = { [Op.like]: `%${value}%` };
+            }
+          } else {
+            whereClause[key] = filterObj[key];
+          }
         }
       });
+      console.log('[Roommate] Final whereClause:', JSON.stringify(whereClause, null, 2));
     }
 
     const announcements = await RoommateAnnouncement.findAndCountAll({

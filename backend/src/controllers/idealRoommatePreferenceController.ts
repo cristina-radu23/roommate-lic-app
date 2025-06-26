@@ -153,12 +153,37 @@ export const getRecommendedAnnouncements = async (req: AuthenticatedRequest, res
       });
     }
 
+    // Get filters from query params
+    const { filters } = req.query;
+    const whereClause: any = {
+      isActive: true,
+      userId: { [Op.ne]: userId }
+    };
+    if (filters) {
+      const filterObj = JSON.parse(filters as string);
+      if (filterObj.locationAreas) {
+        console.log('[Recommended] locationAreas filter:', filterObj.locationAreas);
+      }
+      Object.keys(filterObj).forEach((key) => {
+        if (filterObj[key] && filterObj[key] !== "any") {
+          if (key === "locationAreas") {
+            const value = filterObj[key];
+            if (Array.isArray(value)) {
+              whereClause.locationAreas = { [Op.or]: value.map(city => ({ [Op.like]: `%${city}%` })) };
+            } else {
+              whereClause.locationAreas = { [Op.like]: `%${value}%` };
+            }
+          } else {
+            whereClause[key] = filterObj[key];
+          }
+        }
+      });
+      console.log('[Recommended] Final whereClause:', JSON.stringify(whereClause, null, 2));
+    }
+
     // Get all active roommate announcements
     const announcements = await RoommateAnnouncement.findAll({
-      where: { 
-        isActive: true,
-        userId: { [Op.ne]: userId } // Exclude user's own announcements
-      },
+      where: whereClause,
       include: [
         { model: User, as: "user", attributes: ["userId", "userFirstName", "userLastName", "profilePicture"] },
         { model: Photo, attributes: ["photoId", "url", "order"] },

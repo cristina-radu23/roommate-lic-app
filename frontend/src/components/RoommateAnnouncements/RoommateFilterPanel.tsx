@@ -87,32 +87,32 @@ const RoommateFilterPanel: React.FC<RoommateFilterPanelProps> = ({ initialFilter
         </div>
         <div className="mb-2">
           <label>Preferred Occupation</label>
-          <select className="form-select" value={filters.preferredOccupation || ''} onChange={e => handleChange('preferredOccupation', e.target.value || undefined)}>
+          <select className="form-select" value={filters.userOccupation || ''} onChange={e => handleChange('userOccupation', e.target.value || undefined)}>
             {occupationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
         <div className="mb-2">
           <label>Smoking Preference</label>
-          <select className="form-select" value={filters.smokingPreference || ''} onChange={e => handleChange('smokingPreference', e.target.value || undefined)}>
+          <select className="form-select" value={filters.smokingStatus || ''} onChange={e => handleChange('smokingStatus', e.target.value || undefined)}>
             {smokingOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
         <div className="mb-2">
           <label>Pet Preference</label>
-          <select className="form-select" value={filters.petPreference || ''} onChange={e => handleChange('petPreference', e.target.value || undefined)}>
+          <select className="form-select" value={filters.petStatus || ''} onChange={e => handleChange('petStatus', e.target.value || undefined)}>
             {petOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
         <div className="mb-2">
           <label>Cleanliness Level</label>
-          <select className="form-select" value={filters.cleanlinessLevel || ''} onChange={e => handleChange('cleanlinessLevel', e.target.value || undefined)}>
+          <select className="form-select" value={filters.cleanlinessAttitude || ''} onChange={e => handleChange('cleanlinessAttitude', e.target.value || undefined)}>
             <option value="">Any</option>
             {cleanlinessOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
         <div className="mb-2">
           <label>Noise Level</label>
-          <select className="form-select" value={filters.noiseLevel || ''} onChange={e => handleChange('noiseLevel', e.target.value || undefined)}>
+          <select className="form-select" value={filters.noiseAttitude || ''} onChange={e => handleChange('noiseAttitude', e.target.value || undefined)}>
             <option value="">Any</option>
             {noiseOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
@@ -126,7 +126,7 @@ const RoommateFilterPanel: React.FC<RoommateFilterPanelProps> = ({ initialFilter
         </div>
         <div className="mb-2">
           <label>Social Preference</label>
-          <select className="form-select" value={filters.socialPreference || ''} onChange={e => handleChange('socialPreference', e.target.value || undefined)}>
+          <select className="form-select" value={filters.socialAttitude || ''} onChange={e => handleChange('socialAttitude', e.target.value || undefined)}>
             <option value="">Any</option>
             {socialOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>

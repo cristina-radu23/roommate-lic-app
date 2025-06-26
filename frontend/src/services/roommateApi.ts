@@ -187,12 +187,19 @@ export const idealRoommatePreferenceApi = {
   },
 
   // Get recommended roommate announcements
-  getRecommendedAnnouncements: async (page = 1, limit = 10): Promise<PaginatedResponse<RoommateAnnouncement>> => {
+  getRecommendedAnnouncements: async (page = 1, limit = 10, filters?: AnnouncementFilters): Promise<PaginatedResponse<RoommateAnnouncement>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-
+    if (filters) {
+      const filterParams = Object.entries(filters)
+        .filter(([_, value]) => value !== undefined && value !== '')
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+      if (Object.keys(filterParams).length > 0) {
+        params.append('filters', JSON.stringify(filterParams));
+      }
+    }
     return makeAuthenticatedRequest(`${API_BASE_URL}/ideal-roommate-preferences/recommendations?${params}`);
   },
 }; 

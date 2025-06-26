@@ -80,11 +80,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="preferredOccupation">Preferred Occupation</label>
+          <label htmlFor="userOccupation">Preferred Occupation</label>
           <select
-            id="preferredOccupation"
-            value={localFilters.preferredOccupation || ''}
-            onChange={(e) => handleInputChange('preferredOccupation', e.target.value || undefined)}
+            id="userOccupation"
+            value={localFilters.userOccupation || ''}
+            onChange={(e) => handleInputChange('userOccupation', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="student">Student</option>
@@ -94,11 +94,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="smokingPreference">Smoking Preference</label>
+          <label htmlFor="smokingStatus">Smoking Preference</label>
           <select
-            id="smokingPreference"
-            value={localFilters.smokingPreference || ''}
-            onChange={(e) => handleInputChange('smokingPreference', e.target.value || undefined)}
+            id="smokingStatus"
+            value={localFilters.smokingStatus || ''}
+            onChange={(e) => handleInputChange('smokingStatus', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="smoker">Smoker</option>
@@ -108,11 +108,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="petPreference">Pet Preference</label>
+          <label htmlFor="petStatus">Pet Preference</label>
           <select
-            id="petPreference"
-            value={localFilters.petPreference || ''}
-            onChange={(e) => handleInputChange('petPreference', e.target.value || undefined)}
+            id="petStatus"
+            value={localFilters.petStatus || ''}
+            onChange={(e) => handleInputChange('petStatus', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="pet-friendly">Pet-friendly</option>
@@ -122,11 +122,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="cleanlinessLevel">Cleanliness Level</label>
+          <label htmlFor="cleanlinessAttitude">Cleanliness Level</label>
           <select
-            id="cleanlinessLevel"
-            value={localFilters.cleanlinessLevel || ''}
-            onChange={(e) => handleInputChange('cleanlinessLevel', e.target.value || undefined)}
+            id="cleanlinessAttitude"
+            value={localFilters.cleanlinessAttitude || ''}
+            onChange={(e) => handleInputChange('cleanlinessAttitude', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="very-clean">Very Clean</option>
@@ -136,11 +136,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="noiseLevel">Noise Level</label>
+          <label htmlFor="noiseAttitude">Noise Level</label>
           <select
-            id="noiseLevel"
-            value={localFilters.noiseLevel || ''}
-            onChange={(e) => handleInputChange('noiseLevel', e.target.value || undefined)}
+            id="noiseAttitude"
+            value={localFilters.noiseAttitude || ''}
+            onChange={(e) => handleInputChange('noiseAttitude', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="quiet">Quiet</option>
@@ -164,11 +164,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ filters, onSearch, onClea
         </div>
 
         <div className="filter-group">
-          <label htmlFor="socialPreference">Social Preference</label>
+          <label htmlFor="socialAttitude">Social Preference</label>
           <select
-            id="socialPreference"
-            value={localFilters.socialPreference || ''}
-            onChange={(e) => handleInputChange('socialPreference', e.target.value || undefined)}
+            id="socialAttitude"
+            value={localFilters.socialAttitude || ''}
+            onChange={(e) => handleInputChange('socialAttitude', e.target.value || undefined)}
           >
             <option value="">Any</option>
             <option value="introvert">Introvert</option>

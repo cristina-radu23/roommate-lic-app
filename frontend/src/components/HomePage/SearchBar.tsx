@@ -52,7 +52,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isRoommateMode, roommat
 
   const handleSearch = () => {
     if (isRoommateMode) {
-      onSearch({ ...roommateFilters, preferredCities: preferredCities?.map(c => c.value) });
+      onSearch({ ...roommateFilters, locationAreas: preferredCities?.map(c => c.label) });
     } else {
       const coordinates = selectedCity?.latitude && selectedCity?.longitude 
         ? { lat: selectedCity.latitude, lng: selectedCity.longitude }
