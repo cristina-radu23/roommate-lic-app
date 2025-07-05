@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import SearchBar from "./SearchBar";
 import ListingsGrid from "./ListingsGrid";
@@ -47,6 +47,7 @@ const HomePage: React.FC = () => {
   const [tab, setTab] = useState<'browseAll' | 'recommended'>('browseAll');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [roommateFilters, setRoommateFilters] = useState({});
   const [preferredCities, setPreferredCities] = useState<any[]>([]);
 
@@ -98,6 +99,19 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  // Handle URL parameters to automatically switch tabs
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'browseAll') {
+      setTab('browseAll');
+      setMode('properties');
+    } else if (tabParam === 'recommended') {
+      setTab('recommended');
+      setMode('properties');
+    }
+  }, [location.search]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
