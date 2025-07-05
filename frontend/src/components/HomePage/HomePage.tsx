@@ -43,8 +43,8 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useMapBounds, setUseMapBounds] = useState(false);
-  const [section, setSection] = useState<MenuSection>("listings-all");
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [mode, setMode] = useState<'properties' | 'roommates'>("properties");
+  const [tab, setTab] = useState<'browseAll' | 'recommended'>('browseAll');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const [roommateFilters, setRoommateFilters] = useState({});
@@ -61,22 +61,22 @@ const HomePage: React.FC = () => {
         console.log("[HomePage] Using map bounds for filtering:", mapBounds);
       }
       let url = "";
-      if (section === "listings-all") {
+      if (tab === "browseAll") {
         const query = objectToQueryString(queryParams);
         url = `http://localhost:5000/api/listings${query}`;
-      } else if (section === "listings-recommended") {
+      } else if (tab === "recommended") {
         // For recommendations, pass filters as query params if needed
         const query = objectToQueryString(queryParams);
         url = `http://localhost:5000/api/recommendations${query}`;
       }
       console.log("[HomePage] Fetching listings from:", url);
       const res = await fetch(url, {
-        headers: section === "listings-recommended" ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : undefined
+        headers: tab === "recommended" ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : undefined
       });
       if (!res.ok) throw new Error('Failed to fetch listings');
       let data: any = await res.json();
       // If recommendations, extract listings from the response
-      if (section === "listings-recommended") {
+      if (tab === "recommended") {
         if (Array.isArray(data.recommendations)) {
           // Optionally, you may want to fetch full listing details for each recommended listing
           // For now, assume recommendations already contain listing details
@@ -93,7 +93,7 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, mapBounds, useMapBounds, section]);
+  }, [filters, mapBounds, useMapBounds, tab]);
 
   useEffect(() => {
     fetchListings();
@@ -128,8 +128,7 @@ const HomePage: React.FC = () => {
       east: bounds.getEast(),
       west: bounds.getWest(),
     };
-    
-    console.log("[HomePage] Map bounds changed:", newBoundsFilter);
+    console.log('[HomePage] handleMapChange newBoundsFilter:', newBoundsFilter);
     
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
@@ -144,42 +143,123 @@ const HomePage: React.FC = () => {
     }, 500); // 500ms delay
   };
 
+  // Add logs for map bounds and center
+  useEffect(() => {
+    console.log('[HomePage] mapCenter changed:', mapCenter);
+  }, [mapCenter]);
+  useEffect(() => {
+    console.log('[HomePage] mapBounds changed:', mapBounds);
+  }, [mapBounds]);
+
+  // Log filtered listings for map (for debugging)
+  const filteredMapListings = listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number');
+  if (mode === 'properties' && tab === 'browseAll') {
+    console.log('[HomePage] MapComponent listings:', filteredMapListings);
+  }
+
   return (
-    <div style={{ 
+    <div style={{
       display: "flex",
-      flexDirection: "row",
-      height: "calc(100vh + 100px)",
+      flexDirection: "column",
+      minHeight: "100vh",
       marginTop: "56px",
+      background: "#fafbfc"
     }}>
-      {/* Sidebar */}
-      <SidebarMenu selected={section} onSelect={setSection} expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(e => !e)} />
-      {/* Main content */}
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-        {(section === "listings-all" || section === "listings-recommended") && (
-          <SearchBar onSearch={applyFilters} />
-        )}
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {/* Left side: Listings or Recommendations */}
-          <div style={{ flex: "2 1 0", overflowY: "auto" }}>
-            {section === "listings-recommended" ? (
-              <Recommendations filters={filters} />
-            ) : section === "roommates-all" ? (
-              <>
-                <SearchBar
-                  isRoommateMode
-                  roommateFilters={roommateFilters}
-                  setRoommateFilters={setRoommateFilters}
-                  preferredCities={preferredCities}
-                  setPreferredCities={setPreferredCities}
-                  onSearch={(criteria) => setRoommateFilters(criteria)}
-                />
-                <RoommateAnnouncementsBrowser
-                  filters={roommateFilters}
-                />
-              </>
-            ) : section === "roommates-recommended" ? (
-              <RoommateRecommendations />
-            ) : isLoading ? (
+      {/* SearchBar with radio group overlayed in its background */}
+      <div style={{ position: 'relative', width: '100vw', maxWidth: '100vw', margin: 0, padding: 0 }}>
+        <SearchBar
+          onSearch={applyFilters}
+          isRoommateMode={mode === 'roommates'}
+          roommateFilters={roommateFilters}
+          setRoommateFilters={setRoommateFilters}
+          preferredCities={preferredCities}
+          setPreferredCities={setPreferredCities}
+        />
+        {/* Radio group overlayed below search bar, centered, white text, smaller font */}
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: '60%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          zIndex: 10
+        }}>
+          <label style={{ color: 'white', fontWeight: 600, fontSize: 16, marginBottom: 6, textShadow: '0 2px 8px #0008' }}>What are you looking for today?</label>
+          <div style={{ display: 'flex', gap: 24, marginTop: 2 }}>
+            <label style={{ display: 'flex', alignItems: 'center', fontSize: 15, fontWeight: mode === 'properties' ? 700 : 400, cursor: 'pointer', color: 'white', textShadow: '0 2px 8px #0008' }}>
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === 'properties'}
+                onChange={() => { setMode('properties'); setTab('browseAll'); }}
+                style={{ marginRight: 6 }}
+              />
+              Properties
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', fontSize: 15, fontWeight: mode === 'roommates' ? 700 : 400, cursor: 'pointer', color: 'white', textShadow: '0 2px 8px #0008' }}>
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === 'roommates'}
+                onChange={() => { setMode('roommates'); setTab('browseAll'); }}
+                style={{ marginRight: 6 }}
+              />
+              Roommates
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content area */}
+      {mode === 'properties' && tab === 'recommended' ? (
+        <Recommendations filters={filters} tab={tab} onTabChange={setTab} />
+      ) : mode === 'properties' && tab === 'browseAll' ? (
+        <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 360px)', margin: 0, padding: 0 }}>
+          {/* Left: Tabs + Listings (2/3) */}
+          <div style={{ flex: 2, overflowY: 'auto', height: '100%', paddingTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Tabs for browse/recommended, only in left 2/3 */}
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
+              <button
+                className={tab === 'browseAll' ? 'active-tab' : ''}
+                style={{
+                  padding: '8px 24px',
+                  borderRadius: 24,
+                  border: 'none',
+                  background: tab === 'browseAll' ? '#ff4081' : '#f0f0f0',
+                  color: tab === 'browseAll' ? '#fff' : '#333',
+                  fontWeight: tab === 'browseAll' ? 700 : 500,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setTab('browseAll')}
+              >
+                Browse All
+              </button>
+              <button
+                className={tab === 'recommended' ? 'active-tab' : ''}
+                style={{
+                  padding: '8px 24px',
+                  borderRadius: 24,
+                  border: 'none',
+                  background: tab === 'recommended' ? '#ff4081' : '#f0f0f0',
+                  color: tab === 'recommended' ? '#fff' : '#333',
+                  fontWeight: tab === 'recommended' ? 700 : 500,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setTab('recommended')}
+              >
+                Recommended for You
+              </button>
+            </div>
+            {/* Listings */}
+            {isLoading ? (
               <p>Loading...</p>
             ) : error ? (
               <p className="text-danger">Error: {error}</p>
@@ -191,19 +271,70 @@ const HomePage: React.FC = () => {
               <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
             )}
           </div>
-
-          {/* Right side: Map */}
-          {section === "listings-all" && (
-            <div style={{ flex: "1 1 0", height: "100%", position: 'relative' }}>
-              <MapComponent 
-                listings={listings.filter(l => typeof (l as any).latitude === 'number' && typeof (l as any).longitude === 'number') as any} 
-                onBoundsChange={handleMapChange}
-                center={mapCenter}
+          {/* Right: Map (1/3, sticky/fixed) */}
+          <div style={{ flex: 1, minWidth: 350, height: 'calc(100vh - 360px)', minHeight: 400, maxHeight: '100vh', position: 'sticky', top: 0, alignSelf: 'flex-start', zIndex: 1 }}>
+            <MapComponent
+              listings={filteredMapListings as any}
+              onBoundsChange={handleMapChange}
+              center={mapCenter}
+            />
+          </div>
+        </div>
+      ) : mode === 'roommates' ? (
+        <>
+          {/* Tabs for roommates states */}
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop:'20px', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
+            <button
+              className={tab === 'browseAll' ? 'active-tab' : ''}
+              style={{
+                padding: '8px 24px',
+                borderRadius: 24,
+                border: 'none',
+                background: tab === 'browseAll' ? '#ff4081' : '#f0f0f0',
+                color: tab === 'browseAll' ? '#fff' : '#333',
+                fontWeight: tab === 'browseAll' ? 700 : 500,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => setTab('browseAll')}
+            >
+              Browse All
+            </button>
+            <button
+              className={tab === 'recommended' ? 'active-tab' : ''}
+              style={{
+                padding: '8px 24px',
+                borderRadius: 24,
+                border: 'none',
+                background: tab === 'recommended' ? '#ff4081' : '#f0f0f0',
+                color: tab === 'recommended' ? '#fff' : '#333',
+                fontWeight: tab === 'recommended' ? 700 : 500,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => setTab('recommended')}
+            >
+              Recommended for You
+            </button>
+          </div>
+          {tab === 'browseAll' ? (
+            <RoommateAnnouncementsBrowser filters={roommateFilters} />
+          ) : tab === 'recommended' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <RoommateRecommendations 
+                roommateFilters={roommateFilters}
+                setRoommateFilters={setRoommateFilters}
+                preferredCities={preferredCities}
+                setPreferredCities={setPreferredCities}
               />
             </div>
-          )}
-        </div>
-      </div>
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 };

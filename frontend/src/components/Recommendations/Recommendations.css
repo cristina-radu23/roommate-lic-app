@@ -39,6 +39,8 @@
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
+  min-height: 520px;
+  height: auto;
 }
 
 .recommendation-card:hover {
@@ -99,6 +101,8 @@
 
 .listing-info {
   padding: 20px;
+  overflow: visible;
+  max-height: none;
 }
 
 .listing-title {
@@ -136,6 +140,8 @@
   border-top: 1px solid #ecf0f1;
   margin-top: 15px;
   padding-top: 15px;
+  overflow: visible;
+  max-height: none;
 }
 
 .recommendation-reasons h4 {

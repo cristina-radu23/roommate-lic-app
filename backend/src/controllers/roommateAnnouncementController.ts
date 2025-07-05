@@ -183,7 +183,7 @@ export const getAnnouncements = async (req: Request, res: Response) => {
               whereClause.locationAreas = { [Op.like]: `%${value}%` };
             }
           } else {
-            whereClause[key] = filterObj[key];
+          whereClause[key] = filterObj[key];
           }
         }
       });

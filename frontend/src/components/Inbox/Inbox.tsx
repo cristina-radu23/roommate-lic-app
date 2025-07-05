@@ -454,9 +454,9 @@ const Inbox: React.FC = () => {
             ) : (
               <img
                 src={participants[0]?.profilePicture ? getProfilePictureUrl(participants[0].profilePicture) : profileIcon}
-                alt="avatar"
-                className="inbox-avatar"
-              />
+              alt="avatar" 
+              className="inbox-avatar" 
+            />
             )}
             <div className="inbox-list-info" style={{ minWidth: 0 }}>
               <div
@@ -553,11 +553,11 @@ const Inbox: React.FC = () => {
                 {groupAvatars}
               </div>
             ) : (
-              <img
+            <img 
                 src={participants[0]?.profilePicture ? getProfilePictureUrl(participants[0].profilePicture) : profileIcon}
-                alt="avatar"
-                className="inbox-avatar-large"
-              />
+              alt="avatar" 
+              className="inbox-avatar-large" 
+            />
             )}
             <div>
               <span className="inbox-chat-username">

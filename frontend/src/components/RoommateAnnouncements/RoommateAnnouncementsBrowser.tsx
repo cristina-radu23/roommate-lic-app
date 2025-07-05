@@ -51,8 +51,8 @@ const RoommateAnnouncementsBrowser: React.FC<RoommateAnnouncementsBrowserProps> 
         <h1>Find Your Perfect Roommate</h1>
         <p>Browse through roommate announcements and find your ideal match</p>
       </div>
-      <div className="announcements-content" style={{ display: 'block' }}>
-        <div className="announcements-main" style={{ margin: '0 auto', maxWidth: 900 }}>
+      <div className="announcements-content">
+        <div className="announcements-main">
           {loading && announcements.length === 0 ? (
             <div className="loading-container">
               <div className="loading-spinner"></div>

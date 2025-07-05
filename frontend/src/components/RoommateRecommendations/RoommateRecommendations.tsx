@@ -3,18 +3,20 @@ import { useNavigate, Link } from 'react-router-dom';
 import { RoommateAnnouncement, PreferencesStatus } from '../../types/roommate';
 import { idealRoommatePreferenceApi } from '../../services/roommateApi';
 import AnnouncementCard from '../RoommateAnnouncements/AnnouncementCard';
-import SearchBar from '../HomePage/SearchBar';
 import './RoommateRecommendations.css';
 
-const RoommateRecommendations: React.FC = () => {
+const RoommateRecommendations: React.FC<{
+  roommateFilters: any;
+  setRoommateFilters: (filters: any) => void;
+  preferredCities: any[];
+  setPreferredCities: (cities: any[]) => void;
+}> = ({ roommateFilters, setRoommateFilters, preferredCities, setPreferredCities }) => {
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<RoommateAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [preferencesStatus, setPreferencesStatus] = useState<PreferencesStatus | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
-  const [roommateFilters, setRoommateFilters] = useState<any>({});
-  const [preferredCities, setPreferredCities] = useState<any[]>([]);
 
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem('token'));
@@ -182,49 +184,39 @@ const RoommateRecommendations: React.FC = () => {
   }
 
   return (
-    <>
-      <SearchBar
-        isRoommateMode
-        roommateFilters={roommateFilters}
-        setRoommateFilters={setRoommateFilters}
-        preferredCities={preferredCities}
-        setPreferredCities={setPreferredCities}
-        onSearch={(criteria) => setRoommateFilters(criteria)}
-      />
-      <div className="recommendations-container" style={{ background: 'none', padding: 0, margin: 0, boxShadow: 'none' }}>
-        <div className="recommendations-header">
-          <h2>Recommended for You</h2>
-          <p className="recommendations-subtitle">
-            Based on your ideal roommate preferences
-          </p>
-        </div>
-        <div className="recommendations-grid">
-          {recommendations.map((announcement) => (
-            <div key={announcement.announcementId} className="recommendation-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-                <span className="score-badge">
-                  {Math.min(100, Math.round(announcement.compatibilityScore || 0))}% match
-                </span>
-              </div>
-              <AnnouncementCard announcement={announcement} />
-              <div className="recommendation-reasons">
-                <h4>Why this matches you:</h4>
-                <ul>
-                  <li>Similar budget range</li>
-                  <li>Compatible lifestyle preferences</li>
-                  <li>Matching location preferences</li>
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="recommendations-footer">
-          <button onClick={() => checkPreferencesAndLoadRecommendations(roommateFilters, preferredCities)} className="refresh-button">
-            Refresh Recommendations
-          </button>
-        </div>
+    <div className="recommendations-container" style={{ background: 'none', padding: 0, margin: 0, boxShadow: 'none' }}>
+      <div className="recommendations-header">
+        <h2>Recommended for You</h2>
+        <p className="recommendations-subtitle">
+          Based on your ideal roommate preferences
+        </p>
       </div>
-    </>
+      <div className="recommendations-grid">
+        {recommendations.map((announcement) => (
+          <div key={announcement.announcementId} className="recommendation-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
+              <span className="score-badge">
+                {Math.min(100, Math.round(announcement.compatibilityScore || 0))}% match
+              </span>
+            </div>
+            <AnnouncementCard announcement={announcement} />
+            <div className="recommendation-reasons">
+              <h4>Why this matches you:</h4>
+              <ul>
+                <li>Similar budget range</li>
+                <li>Compatible lifestyle preferences</li>
+                <li>Matching location preferences</li>
+              </ul>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="recommendations-footer">
+        <button onClick={() => checkPreferencesAndLoadRecommendations(roommateFilters, preferredCities)} className="refresh-button">
+          Refresh Recommendations
+        </button>
+      </div>
+    </div>
   );
 };
 

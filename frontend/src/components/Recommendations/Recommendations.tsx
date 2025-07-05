@@ -30,9 +30,11 @@ interface RecommendationScore {
 
 interface RecommendationsProps {
   filters?: any;
+  tab: 'browseAll' | 'recommended';
+  onTabChange: (tab: 'browseAll' | 'recommended') => void;
 }
 
-const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
+const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, onTabChange }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const { recommendations, loading, error, refetch } = useRecommendations(10);
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
@@ -42,6 +44,9 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
   const [mapBounds, setMapBounds] = useState<any>(null);
   const [useMapBounds, setUseMapBounds] = useState(false);
 
+  // LOG: props and tab
+  console.log('[Recommendations] props:', { filters, tab });
+
   useEffect(() => {
     console.log('[Recommendations] Rendered. isLoggedIn:', isLoggedIn);
   });
@@ -49,6 +54,19 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
   useEffect(() => {
     console.log('[Recommendations] isLoggedIn changed:', isLoggedIn);
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    console.log('[Recommendations] recommendations:', recommendations);
+    console.log('[Recommendations] error:', error);
+  }, [recommendations, error]);
+
+  useEffect(() => {
+    if (tab === 'recommended') {
+      console.log('[Recommendations] Fetching recommendations with filters:', filters);
+    } else {
+      console.log('[Recommendations] Not fetching recommendations, tab is:', tab);
+    }
+  }, [tab, filters]);
 
   // Fetch listing details for recommended listings
   useEffect(() => {
@@ -104,11 +122,6 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
       window.removeEventListener('user-login', handleLogin);
     };
   }, [refetch]);
-
-  useEffect(() => {
-    console.log('[Recommendations] recommendations:', recommendations);
-    console.log('[Recommendations] error:', error);
-  }, [recommendations, error]);
 
   // Automatically clear cache on mount
   useEffect(() => {
@@ -302,39 +315,88 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {} }) => {
 
   // Layout: map and grid side by side
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', height: '100vh', overflow: 'hidden' }}>
-      {/* Left: Recommendations Grid */}
-      <div style={{ flex: '2 1 0', overflowY: 'auto', height: '100vh', minHeight: 0 }}>
-        <div className="recommendations-header">
+    <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 360px)', margin: 0, padding: 0 }}>
+      {/* Left: Recommendations Grid (2/3) */}
+      
+      <div style={{ flex: 2, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}>
+        <div className="recommendations-header" style={{ width: '100%', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
+            <button
+              className={tab === 'browseAll' ? 'active-tab' : ''}
+              style={{
+                padding: '8px 24px',
+                borderRadius: 24,
+                border: 'none',
+                background: tab === 'browseAll' ? '#ff4081' : '#f0f0f0',
+                color: tab === 'browseAll' ? '#fff' : '#333',
+                fontWeight: tab === 'browseAll' ? 700 : 500,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => onTabChange('browseAll')}
+            >
+              Browse All
+            </button>
+            <button
+              className={tab === 'recommended' ? 'active-tab' : ''}
+              style={{
+                padding: '8px 24px',
+                borderRadius: 24,
+                border: 'none',
+                background: tab === 'recommended' ? '#ff4081' : '#f0f0f0',
+                color: tab === 'recommended' ? '#fff' : '#333',
+                fontWeight: tab === 'recommended' ? 700 : 500,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => onTabChange('recommended')}
+            >
+              Recommended for You
+            </button>
+          </div>
           <h2>Recommended for You</h2>
           <p className="recommendations-subtitle">
             Based on your preferences and similar users
           </p>
         </div>
-        <ListingsGrid
-          listings={sortedListings as any}
-          isLoggedIn={!!localStorage.getItem('token')}
-          renderExtra={(listing: any) => (
-            <>
-              <div className="recommendation-score" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
-                <span className="score-badge">
-                  {Math.min(100, Math.round(listing.matchScore))}% match
-                </span>
-              </div>
-              <div className="recommendation-reasons" style={{ marginTop: 12 }}>
-                <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>Why this matches you:</h4>
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  {listing.matchReasons && listing.matchReasons.slice(0, 2).map((reason: string, idx: number) => (
-                    <li key={idx} style={{ fontSize: '0.95rem', color: '#2c3e50' }}>{reason}</li>
-                  ))}
-                </ul>
-              </div>
-            </>
+        <div style={{ width: '100%' }}>
+         
+          {tab === 'recommended' && (
+            <ListingsGrid
+              listings={sortedListings as any}
+              isLoggedIn={!!localStorage.getItem('token')}
+              renderExtra={(listing: any) => (
+                <>
+                  <div className="recommendation-score" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
+                    <span className="score-badge">
+                      {Math.min(100, Math.round(listing.matchScore))}% match
+                    </span>
+                  </div>
+                  <div className="recommendation-reasons" style={{ marginTop: 12 }}>
+                    <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>Why this matches you:</h4>
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {listing.matchReasons && listing.matchReasons.slice(0, 2).map((reason: string, idx: number) => (
+                        <li key={idx} style={{ fontSize: '0.95rem', color: '#2c3e50' }}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+            />
           )}
-        />
+          {tab === 'browseAll' && (
+            <div>
+              {/* Optionally, show a message or a different grid for Browse All */}
+            </div>
+          )}
+        </div>
       </div>
-      {/* Right: Map */}
-      <div style={{ flex: '1 1 0', height: '100vh', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+      {/* Right: Map (1/3, sticky/fixed) */}
+      <div style={{ flex: 1, position: 'sticky', top: 0, height: 'calc(100vh - 360px)', minHeight: 400, maxHeight: '100vh', alignSelf: 'flex-start', zIndex: 1 }}>
         <MapComponent
           listings={mapListings as any}
           onBoundsChange={handleMapChange}

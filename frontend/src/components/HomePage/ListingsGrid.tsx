@@ -148,7 +148,8 @@ const ListingsGrid: React.FC<ListingsGridProps> = ({ listings: initialListings, 
             key={index}
             style={{
               width: 350,
-              height: 420,
+              minHeight: renderExtra ? 520 : 420,
+              height: renderExtra ? 'auto' : 420,
               background: 'white',
               borderRadius: 12,
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',

@@ -25,7 +25,7 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
-  
+
   // Handle clicks outside the popup
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
