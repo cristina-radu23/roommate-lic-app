@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import 'leaflet/dist/leaflet.css';
 import MapPreview from '../PostListing/MapPreview';
 import { BsEye } from 'react-icons/bs';
@@ -108,6 +108,7 @@ const ListingPage: React.FC = () => {
 
   // Application modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -136,6 +137,13 @@ const ListingPage: React.FC = () => {
       }
     };
     fetchListing();
+  }, [id]);
+
+  // Fetch liked users when component mounts
+  useEffect(() => {
+    if (id) {
+      fetchLikedUsers();
+    }
   }, [id]);
 
   useEffect(() => {
@@ -196,6 +204,46 @@ const ListingPage: React.FC = () => {
       return;
     }
     setShowApplyModal(true);
+  };
+
+  const handleMatch = async (targetUserId: number) => {
+    if (!userId || !id) {
+      // Show login modal for unauthenticated users
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+      return;
+    }
+    
+    try {
+      await fetch('http://localhost:5000/api/matches', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          userAId: userId,
+          userBId: targetUserId,
+          listingId: Number(id),
+          actingUserId: userId
+        })
+      });
+      
+      // Optionally refresh the likes list or show a success message
+      console.log('Match request sent successfully');
+    } catch (err) {
+      console.error('[ListingPage] Error sending match request:', err);
+    }
+  };
+
+  // Handle image load errors
+  const handleImageError = (userId: number) => {
+    console.log('Image failed to load for user:', userId);
+    setFailedImages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(userId);
+      console.log('Updated failed images set:', Array.from(newSet));
+      return newSet;
+    });
   };
 
   const fetchLikedUsers = async () => {
@@ -581,7 +629,7 @@ const ListingPage: React.FC = () => {
             <div className="col-md-8">
               <h2 className="fw-bold">{listing.title}</h2>
               <div className="text-muted mb-2">{listing.cityName}</div>
-               <div className="card p-4 mb-4" style={{ borderRadius: "2rem", backgroundColor: "#f8f9fa",border: "0px" }}>
+               <div className="card p-4" style={{ borderRadius: "2rem", backgroundColor: "#f8f9fa",border: "0px" }}>
                 {/* Main picture with carousel controls */}
                 <div style={{ position: "relative", borderRadius: "2rem", overflow: "hidden", border: "2px solid #ccc", height: 450, display: "flex", alignItems: "center", justifyContent: "center", background: "#eee" }}>
                   {/* Left arrow */}
@@ -798,8 +846,10 @@ const ListingPage: React.FC = () => {
                 </div>
               )}
               
+
+              
               {/* Description and all data */}
-              <div className="card p-4 mb-4" style={{ borderRadius: "2rem" }}>
+              <div className="card p-4 mb-4" style={{ borderRadius: "2rem", minHeight: "680px" }}>
                 <h5 className="fw-bold mb-3">Description</h5>
                 <div style={{ marginBottom: 16 }}>
                   {isEditMode ? (
@@ -1388,12 +1438,17 @@ const ListingPage: React.FC = () => {
                   )}
                 </div>
               </div>
+
               {/* User details card */}
-              <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "32px" }}>
+              <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "-30px" }}>
                 <div className="d-flex align-items-center mb-3 w-100" style={{ gap: 16 }}>
-                  {listing.user?.profilePicture ? (
+                  {listing.user?.profilePicture && !failedImages.has(listing.user.userId) ? (
                     <img
-                      src={listing.user.profilePicture.startsWith('http') ? listing.user.profilePicture : `http://localhost:5000${listing.user.profilePicture}`}
+                      src={
+                        listing.user.profilePicture.startsWith('http')
+                          ? listing.user.profilePicture
+                          : `http://localhost:5000${listing.user.profilePicture}`
+                      }
                       alt="Profile"
                       style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', background: '#eee', border: '2px solid #ddd', cursor: 'pointer' }}
                       onClick={() => navigate(`/account/${listing.user?.userId}`, { state: { activeSubmenu: 'profile' } })}
@@ -1447,13 +1502,126 @@ const ListingPage: React.FC = () => {
                 {!isOwnListing && (
                   <button
                     className="btn btn-primary mt-2 w-100"
-                    style={{ borderRadius: 18, fontSize: 20, fontWeight: 500, background: '#00aaff', border: 'none', padding: '12px 0' }}
+                    style={{ 
+                      borderRadius: 18, 
+                      fontSize: 20, 
+                      fontWeight: 500, 
+                      background: '#00aaff', 
+                      border: 'none', 
+                      padding: '12px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center'
+                    }}
                     onClick={handleApplyToListing}
                   >
                     Apply to Listing
                   </button>
                 )}
               </div>
+              
+              {/* Inline Likes List */}
+              {listing.listingType === "entire_property" && (
+                <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0, minHeight: "380px" }}>
+                  <div className="fw-bold mb-3">People who liked this listing ({likedUsers.length})</div>
+                    <div className="list-group" style={{ maxHeight: "300px", overflowY: "auto", minHeight: "300px" }}>
+                    {likedUsers.length === 0 ? (
+                      <div className="list-group-item text-center text-muted py-4">
+                        <div style={{ fontSize: '1.1rem', marginBottom: '8px' }}>No likes yet</div>
+                        <div style={{ fontSize: '0.9rem', color: '#666' }}>Be the first to like this listing!</div>
+                      </div>
+                    ) : (
+                      likedUsers.map((user) => {
+                      if (user.userId === userId) {
+                        return (
+                          <div key={user.userId} className="list-group-item d-flex align-items-center gap-3 justify-content-between">
+                            <Link
+                              to={`/account/${user.userId}`}
+                              className="d-flex align-items-center gap-3 flex-grow-1"
+                              style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                              {user.profilePicture && !failedImages.has(user.userId) ? (
+                                <img
+                                  src={
+                                    user.profilePicture.startsWith('http')
+                                      ? user.profilePicture
+                                      : `http://localhost:5000${user.profilePicture}`
+                                  }
+                                  alt={`${user.userFirstName} ${user.userLastName}`}
+                                  className="rounded-circle"
+                                  style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                  onError={() => handleImageError(user.userId)}
+                                />
+                              ) : (
+                                <FaUserCircle 
+                                  size={50} 
+                                  color="#bbb" 
+                                  style={{ background: '#eee', borderRadius: '50%' }} 
+                                />
+                              )}
+                              <div>
+                                <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
+                              </div>
+                            </Link>
+                          </div>
+                        );
+                      }
+                      
+                      // For other users, show Match button
+                      return (
+                        <div key={user.userId} className="list-group-item d-flex align-items-center gap-3">
+                          <Link
+                            to={`/account/${user.userId}`}
+                            className="d-flex align-items-center gap-3"
+                            style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                          >
+                            {user.profilePicture && !failedImages.has(user.userId) ? (
+                              <img
+                                src={
+                                  user.profilePicture.startsWith('http')
+                                    ? user.profilePicture
+                                    : `http://localhost:5000${user.profilePicture}`
+                                }
+                                alt={`${user.userFirstName} ${user.userLastName}`}
+                                className="rounded-circle"
+                                style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                onError={() => handleImageError(user.userId)}
+                              />
+                            ) : (
+                              <FaUserCircle 
+                                size={50} 
+                                color="#bbb" 
+                                style={{ background: '#eee', borderRadius: '50%' }} 
+                              />
+                            )}
+                            <div>
+                              <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
+                            </div>
+                          </Link>
+                          {!isOwnListing && (
+                            <button
+                              className="btn btn-outline-success"
+                              style={{ 
+                                minWidth: 80, 
+                                borderRadius: 18,
+                                fontSize: 14,
+                                fontWeight: 500,
+                                flexShrink: 0
+                              }}
+                              onClick={() => handleMatch(user.userId)}
+                            >
+                              Match
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                  </div>
+                </div>
+              )}
+              
               {/* Map card */}
               <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0 }}>
                 <div className="fw-bold mb-2">Address</div>

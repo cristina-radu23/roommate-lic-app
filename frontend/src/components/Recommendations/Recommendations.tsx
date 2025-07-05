@@ -304,7 +304,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
             <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
               Like more listings to help us understand your preferences better.
             </p>
-            <Link to="/" className="browse-button">
+            <Link to="/?tab=browseAll" className="browse-button">
               Browse Listings
             </Link>
           </div>
