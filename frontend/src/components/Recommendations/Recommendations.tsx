@@ -318,52 +318,55 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
     <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 300px)', margin: 0, padding: 0 }}>
       {/* Left: Recommendations Grid (2/3) */}
       
-      <div style={{ flex: 2, overflowY: 'auto', paddingBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}>
-        <div className="recommendations-header" style={{ width: '100%', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
-            <button
-              className={tab === 'browseAll' ? 'active-tab' : ''}
-              style={{
-                padding: '8px 24px',
-                borderRadius: 24,
-                border: 'none',
-                background: tab === 'browseAll' ? '#ff4081' : '#f0f0f0',
-                color: tab === 'browseAll' ? '#fff' : '#333',
-                fontWeight: tab === 'browseAll' ? 700 : 500,
-                fontSize: 16,
-                cursor: 'pointer',
-                boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
-                transition: 'all 0.2s'
-              }}
-              onClick={() => onTabChange('browseAll')}
-            >
-              Browse All
-            </button>
-            <button
-              className={tab === 'recommended' ? 'active-tab' : ''}
-              style={{
-                padding: '8px 24px',
-                borderRadius: 24,
-                border: 'none',
-                background: tab === 'recommended' ? '#ff4081' : '#f0f0f0',
-                color: tab === 'recommended' ? '#fff' : '#333',
-                fontWeight: tab === 'recommended' ? 700 : 500,
-                fontSize: 16,
-                cursor: 'pointer',
-                boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
-                transition: 'all 0.2s'
-              }}
-              onClick={() => onTabChange('recommended')}
-            >
-              Recommended for You
-            </button>
-          </div>
-          <h2>Recommended for You</h2>
-          <p className="recommendations-subtitle">
+      <div style={{ flex: 2, overflowY: 'auto', paddingTop: '20px', paddingBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}>
+        {/* Tabs for browse/recommended, at the same level as HomePage */}
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 20px 0', gap: 8, width: '100%' }}>
+          <button
+            className={tab === 'browseAll' ? 'active-tab' : ''}
+            style={{
+              padding: '8px 24px',
+              borderRadius: 24,
+              border: 'none',
+              background: tab === 'browseAll' ? '#ff4081' : '#f0f0f0',
+              color: tab === 'browseAll' ? '#fff' : '#333',
+              fontWeight: tab === 'browseAll' ? 700 : 500,
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+              transition: 'all 0.2s'
+            }}
+            onClick={() => onTabChange('browseAll')}
+          >
+            Browse All
+          </button>
+          <button
+            className={tab === 'recommended' ? 'active-tab' : ''}
+            style={{
+              padding: '8px 24px',
+              borderRadius: 24,
+              border: 'none',
+              background: tab === 'recommended' ? '#ff4081' : '#f0f0f0',
+              color: tab === 'recommended' ? '#fff' : '#333',
+              fontWeight: tab === 'recommended' ? 700 : 500,
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
+              transition: 'all 0.2s'
+            }}
+            onClick={() => onTabChange('recommended')}
+          >
+            Recommended for You
+          </button>
+        </div>
+        
+        {/* Subtitle positioned under the buttons */}
+        <div style={{ width: '100%', textAlign: 'center', marginBottom: '4px' }}>
+          <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
             Based on your preferences and similar users
           </p>
         </div>
-        <div style={{ width: '100%' }}>
+        
+        <div style={{ width: '100%', marginTop: '-30px' }}>
          
           {tab === 'recommended' && (
             <ListingsGrid
