@@ -66,8 +66,10 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setHasUnread(false);
+      setHasNotifications(false);
       return;
     }
+    
     const fetchUnread = () => {
       fetch(`http://localhost:5000/api/chat/user/${userId}`)
         .then(res => res.json())
@@ -75,13 +77,60 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
           setHasUnread(data.some((chat: any) => chat.unreadCount && chat.unreadCount > 0));
         });
     };
+
+    const fetchNotifications = () => {
+      fetch(`http://localhost:5000/api/notifications/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          setHasNotifications(data.some((n: any) => !n.read));
+        })
+        .catch(() => setHasNotifications(false));
+    };
+
     fetchUnread();
+    fetchNotifications();
+    
     // Listen for custom event to refresh unread status
     window.addEventListener('refresh-unread', fetchUnread);
     return () => {
       window.removeEventListener('refresh-unread', fetchUnread);
     };
   }, [isLoggedIn, userId, location.pathname]);
+
+  // Listen for login/logout events to reset user state
+  useEffect(() => {
+    const handleLogout = () => {
+      setUser(null);
+      setHasUnread(false);
+      setHasNotifications(false);
+      setShowDropdown(false);
+      setShowNotifications(false);
+    };
+
+    const handleLogin = () => {
+      // Refresh notifications when user logs in
+      if (userId) {
+        fetch(`http://localhost:5000/api/notifications/${userId}`)
+          .then(res => res.json())
+          .then(data => {
+            setHasNotifications(data.some((n: any) => !n.read));
+          })
+          .catch(() => setHasNotifications(false));
+      }
+    };
+
+    window.addEventListener('user-logout', handleLogout);
+    window.addEventListener('user-login', handleLogin);
+    return () => {
+      window.removeEventListener('user-logout', handleLogout);
+      window.removeEventListener('user-login', handleLogin);
+    };
+  }, [userId]);
+
+  // Debug notification state changes
+  useEffect(() => {
+    console.log('showNotifications state changed to:', showNotifications);
+  }, [showNotifications]);
 
   return (
     <nav className="navbar navbar-expand-lg fixed-top" style={{ 
@@ -116,13 +165,22 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, isLoggedIn, onLogout }) =
                   </button>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/createaccount" style={{ color: "white" }}>Sign Up</Link>
+                  <Link className="nav-link btn btn-link" to="/createaccount" style={{ color: "white" }}>Sign Up</Link>
                 </li>
               </>
             ) : (
               <>
                 <li className="nav-item me-2" style={{ position: 'relative' }}>
-                  <span className="nav-link position-relative" style={{ cursor: 'pointer', color: "white" }} onClick={() => setShowNotifications((v) => !v)}>
+                  <span 
+                    className="nav-link position-relative" 
+                    style={{ cursor: 'pointer', color: "white" }} 
+                    data-notification-bell
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Bell clicked, current state:', showNotifications);
+                      setShowNotifications((v) => !v);
+                    }}
+                  >
                     <FaBell size={22} />
                     {hasNotifications && (
                       <span style={{

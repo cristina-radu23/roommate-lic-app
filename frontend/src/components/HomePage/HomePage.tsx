@@ -10,6 +10,7 @@ import Recommendations from "../../components/Recommendations/Recommendations";
 import RoommateAnnouncementsBrowser from '../RoommateAnnouncements/RoommateAnnouncementsBrowser';
 import RoommateFilterPanel from '../RoommateAnnouncements/RoommateFilterPanel';
 import RoommateRecommendations from '../RoommateRecommendations/RoommateRecommendations';
+import { useAuth } from '../../hooks/useAuth';
 
 export interface FilterCriteria {
   city?: string;
@@ -36,6 +37,7 @@ function objectToQueryString(obj: Record<string, any>) {
 }
 
 const HomePage: React.FC = () => {
+  const { isLoggedIn } = useAuth();
   const [listings, setListings] = useState<PostListingFormData[]>([]);
   const [filters, setFilters] = useState<FilterCriteria>({});
   const [mapCenter, setMapCenter] = useState<CityCoordinates | undefined>(undefined);
@@ -72,7 +74,7 @@ const HomePage: React.FC = () => {
       }
       console.log("[HomePage] Fetching listings from:", url);
       const res = await fetch(url, {
-        headers: tab === "recommended" ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : undefined
+        headers: tab === "recommended" && isLoggedIn ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : undefined
       });
       if (!res.ok) throw new Error('Failed to fetch listings');
       let data: any = await res.json();
@@ -230,9 +232,9 @@ const HomePage: React.FC = () => {
       {mode === 'properties' && tab === 'recommended' ? (
         <Recommendations filters={filters} tab={tab} onTabChange={setTab} />
       ) : mode === 'properties' && tab === 'browseAll' ? (
-        <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 360px)', margin: 0, padding: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 300px)', margin: 0, padding: 0 }}>
           {/* Left: Tabs + Listings (2/3) */}
-          <div style={{ flex: 2, overflowY: 'auto', height: '100%', paddingTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ flex: 2, overflowY: 'auto', height: '100%', paddingTop: '20px', paddingBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {/* Tabs for browse/recommended, only in left 2/3 */}
             <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
               <button
@@ -282,7 +284,7 @@ const HomePage: React.FC = () => {
                 <p className="text-muted text-center">No listings found.</p>
               </div>
             ) : (
-              <ListingsGrid listings={listings} isLoggedIn={!!localStorage.getItem('token')} />
+              <ListingsGrid listings={listings} isLoggedIn={isLoggedIn} />
             )}
           </div>
           {/* Right: Map (1/3, sticky/fixed) */}

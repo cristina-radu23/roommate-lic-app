@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecommendations } from '../../hooks/useRecommendations';
+import { useAuth } from '../../hooks/useAuth';
 import './Recommendations.css';
 import ListingsGrid from '../HomePage/ListingsGrid';
 import MapComponent, { CityCoordinates } from '../Map/MapComponent';
@@ -35,7 +36,7 @@ interface RecommendationsProps {
 }
 
 const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, onTabChange }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+  const { isLoggedIn } = useAuth();
   const { recommendations, loading, error, refetch } = useRecommendations(10);
   const [listings, setListings] = useState<Map<number, Listing>>(new Map());
   const [clearingCache, setClearingCache] = useState(true);
@@ -70,11 +71,12 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
 
   // Fetch listing details for recommended listings
   useEffect(() => {
+    console.log('[Recommendations] Fetching listing details for', recommendations.length, 'recommendations');
     const fetchListings = async () => {
       const results = await Promise.all(
         recommendations.map(async (rec) => {
           try {
-            const response = await fetch(`http://localhost:5000/api/listings/${rec.listingId}`);
+            const response = await fetch(`http://localhost:5000/api/listings/${rec.listingId}?incrementViews=false`);
             if (response.ok) {
               const listing: Listing = await response.json();
               return [rec.listingId, listing];
@@ -103,12 +105,10 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
   // Seamlessly update recommendations on login/logout
   useEffect(() => {
     const handleLogout = () => {
-      setIsLoggedIn(false);
       console.log('[Recommendations] user-logout event. Calling refetch()');
       refetch();
     };
     const handleLogin = () => {
-      setIsLoggedIn(true);
       console.log('[Recommendations] user-login event. Will call refetch() after 200ms');
       setTimeout(() => {
         console.log('[Recommendations] Calling refetch() after login');
@@ -315,10 +315,10 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
 
   // Layout: map and grid side by side
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 360px)', margin: 0, padding: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'row', width: '100vw', height: 'calc(100vh - 300px)', margin: 0, padding: 0 }}>
       {/* Left: Recommendations Grid (2/3) */}
       
-      <div style={{ flex: 2, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}>
+      <div style={{ flex: 2, overflowY: 'auto', paddingBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%' }}>
         <div className="recommendations-header" style={{ width: '100%', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px 0', gap: 8, width: '100%' }}>
             <button

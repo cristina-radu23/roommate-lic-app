@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../Navbar/Navbar';
 import LoginModal from '../LoginModal/LoginModal';
 import CreateAccount from '../CreateAccount/CreateAccount';
@@ -10,12 +11,10 @@ import Inbox from '../Inbox/Inbox';
 import MyPosts from '../MyListings/MyListings';
 import AccountInfo from '../AccountInfo/AccountInfo';
 import Favourites from '../Favourites';
-import Recommendations from '../Recommendations/Recommendations';
 import RoommateAnnouncements from '../RoommateAnnouncements/RoommateAnnouncements';
 import CreateRoommateAnnouncement from '../CreateRoommateAnnouncement/CreateRoommateAnnouncement';
 import AnnouncementSuccess from '../CreateRoommateAnnouncement/AnnouncementSuccess';
 import RoommateAnnouncementPage from '../RoommateAnnouncements/RoommateAnnouncementPage';
-import RoommateRecommendations from '../RoommateRecommendations/RoommateRecommendations';
 import IdealRoommateForm from '../IdealRoommateForm/IdealRoommateForm';
 
 // Add TypeScript declaration for global navigation
@@ -27,13 +26,7 @@ declare global {
 
 function App({ navigate }: { navigate: (path: string) => void }) {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Check for token on app load
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+  const { isLoggedIn, isValidating } = useAuth();
 
   useEffect(() => {
     const handler = () => setLoginModalOpen(true);
@@ -52,10 +45,9 @@ function App({ navigate }: { navigate: (path: string) => void }) {
       if (response.ok && data.token) {
         localStorage.setItem("token", data.token);
         if (data.userId) localStorage.setItem("userId", data.userId.toString());
-        setIsLoggedIn(true);
-        setLoginModalOpen(false);
         // Dispatch a custom event to notify components about the login
         window.dispatchEvent(new CustomEvent('user-login'));
+        setLoginModalOpen(false);
         // Only redirect if we're on the CreateAccount page
         if (window.location.pathname === '/createaccount') {
           window.location.href = '/';
@@ -72,7 +64,6 @@ function App({ navigate }: { navigate: (path: string) => void }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
-    setIsLoggedIn(false);
     // Dispatch a custom event to notify components about the logout
     window.dispatchEvent(new CustomEvent('user-logout'));
     navigate('/');
@@ -85,6 +76,22 @@ function App({ navigate }: { navigate: (path: string) => void }) {
 
   // Make navigation available globally
   window.navigateTo = globalNavigate;
+
+  // Show loading state while validating token
+  if (isValidating) {
+    return (
+      <div style={{ 
+        backgroundColor: "#fcfaf8",
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
@@ -112,12 +119,12 @@ function App({ navigate }: { navigate: (path: string) => void }) {
         <Route path="/account" element={<AccountInfo />} />
         <Route path="/account/:userId" element={<AccountInfo />} />
         <Route path="/favourites" element={<Favourites />} />
-        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/recommendations" element={<HomePage />} />
         <Route path="/roommate-announcements" element={<RoommateAnnouncements />} />
         <Route path="/create-roommate-announcement" element={<CreateRoommateAnnouncement />} />
         <Route path="/announcement-success" element={<AnnouncementSuccess />} />
         <Route path="/roommate-announcement/:id" element={<RoommateAnnouncementPage />} />
-        <Route path="/roommate-recommendations" element={<RoommateRecommendations />} />
+        <Route path="/roommate-recommendations" element={<HomePage />} />
         <Route path="/ideal-roommate-form" element={<IdealRoommateForm />} />
       </Routes>
     </div>

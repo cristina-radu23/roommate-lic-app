@@ -29,7 +29,11 @@ const NotificationPopup: React.FC<Props> = ({ open, onClose, userId, onAnyUnread
   // Handle clicks outside the popup
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      // Check if the click is on the bell button (notification trigger)
+      const target = event.target as Node;
+      const bellButton = document.querySelector('[data-notification-bell]');
+      
+      if (popupRef.current && !popupRef.current.contains(target) && !bellButton?.contains(target)) {
         onClose();
       }
     };

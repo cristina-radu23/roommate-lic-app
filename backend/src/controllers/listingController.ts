@@ -336,6 +336,8 @@ export const getListingsByCity = async (req: Request, res: Response) => {
 export const getListingById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { incrementViews = 'true' } = req.query; // Default to true for backward compatibility
+    
     const listing = await Listing.findOne({
       where: { listingId: id },
       include: [
@@ -368,9 +370,15 @@ export const getListingById = async (req: Request, res: Response) => {
     });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    // Increment views
-    await listing.increment('views');
-    await listing.reload();
+    // Only increment views if explicitly requested (default behavior for ListingPage)
+    console.log(`[getListingById] incrementViews parameter: ${incrementViews}`);
+    if (incrementViews === 'true') {
+      console.log(`[getListingById] Incrementing views for listing ${id}`);
+      await listing.increment('views');
+      await listing.reload();
+    } else {
+      console.log(`[getListingById] NOT incrementing views for listing ${id}`);
+    }
 
     // Use direct property access for associations
     const userInstance = (listing as any).User;

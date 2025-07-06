@@ -60,6 +60,45 @@ const makePublicRequest = async (url: string, options: RequestInit = {}) => {
   return response.json();
 };
 
+// Utility function to handle API calls with automatic token validation
+export const apiCall = async (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  
+  // Add authorization header if token exists
+  if (token) {
+    options.headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
+  try {
+    const response = await fetch(url, options);
+    
+    // If we get a 401 or 403 error, the token is likely expired
+    if ((response.status === 401 || response.status === 403) && token) {
+      // Clear invalid token
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      
+      // Dispatch logout event to notify all components
+      window.dispatchEvent(new CustomEvent('user-logout'));
+      
+      // Redirect to home page
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+      
+      throw new Error('Token expired. Please log in again.');
+    }
+    
+    return response;
+  } catch (error) {
+    // Re-throw the error for the calling code to handle
+    throw error;
+  }
+};
+
 // Roommate Announcement API
 export const roommateAnnouncementApi = {
   // Get all announcements (public)

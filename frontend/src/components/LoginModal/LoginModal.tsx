@@ -50,9 +50,22 @@ const LoginModal: React.FC<Props> = ({ show, onClose, onSubmit }) => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Form.Group>
-          <Button type="submit" className="w-100" variant="primary">
-            Log in
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button 
+              type="submit" 
+              variant="primary"
+              style={{ 
+                minWidth: '120px',
+                padding: '8px 24px',
+                textAlign: 'center',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              Log in
+            </Button>
+          </div>
           <div className="text-center mt-3">
             <span className="text-muted">Don't have an account? </span>
             <Link to="/createaccount" onClick={onClose} style={{ color: '#0d6efd', textDecoration: 'none' }}>
