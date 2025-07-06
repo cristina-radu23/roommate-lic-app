@@ -251,7 +251,11 @@ const HomePage: React.FC = () => {
                   boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
                   transition: 'all 0.2s'
                 }}
-                onClick={() => setTab('browseAll')}
+                onClick={() => {
+                  setTab('browseAll');
+                  // Use React Router navigation to update URL
+                  window.location.href = '/?tab=browseAll';
+                }}
               >
                 Browse All
               </button>
@@ -269,7 +273,11 @@ const HomePage: React.FC = () => {
                   boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
                   transition: 'all 0.2s'
                 }}
-                onClick={() => setTab('recommended')}
+                onClick={() => {
+                  setTab('recommended');
+                  // Use React Router navigation to update URL
+                  window.location.href = '/?tab=recommended';
+                }}
               >
                 Recommended for You
               </button>

@@ -335,7 +335,11 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
               boxShadow: tab === 'browseAll' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
               transition: 'all 0.2s'
             }}
-            onClick={() => onTabChange('browseAll')}
+            onClick={() => {
+              onTabChange('browseAll');
+              // Use React Router navigation to update URL
+              window.location.href = '/?tab=browseAll';
+            }}
           >
             Browse All
           </button>
@@ -353,7 +357,11 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
               boxShadow: tab === 'recommended' ? '0 2px 8px rgba(255,64,129,0.08)' : 'none',
               transition: 'all 0.2s'
             }}
-            onClick={() => onTabChange('recommended')}
+            onClick={() => {
+              onTabChange('recommended');
+              // Use React Router navigation to update URL
+              window.location.href = '/?tab=recommended';
+            }}
           >
             Recommended for You
           </button>
