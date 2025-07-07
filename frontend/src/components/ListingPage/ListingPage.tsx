@@ -109,6 +109,7 @@ const ListingPage: React.FC = () => {
   // Application modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+  const [mapContainerStyle, setMapContainerStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -145,6 +146,80 @@ const ListingPage: React.FC = () => {
       fetchLikedUsers();
     }
   }, [id]);
+
+  // Calculate map container position to align with Details container bottom
+  useEffect(() => {
+    if (listing) {
+      const timer = setTimeout(() => {
+        const leftColumn = document.querySelector('.col-md-8');
+        const rightColumn = document.querySelector('.col-md-4');
+        const mapCard = document.querySelector('.map-card');
+        
+        if (leftColumn && rightColumn && mapCard) {
+          const leftHeight = leftColumn.getBoundingClientRect().height;
+          const rightTopHeight = rightColumn.getBoundingClientRect().top;
+          const mapCardTop = mapCard.getBoundingClientRect().top;
+          const mapCardHeight = mapCard.getBoundingClientRect().height;
+          
+          const leftBottom = rightTopHeight + leftHeight;
+          const mapBottom = mapCardTop + mapCardHeight;
+          
+          // For room listings (no likes list), position map at same level as Details
+          if (listing.listingType === "room") {
+            // Find the Details section in the left column
+            const detailsSection = leftColumn.querySelector('h6.fw-bold.mb-2');
+            if (detailsSection) {
+              const detailsTop = detailsSection.getBoundingClientRect().top;
+              const detailsBottom = leftColumn.getBoundingClientRect().bottom;
+              const detailsHeight = detailsBottom - detailsTop + 130; // Add 20px to ensure it matches
+              const rightColumnTop = rightColumn.getBoundingClientRect().top;
+              const mapCardTop = mapCard.getBoundingClientRect().top;
+              
+              // Calculate where map should be positioned to align with Details section
+              const desiredMapTop = rightColumnTop + (detailsTop - rightColumnTop) - 155; // Add 20px offset down
+              const offset = desiredMapTop - mapCardTop;
+              
+              console.log('Room listing alignment:', {
+                detailsTop,
+                detailsBottom,
+                detailsHeight,
+                rightColumnTop,
+                mapCardTop,
+                desiredMapTop,
+                offset
+              });
+              
+              if (Math.abs(offset) > 5) {
+                setMapContainerStyle({
+                  position: 'relative',
+                  top: `${offset}px`,
+                  height: `${detailsHeight}px` // Match Details container height
+                });
+              } else {
+                setMapContainerStyle({
+                  height: `${detailsHeight}px` // Match Details container height even if no position adjustment needed
+                });
+              }
+            }
+          } else {
+            // For entire_property listings (with likes list), extend height to align with Details
+            if (mapBottom < leftBottom) {
+              const additionalHeight = leftBottom - mapBottom;
+              setMapContainerStyle({
+                height: `${mapCardHeight + additionalHeight - 20}px` // 20px shorter
+              });
+            } else {
+              setMapContainerStyle({
+                height: `${mapCardHeight - 30}px` // 20px shorter even when no extension needed
+              });
+            }
+          }
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [listing]);
 
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -1440,7 +1515,7 @@ const ListingPage: React.FC = () => {
               </div>
 
               {/* User details card */}
-              <div className="card p-4 d-flex align-items-center" style={{ borderRadius: "2rem", minWidth: 0, marginTop: "-30px" }}>
+              <div className="card p-4 d-flex align-items-center user-details-card" style={{ borderRadius: "2rem", minWidth: 0, marginTop: isOwnListing ? "40px" : "-30px" }}>
                 <div className="d-flex align-items-center mb-3 w-100" style={{ gap: 16 }}>
                   {listing.user?.profilePicture && !failedImages.has(listing.user.userId) ? (
                     <img
@@ -1523,7 +1598,7 @@ const ListingPage: React.FC = () => {
               
               {/* Inline Likes List */}
               {listing.listingType === "entire_property" && (
-                <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0, minHeight: "380px" }}>
+                <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0, minHeight: "380px", marginTop: isOwnListing ? "2rem" : "1.5rem" }}>
                   <div className="fw-bold mb-3">People who liked this listing ({likedUsers.length})</div>
                     <div className="list-group" style={{ maxHeight: "300px", overflowY: "auto", minHeight: "300px" }}>
                     {likedUsers.length === 0 ? (
@@ -1623,12 +1698,14 @@ const ListingPage: React.FC = () => {
               )}
               
               {/* Map card */}
-              <div className="card p-4 mt-4" style={{ borderRadius: "2rem", minWidth: 0 }}>
+              <div className="card p-4 mt-4 map-card" style={{ borderRadius: "2rem", minWidth: 0, ...mapContainerStyle }}>
                 <div className="fw-bold mb-2">Address</div>
                 <div style={{ marginBottom: 12 }}>
                   Str {streetName} No. {streetNo}
                 </div>
-                <MapPreview address={fullAddress} />
+                <div style={{ height: '100%', minHeight: '300px' }}>
+                  <MapPreview address={fullAddress} />
+                </div>
               </div>
             </div>
           </div>
