@@ -29,44 +29,31 @@ export const createOrUpdateMatch = async (req: Request, res: Response) => {
     const actingUser = await User.findByPk(actingUserId);
     console.log('[MatchController] userAId:', userAId, 'userBId:', userBId, 'actingUserId:', actingUserId, 'listingId:', listingId, 'announcementId:', announcementId);
     if (!match) {
-      // Only now, for creation, use initiator/recipient logic
+      // Use the userBId from the request (the user next to whom "Match" was clicked)
       let contextTitle = "";
       let contextLink = "";
-      let ownerId: number | undefined;
-      let recipientId: number | undefined;
       if (listingId) {
         const listing = await Listing.findByPk(listingId);
         if (!listing) {
           return res.status(404).json({ error: "Listing not found" });
         }
-        ownerId = listing.userId;
         contextTitle = listing.title;
         contextLink = `/listing/${listingId}`;
-        if (ownerId === actingUserId) {
-          return res.status(403).json({ error: "Listing owners cannot match with users who liked their listing" });
-        }
-        recipientId = ownerId;
       } else if (announcementId) {
         const announcement = await RoommateAnnouncement.findByPk(announcementId);
         if (!announcement) {
           return res.status(404).json({ error: "Announcement not found" });
         }
-        ownerId = announcement.userId;
         contextTitle = announcement.title;
         contextLink = `/announcement/${announcementId}`;
-        if (ownerId === actingUserId) {
-          return res.status(403).json({ error: "Announcement owners cannot match with users who liked their announcement" });
-        }
-        recipientId = ownerId;
       }
-      if (recipientId === undefined) {
-        return res.status(400).json({ error: "Could not determine recipient userId." });
-      }
-      if (actingUserId === recipientId) {
+      
+      if (actingUserId === userBId) {
         return res.status(400).json({ error: "Cannot create or confirm a match with yourself." });
       }
+      
       const userAIdFinal = actingUserId;
-      const userBIdFinal = recipientId;
+      const userBIdFinal = userBId; // Use the userBId from the request
       console.log('[MatchController] Creating new match: userAId:', userAIdFinal, 'userBId:', userBIdFinal);
       match = await Match.create({
         userAId: userAIdFinal,
@@ -252,6 +239,8 @@ export const getUserPairMatch = async (req: Request, res: Response) => {
     if (!userId || !otherUserId) {
       return res.status(400).json({ error: "userId and otherUserId are required" });
     }
+    console.log(`[getUserPairMatch] Searching for match between userId=${userId} and otherUserId=${otherUserId}`);
+    
     // Try both directions: userId as initiator, otherUserId as recipient, and vice versa
     let match = await Match.findOne({
       where: {
@@ -259,6 +248,8 @@ export const getUserPairMatch = async (req: Request, res: Response) => {
         userBId: Number(otherUserId)
       }
     });
+    console.log(`[getUserPairMatch] First search result:`, match ? match.toJSON() : 'null');
+    
     if (!match) {
       match = await Match.findOne({
         where: {
@@ -266,9 +257,30 @@ export const getUserPairMatch = async (req: Request, res: Response) => {
           userBId: Number(userId)
         }
       });
+      console.log(`[getUserPairMatch] Second search result:`, match ? match.toJSON() : 'null');
     }
+    
+    // If still no match found, try to find any match between these users (regardless of listing/announcement)
+    if (!match) {
+      const allMatches = await Match.findAll({
+        where: {
+          [Op.or]: [
+            { userAId: Number(userId), userBId: Number(otherUserId) },
+            { userAId: Number(otherUserId), userBId: Number(userId) }
+          ]
+        }
+      });
+      console.log(`[getUserPairMatch] All matches found:`, allMatches.map(m => m.toJSON()));
+      if (allMatches.length > 0) {
+        match = allMatches[0]; // Return the first match found
+        console.log(`[getUserPairMatch] Using first match:`, match.toJSON());
+      }
+    }
+    
+    console.log(`[getUserPairMatch] Final result:`, match ? match.toJSON() : 'null');
     res.json(match);
   } catch (err) {
+    console.error(`[getUserPairMatch] Error:`, err);
     res.status(500).json({ error: "Failed to fetch match for user pair" });
   }
 }; 
