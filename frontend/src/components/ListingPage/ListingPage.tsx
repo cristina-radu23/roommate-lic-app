@@ -166,40 +166,27 @@ const ListingPage: React.FC = () => {
           
           // For room listings (no likes list), position map at same level as Details
           if (listing.listingType === "room") {
-            // Find the Details section in the left column
-            const detailsSection = leftColumn.querySelector('h6.fw-bold.mb-2');
-            if (detailsSection) {
-              const detailsTop = detailsSection.getBoundingClientRect().top;
-              const detailsBottom = leftColumn.getBoundingClientRect().bottom;
-              const detailsHeight = detailsBottom - detailsTop + 130; // Add 20px to ensure it matches
+            // Find the Details container (the card that contains the Details section)
+            const detailsContainer = leftColumn.querySelector('.card.p-4.mb-4');
+            if (detailsContainer) {
+              const detailsContainerTop = detailsContainer.getBoundingClientRect().top;
               const rightColumnTop = rightColumn.getBoundingClientRect().top;
-              const mapCardTop = mapCard.getBoundingClientRect().top;
+              const leftColumnTop = leftColumn.getBoundingClientRect().top;
               
-              // Calculate where map should be positioned to align with Details section
-              const desiredMapTop = rightColumnTop + (detailsTop - rightColumnTop) - 155; // Add 20px offset down
-              const offset = desiredMapTop - mapCardTop;
+              // Calculate the offset needed to move map container to same level as Details
+              const mapCardTop = mapCard.getBoundingClientRect().top;
+              const offset = detailsContainerTop - mapCardTop;
               
               console.log('Room listing alignment:', {
-                detailsTop,
-                detailsBottom,
-                detailsHeight,
-                rightColumnTop,
+                detailsContainerTop,
                 mapCardTop,
-                desiredMapTop,
                 offset
               });
               
-              if (Math.abs(offset) > 5) {
-                setMapContainerStyle({
-                  position: 'relative',
-                  top: `${offset}px`,
-                  height: `${detailsHeight}px` // Match Details container height
-                });
-              } else {
-                setMapContainerStyle({
-                  height: `${detailsHeight}px` // Match Details container height even if no position adjustment needed
-                });
-              }
+              setMapContainerStyle({
+                position: 'relative',
+                top: `${offset}px`
+              });
             }
           } else {
             // For entire_property listings (with likes list), extend height to align with Details
