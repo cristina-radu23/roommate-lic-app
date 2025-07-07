@@ -748,7 +748,7 @@ const AccountInfo: React.FC = () => {
                   <>
                     {(authUserId == match.userAId && match.userAConfirmed && !match.userBConfirmed) && (
                       <button className="btn btn-outline-danger me-2" onClick={handleCancelMatch} disabled={matchLoading}>
-                        Cancel
+                        Cancel request
                       </button>
                     )}
                     {(authUserId == match.userBId && match.userAConfirmed && !match.userBConfirmed) && (

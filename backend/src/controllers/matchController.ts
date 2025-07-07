@@ -176,6 +176,25 @@ export const getUserMatches = async (req: Request, res: Response) => {
   }
 };
 
+// Get all matches for a user (including pending ones)
+export const getAllUserMatches = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+    const matches = await Match.findAll({
+      where: {
+        [Op.or]: [
+          { userAId: userId },
+          { userBId: userId }
+        ]
+      }
+    });
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch matches" });
+  }
+};
+
 // Check if a match exists between two users for a given announcementId or listingId
 export const checkMatchExists = async (req: Request, res: Response) => {
   try {

@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
 import { FaUserCircle } from 'react-icons/fa';
 
+// Custom styles for red text
+const redButtonStyle = {
+  minWidth: '80px'
+};
+
 interface User {
   userId: number;
   userFirstName: string;
@@ -47,7 +52,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
   useEffect(() => {
     if (!show || !isAuthenticated) return;
     setLoading(true);
-    fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+    fetch(`http://localhost:5000/api/matches/user/${currentUserId}/all`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -77,7 +82,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
       })
     });
     // Refresh matches
-    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+    const res = await fetch(`http://localhost:5000/api/matches/user/${currentUserId}/all`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -106,7 +111,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
       })
     });
     // Refresh matches
-    const res = await fetch(`http://localhost:5000/api/match/user/${currentUserId}`, {
+    const res = await fetch(`http://localhost:5000/api/matches/user/${currentUserId}/all`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -138,7 +143,18 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
+    <>
+      <style>
+        {`
+          .cancel-request-btn {
+            color: #dc3545 !important;
+          }
+          .cancel-request-btn:hover {
+            color: white !important;
+          }
+        `}
+      </style>
+      <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
         <Modal.Title>People who liked this listing</Modal.Title>
       </Modal.Header>
@@ -191,16 +207,17 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
               }
               const match = getMatch(user.userId);
               const isPending = pending === user.userId || loading;
-              let currentConfirmed = false;
-              let otherConfirmed = false;
-              if (match) {
-                currentConfirmed =
-                  (match.userAId === currentUserId && match.userAConfirmed) ||
-                  (match.userBId === currentUserId && match.userBConfirmed);
-                otherConfirmed =
-                  (match.userAId !== currentUserId && match.userAConfirmed) ||
-                  (match.userBId !== currentUserId && match.userBConfirmed);
-              }
+              // Pending: match exists, userBConfirmed is false, and not a match
+              const isPendingRequest = match && match.userBConfirmed === false && !match.isMatch;
+              
+              // Debug logging
+              console.log(`[LikesList] User ${user.userId}:`, {
+                match: match,
+                isPendingRequest,
+                userBConfirmed: match?.userBConfirmed,
+                isMatch: match?.isMatch
+              });
+              
               // If both users confirmed, show 'Send message'
               if (match && match.isMatch) {
                 return (
@@ -255,8 +272,8 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                   </div>
                 );
               }
-              // Optimistically show Cancel if just clicked Match (unless isMatch is true)
-              if ((pendingMatchUserId === user.userId && !(match && match.isMatch)) || (match && currentConfirmed && !otherConfirmed && !match.isMatch)) {
+              // Show Cancel if there's a pending request
+              if (isPendingRequest) {
                 return (
                   <div key={user.userId} className="list-group-item d-flex align-items-center gap-3 justify-content-between">
                     <Link
@@ -290,12 +307,12 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                     </Link>
                     {canPerformMatchActions && (
                       <button
-                        className="btn btn-outline-danger ms-auto"
-                        style={{ minWidth: 80 }}
+                        className="btn btn-outline-danger ms-auto cancel-request-btn"
+                        style={redButtonStyle}
                         onClick={() => handleUnmatch(user.userId)}
                         disabled={isPending}
                       >
-                        {isPending ? '...' : 'Cancel'}
+                        {isPending ? 'Cancel request' : 'Cancel request'}
                       </button>
                     )}
                   </div>
@@ -340,7 +357,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
                       onClick={() => handleMatch(user.userId)}
                       disabled={isPending}
                     >
-                      {isPending ? '...' : 'Match'}
+                                              {isPending ? 'Cancel request' : 'Match'}
                     </button>
                   )}
                 </div>
@@ -350,6 +367,7 @@ const LikesList: React.FC<LikesListProps> = ({ show, onHide, users, listingId, l
         )}
       </Modal.Body>
     </Modal>
+    </>
   );
 };
 
