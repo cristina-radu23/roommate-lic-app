@@ -177,15 +177,20 @@ const ListingPage: React.FC = () => {
               const mapCardTop = mapCard.getBoundingClientRect().top;
               const offset = detailsContainerTop - mapCardTop;
               
+              // Calculate the height of the Details container
+              const detailsContainerHeight = detailsContainer.getBoundingClientRect().height;
+              
               console.log('Room listing alignment:', {
                 detailsContainerTop,
                 mapCardTop,
-                offset
+                offset,
+                detailsContainerHeight
               });
               
               setMapContainerStyle({
                 position: 'relative',
-                top: `${offset}px`
+                top: `${offset}px`,
+                height: `${detailsContainerHeight}px`
               });
             }
           } else {
