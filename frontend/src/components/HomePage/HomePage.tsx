@@ -253,8 +253,8 @@ const HomePage: React.FC = () => {
                 }}
                 onClick={() => {
                   setTab('browseAll');
-                  // Use React Router navigation to update URL
-                  window.location.href = '/?tab=browseAll';
+                  // Use React Router navigation to update URL without page reload
+                  navigate('/?tab=browseAll');
                 }}
               >
                 Browse All
@@ -275,8 +275,8 @@ const HomePage: React.FC = () => {
                 }}
                 onClick={() => {
                   setTab('recommended');
-                  // Use React Router navigation to update URL
-                  window.location.href = '/?tab=recommended';
+                  // Use React Router navigation to update URL without page reload
+                  navigate('/?tab=recommended');
                 }}
               >
                 Recommended for You

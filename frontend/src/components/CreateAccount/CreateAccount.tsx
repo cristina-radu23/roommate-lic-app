@@ -64,6 +64,11 @@ const CreateAccount = ({ onLoginClick }: { onLoginClick?: () => void }) => {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",

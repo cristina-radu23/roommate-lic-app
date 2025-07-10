@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import profileIcon from '../../assets/profileIcon.png';
 import './Inbox.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
 
 interface ChatRoom {
@@ -63,6 +63,7 @@ const Inbox: React.FC = () => {
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
 
   // WebSocket hook
   const { socket, isConnected } = useSocket();
@@ -553,21 +554,22 @@ const Inbox: React.FC = () => {
                 {groupAvatars}
               </div>
             ) : (
-            <img 
+            <img
                 src={participants[0]?.profilePicture ? getProfilePictureUrl(participants[0].profilePicture) : profileIcon}
               alt="avatar" 
               className="inbox-avatar-large" 
+              style={{ cursor: participants[0] ? 'pointer' : 'default' }}
+              onClick={() => participants[0] && navigate(`/account/${participants[0].userId}`)}
             />
             )}
             <div>
-              <span className="inbox-chat-username">
+              <span
+                className="inbox-chat-username"
+                style={{ cursor: participants[0] ? 'pointer' : 'default' }}
+                onClick={() => participants[0] && navigate(`/account/${participants[0].userId}`)}
+              >
                 {isGroup ? groupNames : (participants[0] ? `${participants[0].userFirstName} ${participants[0].userLastName}` : `Chat #${selectedChat.ChatRoom.chatRoomId}`)}
               </span>
-              <div style={{ fontSize: '0.75rem', marginTop: 2 }}>
-                <span style={{ color: isConnected ? '#28a745' : '#dc3545' }}>
-                  ● {isConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
             </div>
           </div>
           <div className="inbox-chat-messages" style={{ overflowY: 'auto' }}>

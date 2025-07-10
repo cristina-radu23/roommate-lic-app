@@ -60,6 +60,7 @@ const ListingPage: React.FC = () => {
   const [showPhone, setShowPhone] = useState(false);
   const hasFetched = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [matches, setMatches] = useState<any[]>([]);
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -146,6 +147,24 @@ const ListingPage: React.FC = () => {
       fetchLikedUsers();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!userId || !id) return;
+    fetch(`http://localhost:5000/api/matches/user/${userId}/all`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => setMatches(data.filter((m: any) => m.listingId === Number(id))));
+  }, [userId, id]);
+
+  const getMatch = (otherUserId: number) =>
+    matches.find(
+      (m) =>
+        (m.userAId === userId && m.userBId === otherUserId) ||
+        (m.userAId === otherUserId && m.userBId === userId)
+    );
 
   // Calculate map container position to align with Details container bottom
   useEffect(() => {
@@ -281,7 +300,7 @@ const ListingPage: React.FC = () => {
     }
     
     try {
-      await fetch('http://localhost:5000/api/matches', {
+      const response = await fetch('http://localhost:5000/api/matches', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -295,10 +314,59 @@ const ListingPage: React.FC = () => {
         })
       });
       
-      // Optionally refresh the likes list or show a success message
-      console.log('Match request sent successfully');
+      if (response.ok) {
+        // Refresh matches list after successful match request
+        const matchesResponse = await fetch(`http://localhost:5000/api/matches/user/${userId}/all`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (matchesResponse.ok) {
+          const matchesData = await matchesResponse.json();
+          setMatches(matchesData.filter((m: any) => m.listingId === Number(id)));
+        }
+        console.log('Match request sent successfully');
+      } else {
+        console.error('Failed to send match request');
+      }
     } catch (err) {
       console.error('[ListingPage] Error sending match request:', err);
+    }
+  };
+
+  const handleUnmatch = async (otherUserId: number) => {
+    if (!userId || !id) return;
+    try {
+      const response = await fetch('http://localhost:5000/api/matches/unmatch', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          userAId: userId,
+          userBId: otherUserId,
+          listingId: Number(id)
+        })
+      });
+      
+      if (response.ok) {
+        // Refresh matches list after successful unmatch
+        const matchesResponse = await fetch(`http://localhost:5000/api/matches/user/${userId}/all`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (matchesResponse.ok) {
+          const matchesData = await matchesResponse.json();
+          setMatches(matchesData.filter((m: any) => m.listingId === Number(id)));
+        }
+        console.log('Unmatch request sent successfully');
+      } else {
+        console.error('Failed to send unmatch request');
+      }
+    } catch (err) {
+      console.error('[ListingPage] Error sending unmatch request:', err);
     }
   };
 
@@ -1600,13 +1668,142 @@ const ListingPage: React.FC = () => {
                       </div>
                     ) : (
                       likedUsers.map((user) => {
-                      if (user.userId === userId) {
+                        if (user.userId === userId) {
+                          return (
+                            <div key={user.userId} className="list-group-item d-flex align-items-center gap-3 justify-content-between">
+                              <Link
+                                to={`/account/${user.userId}`}
+                                className="d-flex align-items-center gap-3 flex-grow-1"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                              >
+                                {user.profilePicture && !failedImages.has(user.userId) ? (
+                                  <img
+                                    src={
+                                      user.profilePicture.startsWith('http')
+                                        ? user.profilePicture
+                                        : `http://localhost:5000${user.profilePicture}`
+                                    }
+                                    alt={`${user.userFirstName} ${user.userLastName}`}
+                                    className="rounded-circle"
+                                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                    onError={() => handleImageError(user.userId)}
+                                  />
+                                ) : (
+                                  <FaUserCircle 
+                                    size={50} 
+                                    color="#bbb" 
+                                    style={{ background: '#eee', borderRadius: '50%' }} 
+                                  />
+                                )}
+                                <div>
+                                  <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
+                                </div>
+                              </Link>
+                            </div>
+                          );
+                        }
+                        const match = getMatch(user.userId);
+                        console.log('Match for user', user.userId, ':', match);
+                        const isPendingRequest = match && match.userAConfirmed === true && match.userBConfirmed === false && !match.isMatch;
+                        if (match && match.isMatch) {
+                          return (
+                            <div key={user.userId} className="list-group-item d-flex align-items-center gap-3">
+                              <Link
+                                to={`/account/${user.userId}`}
+                                className="d-flex align-items-center gap-3"
+                                style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                              >
+                                {user.profilePicture && !failedImages.has(user.userId) ? (
+                                  <img
+                                    src={
+                                      user.profilePicture.startsWith('http')
+                                        ? user.profilePicture
+                                        : `http://localhost:5000${user.profilePicture}`
+                                    }
+                                    alt={`${user.userFirstName} ${user.userLastName}`}
+                                    className="rounded-circle"
+                                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                    onError={() => handleImageError(user.userId)}
+                                  />
+                                ) : (
+                                  <FaUserCircle 
+                                    size={50} 
+                                    color="#bbb" 
+                                    style={{ background: '#eee', borderRadius: '50%' }} 
+                                  />
+                                )}
+                                <div>
+                                  <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
+                                </div>
+                              </Link>
+                              {!isOwnListing && (
+                                <button
+                                  className="btn btn-primary"
+                                  style={{ minWidth: 120, borderRadius: 18, fontSize: 14, fontWeight: 500, flexShrink: 0 }}
+                                  onClick={() => navigate('/inbox', {
+                                    state: {
+                                      receiverId: user.userId,
+                                      receiverName: `${user.userFirstName} ${user.userLastName}`,
+                                      listingId: Number(id)
+                                    }
+                                  })}
+                                >
+                                  Send message
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }
+                        if (isPendingRequest) {
+                          return (
+                            <div key={user.userId} className="list-group-item d-flex align-items-center gap-3">
+                              <Link
+                                to={`/account/${user.userId}`}
+                                className="d-flex align-items-center gap-3"
+                                style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                              >
+                                {user.profilePicture && !failedImages.has(user.userId) ? (
+                                  <img
+                                    src={
+                                      user.profilePicture.startsWith('http')
+                                        ? user.profilePicture
+                                        : `http://localhost:5000${user.profilePicture}`
+                                    }
+                                    alt={`${user.userFirstName} ${user.userLastName}`}
+                                    className="rounded-circle"
+                                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                    onError={() => handleImageError(user.userId)}
+                                  />
+                                ) : (
+                                  <FaUserCircle 
+                                    size={50} 
+                                    color="#bbb" 
+                                    style={{ background: '#eee', borderRadius: '50%' }} 
+                                  />
+                                )}
+                                <div>
+                                  <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
+                                </div>
+                              </Link>
+                              {!isOwnListing && (
+                                <button
+                                  className="btn btn-outline-danger"
+                                  style={{ minWidth: 80, borderRadius: 18, fontSize: 14, fontWeight: 500, flexShrink: 0 }}
+                                  onClick={() => handleUnmatch(user.userId)}
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }
+                        // Default: show Match button
                         return (
-                          <div key={user.userId} className="list-group-item d-flex align-items-center gap-3 justify-content-between">
+                          <div key={user.userId} className="list-group-item d-flex align-items-center gap-3">
                             <Link
                               to={`/account/${user.userId}`}
-                              className="d-flex align-items-center gap-3 flex-grow-1"
-                              style={{ textDecoration: 'none', color: 'inherit' }}
+                              className="d-flex align-items-center gap-3"
+                              style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
                             >
                               {user.profilePicture && !failedImages.has(user.userId) ? (
                                 <img
@@ -1631,60 +1828,19 @@ const ListingPage: React.FC = () => {
                                 <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
                               </div>
                             </Link>
+                            {!isOwnListing && (
+                              <button
+                                className="btn btn-outline-success"
+                                style={{ minWidth: 80, borderRadius: 18, fontSize: 14, fontWeight: 500, flexShrink: 0 }}
+                                onClick={() => handleMatch(user.userId)}
+                              >
+                                Match
+                              </button>
+                            )}
                           </div>
                         );
-                      }
-                      
-                      // For other users, show Match button
-                      return (
-                        <div key={user.userId} className="list-group-item d-flex align-items-center gap-3">
-                          <Link
-                            to={`/account/${user.userId}`}
-                            className="d-flex align-items-center gap-3"
-                            style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
-                          >
-                            {user.profilePicture && !failedImages.has(user.userId) ? (
-                              <img
-                                src={
-                                  user.profilePicture.startsWith('http')
-                                    ? user.profilePicture
-                                    : `http://localhost:5000${user.profilePicture}`
-                                }
-                                alt={`${user.userFirstName} ${user.userLastName}`}
-                                className="rounded-circle"
-                                style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                                onError={() => handleImageError(user.userId)}
-                              />
-                            ) : (
-                              <FaUserCircle 
-                                size={50} 
-                                color="#bbb" 
-                                style={{ background: '#eee', borderRadius: '50%' }} 
-                              />
-                            )}
-                            <div>
-                              <h6 className="mb-0">{user.userFirstName} {user.userLastName}</h6>
-                            </div>
-                          </Link>
-                          {!isOwnListing && (
-                            <button
-                              className="btn btn-outline-success"
-                              style={{ 
-                                minWidth: 80, 
-                                borderRadius: 18,
-                                fontSize: 14,
-                                fontWeight: 500,
-                                flexShrink: 0
-                              }}
-                              onClick={() => handleMatch(user.userId)}
-                            >
-                              Match
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
+                      })
+                    )}
                   </div>
                 </div>
               )}

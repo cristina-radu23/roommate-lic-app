@@ -180,6 +180,7 @@ export const getUserMatches = async (req: Request, res: Response) => {
 export const getAllUserMatches = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
+    console.log(`[getAllUserMatches] userId param:`, userId);
     if (!userId) return res.status(400).json({ error: "userId required" });
     const matches = await Match.findAll({
       where: {
@@ -189,8 +190,10 @@ export const getAllUserMatches = async (req: Request, res: Response) => {
         ]
       }
     });
+    console.log(`[getAllUserMatches] matches found:`, matches.map(m => m.toJSON()));
     res.json(matches);
   } catch (err) {
+    console.error(`[getAllUserMatches] Error:`, err);
     res.status(500).json({ error: "Failed to fetch matches" });
   }
 };

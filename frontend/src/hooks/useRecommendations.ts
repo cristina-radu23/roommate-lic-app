@@ -42,9 +42,20 @@ export const useRecommendations = (limit: number = 20) => {
         }
       });
       console.log('[useRecommendations] API response status:', response.status);
+      
+      // Handle different HTTP status codes appropriately
+      if (response.status === 401 || response.status === 403) {
+        // Authentication error - don't trigger logout, just show auth required message
+        setError('Authentication required');
+        setRecommendations([]);
+        console.log('[useRecommendations] Authentication error. Showing auth required message.');
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data: RecommendationResponse = await response.json();
       console.log('[useRecommendations] API response data:', data);
       if (data.success) {
@@ -54,7 +65,14 @@ export const useRecommendations = (limit: number = 20) => {
       }
     } catch (err) {
       console.error('[useRecommendations] Error fetching recommendations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
+      // Don't set authentication errors for network or other errors
+      if (err instanceof Error && err.message.includes('401')) {
+        setError('Authentication required');
+      } else if (err instanceof Error && err.message.includes('403')) {
+        setError('Authentication required');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,13 +83,23 @@ export const useRecommendations = (limit: number = 20) => {
     if (!token) return;
 
     try {
-      await fetch('http://localhost:5000/api/recommendations/update-preferences', {
+      const response = await fetch('http://localhost:5000/api/recommendations/update-preferences', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      
+      // Handle authentication errors in updatePreferences as well
+      if (response.status === 401 || response.status === 403) {
+        console.log('[useRecommendations] Authentication error in updatePreferences');
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (error) {
       console.error('Error updating preferences:', error);
     }

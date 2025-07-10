@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { useAuth } from '../../hooks/useAuth';
 import './Recommendations.css';
@@ -44,6 +44,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
   const [mapCenter, setMapCenter] = useState<CityCoordinates | undefined>(undefined);
   const [mapBounds, setMapBounds] = useState<any>(null);
   const [useMapBounds, setUseMapBounds] = useState(false);
+  const navigate = useNavigate();
 
   // LOG: props and tab
   console.log('[Recommendations] props:', { filters, tab });
@@ -138,6 +139,15 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
         });
+        
+        // Handle authentication errors specifically
+        if (res.status === 401 || res.status === 403) {
+          if (isMounted) {
+            setCacheMessage('Authentication required to clear cache.');
+          }
+          return;
+        }
+        
         if (res.ok && isMounted) {
           setCacheMessage(null);
         } else if (isMounted) {
@@ -338,7 +348,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
             onClick={() => {
               onTabChange('browseAll');
               // Use React Router navigation to update URL
-              window.location.href = '/?tab=browseAll';
+              navigate(`/?tab=browseAll`);
             }}
           >
             Browse All
@@ -360,7 +370,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ filters = {}, tab, on
             onClick={() => {
               onTabChange('recommended');
               // Use React Router navigation to update URL
-              window.location.href = '/?tab=recommended';
+              navigate(`/?tab=recommended`);
             }}
           >
             Recommended for You
