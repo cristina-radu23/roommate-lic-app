@@ -1739,7 +1739,7 @@ const ListingPage: React.FC = () => {
                               {!isOwnListing && (
                                 <button
                                   className="btn btn-primary"
-                                  style={{ minWidth: 120, borderRadius: 18, fontSize: 14, fontWeight: 500, flexShrink: 0 }}
+                                  style={{ minWidth: 80, borderRadius: 18, fontSize: 14, fontWeight: 500, flexShrink: 0, marginRight: 20 }}
                                   onClick={() => navigate('/inbox', {
                                     state: {
                                       receiverId: user.userId,
@@ -1979,6 +1979,7 @@ const ListingPage: React.FC = () => {
         listingTitle={listing?.title || 'Apartment Listing'}
         listingId={listing?.listingId || 0}
         currentUserId={userId}
+        listingOwnerId={listing?.user?.userId}
       />
     </div>
   );

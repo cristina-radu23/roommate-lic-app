@@ -15,6 +15,7 @@ interface ApplyToListingModalProps {
   listingTitle: string;
   listingId: number;
   currentUserId: number;
+  listingOwnerId?: number;
 }
 
 const ApplyToListingModal: React.FC<ApplyToListingModalProps> = ({
@@ -22,7 +23,8 @@ const ApplyToListingModal: React.FC<ApplyToListingModalProps> = ({
   onHide,
   listingTitle,
   listingId,
-  currentUserId
+  currentUserId,
+  listingOwnerId
 }) => {
   const [matches, setMatches] = useState<User[]>([]);
   const [selectedMatches, setSelectedMatches] = useState<number[]>([]);
@@ -57,7 +59,7 @@ const ApplyToListingModal: React.FC<ApplyToListingModalProps> = ({
         );
         
         // Get the other user from each match
-        const matchUsers = confirmedMatches.map((match: any) => {
+        let matchUsers = confirmedMatches.map((match: any) => {
           const otherUserId = match.userAId === currentUserId ? match.userBId : match.userAId;
           return {
             userId: otherUserId,
@@ -66,7 +68,10 @@ const ApplyToListingModal: React.FC<ApplyToListingModalProps> = ({
             profilePicture: match.userAId === currentUserId ? match.UserB?.profilePicture : match.UserA?.profilePicture
           };
         });
-        
+        // Filter out the listing owner if present
+        if (listingOwnerId) {
+          matchUsers = matchUsers.filter((user: any) => user.userId !== listingOwnerId);
+        }
         setMatches(matchUsers);
       }
     } catch (error) {

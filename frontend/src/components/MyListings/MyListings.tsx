@@ -15,6 +15,8 @@ const MyPosts: React.FC = () => {
 
   useEffect(() => {
     const fetchUserPosts = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -64,7 +66,7 @@ const MyPosts: React.FC = () => {
     };
 
     fetchUserPosts();
-  }, [navigate]);
+  }, [navigate, activeTab]);
 
   const handleDeleteAnnouncement = async (announcementId: number) => {
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;

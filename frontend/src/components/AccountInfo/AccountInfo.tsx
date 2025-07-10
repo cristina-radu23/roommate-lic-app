@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Modal, Button } from 'react-bootstrap';
+import ListingsGrid from '../HomePage/ListingsGrid';
+import AnnouncementCard from '../RoommateAnnouncements/AnnouncementCard';
 
 interface UserInfo {
   userFirstName: string;
@@ -46,6 +48,9 @@ const AccountInfo: React.FC = () => {
   const location = useLocation();
   const isViewingOtherProfile = userId !== undefined && userId !== localStorage.getItem('userId');
   const authUserId = localStorage.getItem('userId');
+  const [otherUserListings, setOtherUserListings] = useState<any[]>([]);
+  const [otherUserAnnouncements, setOtherUserAnnouncements] = useState<any[]>([]);
+  const [postsTab, setPostsTab] = useState<'listings' | 'announcements'>('listings');
 
   console.log('[ProfilePage] Viewing profile userId:', userId, 'authUserId:', authUserId);
 
@@ -123,6 +128,19 @@ const AccountInfo: React.FC = () => {
       .catch(() => setMatchError('Failed to fetch match info'))
       .finally(() => setMatchLoading(false));
   }, [isViewingOtherProfile, authUserId, userId]);
+
+  useEffect(() => {
+    if (isViewingOtherProfile && userId) {
+      // Fetch listings
+      fetch(`http://localhost:5000/api/listings/user/${userId}`)
+        .then(res => res.json())
+        .then(setOtherUserListings);
+      // Fetch roommate announcements
+      fetch(`http://localhost:5000/api/roommate-announcements/user/${userId}`)
+        .then(res => res.json())
+        .then(data => setOtherUserAnnouncements(data.data || []));
+    }
+  }, [isViewingOtherProfile, userId]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -762,6 +780,47 @@ const AccountInfo: React.FC = () => {
                   <button className="btn btn-primary me-2" onClick={handleSendMessage}>
                     Send Message
                   </button>
+                )}
+              </div>
+            )}
+            {/* After the profile info, if viewing another user's profile, show posts section */}
+            {isViewingOtherProfile && (
+              <div className="mt-5">
+                <h4 className="mb-3">Posts by {user.userFirstName} {user.userLastName}</h4>
+                <ul className="nav nav-tabs mb-3">
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link${postsTab === 'listings' ? ' active' : ''}`}
+                      onClick={() => setPostsTab('listings')}
+                    >
+                      Listings ({otherUserListings.length})
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link${postsTab === 'announcements' ? ' active' : ''}`}
+                      onClick={() => setPostsTab('announcements')}
+                    >
+                      Roommate Announcements ({otherUserAnnouncements.length})
+                    </button>
+                  </li>
+                </ul>
+                {postsTab === 'listings' ? (
+                  <ListingsGrid listings={otherUserListings} isLoggedIn={!!localStorage.getItem('token')} showDeleteButton={false} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+                    {otherUserAnnouncements.length === 0 ? (
+                      <div className="alert alert-info" role="alert">
+                        No roommate announcements yet.
+                      </div>
+                    ) : (
+                      otherUserAnnouncements.map((announcement: any) => (
+                        <div key={announcement.announcementId} style={{ position: 'relative', width: '100%', maxWidth: 900 }}>
+                          <AnnouncementCard announcement={announcement} />
+                        </div>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
             )}

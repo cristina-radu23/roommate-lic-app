@@ -467,6 +467,43 @@ export const getUserListings = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
+export const getUserListingsById = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+
+    const listings = await Listing.findAll({
+      where: { userId },
+      include: [
+        {
+          model: Address,
+          include: [City],
+        },
+        RoomAmenity,
+        PropertyAmenity,
+        HouseRule,
+        {
+          model: Photo
+        },
+      ],
+      order: [
+        ['createdAt', 'DESC'],
+        [{ model: Photo, as: 'Photos' }, 'order', 'ASC']
+      ]
+    });
+
+    // Add likesCount to each listing
+    const listingsWithLikes = await Promise.all(listings.map(async (listing: any) => {
+      const likesCount = await Like.count({ where: { listingId: listing.listingId } });
+      return { ...listing.toJSON(), likesCount };
+    }));
+    res.status(200).json(listingsWithLikes);
+  } catch (error) {
+    console.error("Error fetching user listings by id:", error);
+    res.status(500).json({ error: "Failed to fetch user listings" });
+  }
+};
+
 export const deleteListing = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.userId;

@@ -418,21 +418,23 @@ export const getUserAnnouncements = async (req: AuthenticatedRequest, res: Respo
     // Parse JSON fields and format photos for each announcement
     const parsedAnnouncements = announcements.map((a) => {
       const ann = a.toJSON();
-      // Always provide photos as an array
       (ann as any).photos = Array.isArray((ann as any).Photos) ? (ann as any).Photos : ((ann as any).Photos ? [(ann as any).Photos] : []);
       delete (ann as any).Photos;
-      // Parse all JSON fields
       const jsonFields = [
-        'locationPreferences', 'mustHaveAmenities', 'dealBreakers',
+        'locationAreas', 'locationPreferences', 'mustHaveAmenities', 'dealBreakers',
         'preferredGenderArr', 'preferredLocations', 'workSchedule', 'languages', 'hobbies'
       ];
       for (const field of jsonFields) {
         if (typeof (ann as any)[field] === 'string') {
           try { (ann as any)[field] = JSON.parse((ann as any)[field]); } catch { (ann as any)[field] = []; }
         }
+        if (!Array.isArray((ann as any)[field])) {
+          (ann as any)[field] = [];
+        }
       }
       return ann;
     });
+    console.log('[getUserAnnouncements] parsedAnnouncements:', parsedAnnouncements);
 
     res.json({
       success: true,
@@ -444,6 +446,52 @@ export const getUserAnnouncements = async (req: AuthenticatedRequest, res: Respo
       success: false,
       message: "Failed to fetch user announcements",
     });
+  }
+};
+
+export const getUserAnnouncementsById = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+    const announcements = await RoommateAnnouncement.findAll({
+      where: { userId },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['userId', 'userFirstName', 'userLastName', 'profilePicture', 'gender', 'dateOfBirth', 'occupation']
+        },
+        {
+          model: Photo,
+          attributes: ['photoId', 'url', 'order'],
+        }
+      ]
+    });
+    // Always provide photos as an array
+    const parsedAnnouncements = announcements.map(a => {
+      const ann = a.toJSON() as any;
+      ann.photos = Array.isArray(ann.Photos) ? ann.Photos : (ann.Photos ? [ann.Photos] : []);
+      delete ann.Photos;
+      // Parse JSON fields and always ensure array
+      const jsonFields = [
+        'locationAreas', 'mustHaveAmenities', 'dealBreakers',
+        'preferredGenderArr', 'preferredLocations', 'workSchedule', 'languages', 'hobbies'
+      ];
+      for (const field of jsonFields) {
+        if (typeof ann[field] === 'string') {
+          try { ann[field] = JSON.parse(ann[field]); } catch { ann[field] = []; }
+        }
+        if (!Array.isArray(ann[field])) {
+          ann[field] = [];
+        }
+      }
+      return ann;
+    });
+    res.status(200).json({ data: parsedAnnouncements });
+  } catch (error) {
+    console.error("Error fetching roommate announcements by userId:", error);
+    res.status(500).json({ error: "Failed to fetch roommate announcements" });
   }
 };
 
