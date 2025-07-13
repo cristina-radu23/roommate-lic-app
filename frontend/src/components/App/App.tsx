@@ -96,7 +96,6 @@ function App({ navigate }: { navigate: (path: string) => void }) {
   return (
     <div style={{ 
       backgroundColor: "#fcfaf8",
-      minHeight: "100vh",
       width: "100%"
     }}>
       <Navbar

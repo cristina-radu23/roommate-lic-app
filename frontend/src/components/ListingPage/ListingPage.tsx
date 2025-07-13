@@ -1376,7 +1376,6 @@ const ListingPage: React.FC = () => {
                   <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
                     <div className="d-flex justify-content-center">
                       <button
-                        className="btn btn-lg"
                         onClick={saveChanges}
                         disabled={savingChanges || uploadingPhotos}
                         style={{
@@ -1384,13 +1383,20 @@ const ListingPage: React.FC = () => {
                           fontSize: '18px',
                           fontWeight: '600',
                           borderRadius: '12px',
-                          minWidth: '200px',
+                          width: '25%',
                           backgroundColor: '#a1cca7',
                           borderColor: '#a1cca7',
-                          color: 'white'
+                          color: 'white',
+                          display: 'flex !important',
+                          justifyContent: 'center !important',
+                          alignItems: 'center !important',
+                          textAlign: 'center',
+                          border: '1px solid',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease'
                         }}
                       >
-                        {savingChanges ? 'Saving Changes...' : 'Save Changes'}
+                        <span style={{ width: '100%', textAlign: 'center' }}>{savingChanges ? 'Saving Changes...' : 'Save Changes'}</span>
                       </button>
                     </div>
                     {(savingChanges || uploadingPhotos) && (

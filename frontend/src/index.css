@@ -23,14 +23,28 @@ a:hover {
 }
 
 body {
-  background-color: white !important;
+  background-color: #fcfaf8 !important;
   color: black !important;
 
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 0;
   width: 100%;
   min-height: 100vh;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  background-color: #fcfaf8;
+}
+
+#root {
+  margin: 0;
+  padding: 0;
+  background-color: #fcfaf8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1 {

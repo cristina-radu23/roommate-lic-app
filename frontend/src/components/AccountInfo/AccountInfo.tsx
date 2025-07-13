@@ -33,9 +33,7 @@ const AccountInfo: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
@@ -230,45 +228,7 @@ const AccountInfo: React.FC = () => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    setIsDeleting(true);
-    setDeleteError(null);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/');
-        return;
-      }
-      const response = await fetch('http://localhost:5000/api/users/me', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete account');
-      }
 
-      // Clear local storage
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
-      
-      // Dispatch logout event to update UI state
-      window.dispatchEvent(new CustomEvent('user-logout'));
-      
-      // Close the modal
-      setShowDeleteModal(false);
-      
-      // Redirect to home page
-      navigate('/', { replace: true });
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   const handleDeactivateAccount = async () => {
     setIsDeactivating(true);
@@ -608,21 +568,29 @@ const AccountInfo: React.FC = () => {
                   </>
                 )}
                 {!isViewingOtherProfile && (
-                <div className="col-12 mb-3 d-flex justify-content-center" style={{ paddingBottom: "40px" }}>
+                <div className="col-12 mb-3 d-flex justify-content-start" style={{ paddingBottom: "40px" }}>
                   <button
                     type="submit"
-                    className="btn"
                     style={{ 
                       backgroundColor: "#a1cca7", 
                       borderColor: "#a1cca7", 
                       color: "white",
-                      width: "25%",
+                      width: "18%",
                       borderRadius: "8px",
-                      padding: "0.375rem 1rem"
+                      padding: "0.5rem 2rem",
+                      display: "flex !important",
+                      justifyContent: "center !important",
+                      alignItems: "center !important",
+                      textAlign: "center",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      border: "1px solid",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease"
                     }}
                     disabled={!isDirty || saving}
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    <span style={{ width: "100%", textAlign: "center" }}>{saving ? 'Saving...' : 'Save'}</span>
                   </button>
                 </div>
                 )}
@@ -708,21 +676,31 @@ const AccountInfo: React.FC = () => {
                     </div>
                     {passwordError && <div className="text-danger mb-3">{passwordError}</div>}
                     {passwordSuccess && <div className="text-success mb-3">{passwordSuccess}</div>}
-                    <button
-                      type="submit"
-                      className="btn"
-                      style={{ 
-                        backgroundColor: "#a1cca7", 
-                        borderColor: "#a1cca7", 
-                        color: "white",
-                        width: "25%",
-                        borderRadius: "8px",
-                        padding: "0.375rem 1rem"
-                      }}
-                      disabled={passwordSaving || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword}
-                    >
-                      {passwordSaving ? 'Saving...' : 'Change Password'}
-                    </button>
+                    <div className="d-flex justify-content-start">
+                      <button
+                        type="submit"
+                        style={{ 
+                          backgroundColor: "#a1cca7", 
+                          borderColor: "#a1cca7", 
+                          color: "white",
+                          width: "18%",
+                          borderRadius: "8px",
+                          padding: "0.5rem 2rem",
+                          display: "flex !important",
+                          justifyContent: "center !important",
+                          alignItems: "center !important",
+                          textAlign: "center",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          border: "1px solid",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease"
+                        }}
+                        disabled={passwordSaving || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmNewPassword}
+                      >
+                        <span style={{ width: "100%", textAlign: "center" }}>{passwordSaving ? 'Saving...' : 'Change Password'}</span>
+                      </button>
+                    </div>
                   </form>
                 </div>
 
@@ -741,21 +719,7 @@ const AccountInfo: React.FC = () => {
                   </button>
                 </div>
 
-                <hr className="my-4" />
 
-                <div>
-                  <h5>Delete Account</h5>
-                  <p className="text-muted mb-3">
-                    Once you delete your account, there is no going back. Please be certain.
-                  </p>
-                  <button
-                    className="btn btn-outline-danger"
-                    onClick={() => setShowDeleteModal(true)}
-                    style={{ marginBottom: 100 }}
-                  >
-                    Delete Account
-                  </button>
-                </div>
               </div>
             )}
             {isViewingOtherProfile && match && match.userAId !== match.userBId && (
@@ -828,28 +792,7 @@ const AccountInfo: React.FC = () => {
         </div>
       </div>
 
-      {/* Delete Account Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Account</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-          {deleteError && <div className="text-danger mb-3">{deleteError}</div>}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button 
-            variant="danger" 
-            onClick={handleDeleteAccount}
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete Account'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+
 
       {/* Deactivate Account Modal */}
       <Modal show={showDeactivateModal} onHide={() => setShowDeactivateModal(false)}>
