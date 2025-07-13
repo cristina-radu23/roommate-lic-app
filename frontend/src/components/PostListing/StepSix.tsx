@@ -143,7 +143,6 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted, isEditing, lis
             {/* Navigation Buttons */}
             <div className="d-flex justify-content-between">
               <button 
-                className="btn" 
                 onClick={onBack}
                 style={{ 
                   borderRadius: "8px",
@@ -151,13 +150,21 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted, isEditing, lis
                   backgroundColor: "#f8f9fa",
                   borderColor: "#dee2e6",
                   color: "#212529",
-                  width: "25%"
+                  width: "18%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Back
+                <span style={{ width: "100%", textAlign: "center" }}>Back</span>
               </button>
               <button 
-                className="btn" 
                 onClick={handleSubmit}
                 style={{ 
                   borderRadius: "8px",
@@ -165,10 +172,19 @@ const StepSix = ({ formData, onBack, displayedStep, setSubmitted, isEditing, lis
                   backgroundColor: "#a1cca7",
                   borderColor: "#a1cca7",
                   color: "white",
-                  width: "25%"
+                  width: "18%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                {isEditing ? 'Update' : 'Submit'}
+                <span style={{ width: "100%", textAlign: "center" }}>{isEditing ? 'Update' : 'Submit'}</span>
               </button>
             </div>
           </div>

@@ -235,7 +235,6 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
             {/* Continue Button */}
             <div className="d-flex justify-content-end">
               <button 
-                className="btn" 
                 onClick={handleNext}
                 style={{ 
                   borderRadius: "8px",
@@ -243,10 +242,19 @@ const StepOne = ({ formData, setFormData, onNext }: StepOneProps) => {
                   backgroundColor: "#a1cca7",
                   borderColor: "#a1cca7",
                   color: "white",
-                  width: "25%"
+                  width: "18%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Continue
+                <span style={{ width: "100%", textAlign: "center" }}>Continue</span>
               </button>
             </div>
           </div>

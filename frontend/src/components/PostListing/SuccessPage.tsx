@@ -29,7 +29,6 @@ const SuccessPage = ({ isEditing = false }: SuccessPageProps) => {
                 }
               </p>
               <button 
-                className="btn" 
                 onClick={() => navigate("/")}
                 style={{ 
                   borderRadius: "8px",
@@ -37,10 +36,19 @@ const SuccessPage = ({ isEditing = false }: SuccessPageProps) => {
                   backgroundColor: "#a1cca7",
                   borderColor: "#a1cca7",
                   color: "white",
-                  width: "35%"
+                  width: "30%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Return to Home
+                <span style={{ width: "100%", textAlign: "center" }}>Return to Home</span>
               </button>
             </div>
           </div>

@@ -161,7 +161,6 @@ const StepFive = ({ formData, setFormData, onNext, onBack, displayedStep }: Step
             {/* Navigation Buttons */}
             <div className="d-flex justify-content-between">
               <button 
-                className="btn" 
                 onClick={onBack}
                 style={{ 
                   borderRadius: "8px",
@@ -169,13 +168,21 @@ const StepFive = ({ formData, setFormData, onNext, onBack, displayedStep }: Step
                   backgroundColor: "#f8f9fa",
                   borderColor: "#dee2e6",
                   color: "#212529",
-                  width: "25%"
+                  width: "18%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Back
+                <span style={{ width: "100%", textAlign: "center" }}>Back</span>
               </button>
               <button 
-                className="btn" 
                 onClick={handleNext}
                 style={{ 
                   borderRadius: "8px",
@@ -183,10 +190,19 @@ const StepFive = ({ formData, setFormData, onNext, onBack, displayedStep }: Step
                   backgroundColor: "#a1cca7",
                   borderColor: "#a1cca7",
                   color: "white",
-                  width: "25%"
+                  width: "18%",
+                  display: "flex !important",
+                  justifyContent: "center !important",
+                  alignItems: "center !important",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  border: "1px solid",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Continue
+                <span style={{ width: "100%", textAlign: "center" }}>Continue</span>
               </button>
             </div>
           </div>
