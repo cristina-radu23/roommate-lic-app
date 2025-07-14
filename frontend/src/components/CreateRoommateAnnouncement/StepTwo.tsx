@@ -83,16 +83,16 @@ const StepTwo: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
 
         <div className="form-group">
           <label>Preferred Location(s) *</label>
-          <div className="checkbox-group">
+          <div className="checkbox-group modern-checkbox-group">
             {['Cluj-Napoca', 'Bucharest', 'Timișoara', 'Iași', 'Constanța', 'Brașov', 'Arad', 'Brăila'].map((location) => (
-              <label key={location} className="checkbox-label">
+              <label key={location} className="modern-checkbox">
                 <input
                   type="checkbox"
                   checked={formData.preferredLocations?.includes(location) || false}
                   onChange={() => handleLocationChange(location)}
                 />
-                <span className="checkmark"></span>
-                {location}
+                <span className="modern-checkmark"></span>
+                <span className="checkbox-text">{location}</span>
               </label>
             ))}
           </div>
@@ -127,7 +127,7 @@ const StepTwo: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
           disabled={!canProceed}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

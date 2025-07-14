@@ -17,6 +17,7 @@ const RoommateAnnouncementPage: React.FC = () => {
   const [matchExists, setMatchExists] = useState(false);
   const [matchLoading, setMatchLoading] = useState(false);
   const [match, setMatch] = useState<any>(null);
+  const [profileImageError, setProfileImageError] = useState(false);
 
   const authUserId = getAuthUserId();
 
@@ -150,16 +151,17 @@ const RoommateAnnouncementPage: React.FC = () => {
         </div>
         {/* User card placeholder */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', padding: 24, textAlign: 'center' }}>
-          <div style={{ marginBottom: 12 }}>
-            {announcement.user?.profilePicture ? (
+          <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+            {announcement.user?.profilePicture && !profileImageError ? (
               <img
                 src={announcement.user.profilePicture.startsWith('http') ? announcement.user.profilePicture : `http://localhost:5000${announcement.user.profilePicture}`}
                 alt="Profile"
                 style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+                onError={() => setProfileImageError(true)}
               />
             ) : (
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#bbb' }}>
-                {announcement.user?.userFirstName?.[0] || 'U'}
+                {announcement.user?.userFirstName?.[0] || '👤'}
               </div>
             )}
           </div>

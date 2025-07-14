@@ -36,16 +36,16 @@ const StepSix: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
       <div className="form-fields">
         <div className="form-group">
           <label>Languages you speak *</label>
-          <div className="checkbox-group">
+          <div className="checkbox-group modern-checkbox-group">
             {['Romanian', 'English', 'Hungarian', 'German', 'French', 'Spanish', 'Italian'].map((language) => (
-              <label key={language} className="checkbox-label">
+              <label key={language} className="modern-checkbox">
                 <input
                   type="checkbox"
                   checked={formData.languages?.includes(language) || false}
                   onChange={() => handleLanguageChange(language)}
                 />
-                <span className="checkmark"></span>
-                {language}
+                <span className="modern-checkmark"></span>
+                <span className="checkbox-text">{language}</span>
               </label>
             ))}
           </div>
@@ -91,7 +91,7 @@ const StepSix: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
           onClick={onNext}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>
