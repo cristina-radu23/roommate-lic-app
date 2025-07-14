@@ -393,7 +393,21 @@
   align-items: center;
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: none !important;
+}
+
+.step-actions .btn-secondary {
+  margin-right: auto;
+  width: 120px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-actions .btn-primary {
+  margin-left: auto;
+  width: 120px;
 }
 
 .btn {
@@ -414,15 +428,19 @@
   cursor: not-allowed;
 }
 
+.btn-primary:disabled {
+  background: #28a745;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-primary {
-  background: #007bff;
+  background: #28a745;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  background: #28a745;
 }
 
 .btn-secondary {
@@ -431,9 +449,9 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #545b62;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+  background: #6c757d !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .btn-success {
