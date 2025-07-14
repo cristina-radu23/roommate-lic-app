@@ -17,7 +17,7 @@ const StepFour: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
   };
 
   return (
-    <div className="form-step">
+    <div className="form-step step-four">
       <div className="step-header">
         <h2>Step 4: Personality & Habits</h2>
         <p>Tell us about your lifestyle choices</p>
@@ -26,95 +26,81 @@ const StepFour: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
       <div className="form-fields">
         <div className="form-group">
           <label>Do you smoke? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="smoking"
-                value="yes"
+                type="checkbox"
                 checked={formData.smoking === 'yes'}
-                onChange={(e) => handleInputChange('smoking', e.target.value)}
+                onChange={() => handleInputChange('smoking', 'yes')}
               />
-              <span className="radio-checkmark"></span>
-              Yes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Yes</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="smoking"
-                value="no"
+                type="checkbox"
                 checked={formData.smoking === 'no'}
-                onChange={(e) => handleInputChange('smoking', e.target.value)}
+                onChange={() => handleInputChange('smoking', 'no')}
               />
-              <span className="radio-checkmark"></span>
-              No
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">No</span>
             </label>
           </div>
         </div>
 
         <div className="form-group">
           <label>Do you drink alcohol? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="drinking"
-                value="yes"
+                type="checkbox"
                 checked={formData.drinking === 'yes'}
-                onChange={(e) => handleInputChange('drinking', e.target.value)}
+                onChange={() => handleInputChange('drinking', 'yes')}
               />
-              <span className="radio-checkmark"></span>
-              Yes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Yes</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="drinking"
-                value="no"
+                type="checkbox"
                 checked={formData.drinking === 'no'}
-                onChange={(e) => handleInputChange('drinking', e.target.value)}
+                onChange={() => handleInputChange('drinking', 'no')}
               />
-              <span className="radio-checkmark"></span>
-              No
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">No</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="drinking"
-                value="occasionally"
+                type="checkbox"
                 checked={formData.drinking === 'occasionally'}
-                onChange={(e) => handleInputChange('drinking', e.target.value)}
+                onChange={() => handleInputChange('drinking', 'occasionally')}
               />
-              <span className="radio-checkmark"></span>
-              Occasionally
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Occasionally</span>
             </label>
           </div>
         </div>
 
         <div className="form-group">
           <label>Do you have pets? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="hasPets"
-                value="yes"
+                type="checkbox"
                 checked={formData.hasPets === 'yes'}
-                onChange={(e) => handleInputChange('hasPets', e.target.value)}
+                onChange={() => handleInputChange('hasPets', 'yes')}
               />
-              <span className="radio-checkmark"></span>
-              Yes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Yes</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="hasPets"
-                value="no"
+                type="checkbox"
                 checked={formData.hasPets === 'no'}
-                onChange={(e) => handleInputChange('hasPets', e.target.value)}
+                onChange={() => handleInputChange('hasPets', 'no')}
               />
-              <span className="radio-checkmark"></span>
-              No
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">No</span>
             </label>
           </div>
         </div>
@@ -135,39 +121,33 @@ const StepFour: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
 
         <div className="form-group">
           <label>Are you okay living with pets? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="okayWithPets"
-                value="yes"
+                type="checkbox"
                 checked={formData.okayWithPets === 'yes'}
-                onChange={(e) => handleInputChange('okayWithPets', e.target.value)}
+                onChange={() => handleInputChange('okayWithPets', 'yes')}
               />
-              <span className="radio-checkmark"></span>
-              Yes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Yes</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="okayWithPets"
-                value="no"
+                type="checkbox"
                 checked={formData.okayWithPets === 'no'}
-                onChange={(e) => handleInputChange('okayWithPets', e.target.value)}
+                onChange={() => handleInputChange('okayWithPets', 'no')}
               />
-              <span className="radio-checkmark"></span>
-              No
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">No</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="okayWithPets"
-                value="depends"
+                type="checkbox"
                 checked={formData.okayWithPets === 'depends'}
-                onChange={(e) => handleInputChange('okayWithPets', e.target.value)}
+                onChange={() => handleInputChange('okayWithPets', 'depends')}
               />
-              <span className="radio-checkmark"></span>
-              Depends
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Depends</span>
             </label>
           </div>
         </div>

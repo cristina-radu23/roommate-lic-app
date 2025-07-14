@@ -211,6 +211,87 @@
   font-weight: bold;
 }
 
+/* Modern Big Checkbox Styles */
+.modern-checkbox {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #333;
+  padding: 8px 0;
+  transition: all 0.2s ease;
+  width: auto;
+  min-height: 32px;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0;
+}
+
+.modern-checkbox:hover {
+  transform: translateY(-1px);
+}
+
+.modern-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.modern-checkbox .modern-checkmark {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d0d0d0;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  flex: 0 0 24px;
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .modern-checkmark {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .modern-checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.modern-checkbox .checkbox-text {
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Override grid layout for modern checkboxes */
+.modern-checkbox-group {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap !important;
+}
+
+/* StepFour specific layout - vertical stacking */
+.step-four .modern-checkbox-group {
+  flex-direction: column !important;
+  gap: 12px;
+}
+
+/* StepFive specific layout - vertical stacking */
+.step-five .modern-checkbox-group {
+  flex-direction: column !important;
+  gap: 12px;
+}
+
 .radio-label input[type="radio"]:checked + .radio-checkmark {
   border-color: #007bff;
 }

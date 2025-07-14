@@ -70,7 +70,7 @@ const StepThree: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack 
 
         <div className="form-group">
           <label>Work Schedule *</label>
-          <div className="checkbox-group">
+          <div className="checkbox-group modern-checkbox-group">
             {[
               { value: '9-to-5', label: '9 to 5' },
               { value: 'night-shift', label: 'Night shift' },
@@ -78,14 +78,14 @@ const StepThree: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack 
               { value: 'work-from-home', label: 'Work from home' },
               { value: 'mostly-out', label: 'Mostly out' }
             ].map((schedule) => (
-              <label key={schedule.value} className="checkbox-label">
+              <label key={schedule.value} className="modern-checkbox">
                 <input
                   type="checkbox"
                   checked={formData.workSchedule?.includes(schedule.value) || false}
                   onChange={() => handleWorkScheduleChange(schedule.value)}
                 />
-                <span className="checkmark"></span>
-                {schedule.label}
+                <span className="modern-checkmark"></span>
+                <span className="checkbox-text">{schedule.label}</span>
               </label>
             ))}
           </div>
