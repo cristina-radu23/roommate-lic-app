@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RoommateAnnouncement } from '../../types/roommate';
 import './AnnouncementCard.css';
 import '../RoommateRecommendations/RoommateRecommendations.css';
@@ -10,6 +10,9 @@ interface AnnouncementCardProps {
 
 const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => {
   const navigate = useNavigate();
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [mainImageError, setMainImageError] = useState(false);
+  
   // Debug logs
   console.log('[AnnouncementCard] Full announcement:', announcement);
   if (announcement.photos && announcement.photos.length > 0) {
@@ -47,8 +50,12 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
     >
       <div className="listing-link">
         <div className="listing-image" style={{ height: 220, position: 'relative' }}>
-          {mainImage ? (
-            <img src={mainImage} alt="Main" />
+          {mainImage && !mainImageError ? (
+            <img 
+              src={mainImage} 
+              alt="Main" 
+              onError={() => setMainImageError(true)}
+            />
           ) : (
             <div className="placeholder-image">👤</div>
           )}
@@ -56,11 +63,12 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
         <div className="listing-info" style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
           {/* Profile picture as circle */}
           <div style={{ minWidth: 56, marginTop: 2 }}>
-            {announcement.user?.profilePicture ? (
+            {announcement.user?.profilePicture && !profileImageError ? (
               <img
                 src={announcement.user.profilePicture.startsWith('http') ? announcement.user.profilePicture : `http://localhost:5000${announcement.user.profilePicture}`}
                 alt="Profile"
                 style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e0e0e0' }}
+                onError={() => setProfileImageError(true)}
               />
             ) : (
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#c3cfe2', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 600, border: '2px solid #e0e0e0' }}>

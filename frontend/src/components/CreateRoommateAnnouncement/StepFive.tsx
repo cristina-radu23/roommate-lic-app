@@ -17,7 +17,7 @@ const StepFive: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
   };
 
   return (
-    <div className="form-step">
+    <div className="form-step step-five">
       <div className="step-header">
         <h2>Step 5: Cleanliness & Lifestyle Preferences</h2>
         <p>How do you like to live?</p>
@@ -45,156 +45,132 @@ const StepFive: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
 
         <div className="form-group">
           <label>Are you more social or private at home? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="socialPreference"
-                value="very-social"
+                type="checkbox"
                 checked={formData.socialPreference === 'very-social'}
-                onChange={(e) => handleInputChange('socialPreference', e.target.value)}
+                onChange={() => handleInputChange('socialPreference', 'very-social')}
               />
-              <span className="radio-checkmark"></span>
-              I love hanging out
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">I love hanging out</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="socialPreference"
-                value="moderate"
+                type="checkbox"
                 checked={formData.socialPreference === 'moderate'}
-                onChange={(e) => handleInputChange('socialPreference', e.target.value)}
+                onChange={() => handleInputChange('socialPreference', 'moderate')}
               />
-              <span className="radio-checkmark"></span>
-              Moderate
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Moderate</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="socialPreference"
-                value="private"
+                type="checkbox"
                 checked={formData.socialPreference === 'private'}
-                onChange={(e) => handleInputChange('socialPreference', e.target.value)}
+                onChange={() => handleInputChange('socialPreference', 'private')}
               />
-              <span className="radio-checkmark"></span>
-              I prefer quiet time
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">I prefer quiet time</span>
             </label>
           </div>
         </div>
 
         <div className="form-group">
           <label>How quiet/noisy is your lifestyle? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="noiseLevel"
-                value="very-quiet"
+                type="checkbox"
                 checked={formData.noiseLevel === 'very-quiet'}
-                onChange={(e) => handleInputChange('noiseLevel', e.target.value)}
+                onChange={() => handleInputChange('noiseLevel', 'very-quiet')}
               />
-              <span className="radio-checkmark"></span>
-              Very quiet
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Very quiet</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="noiseLevel"
-                value="moderate"
+                type="checkbox"
                 checked={formData.noiseLevel === 'moderate'}
-                onChange={(e) => handleInputChange('noiseLevel', e.target.value)}
+                onChange={() => handleInputChange('noiseLevel', 'moderate')}
               />
-              <span className="radio-checkmark"></span>
-              Moderate
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Moderate</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="noiseLevel"
-                value="noisy"
+                type="checkbox"
                 checked={formData.noiseLevel === 'noisy'}
-                onChange={(e) => handleInputChange('noiseLevel', e.target.value)}
+                onChange={() => handleInputChange('noiseLevel', 'noisy')}
               />
-              <span className="radio-checkmark"></span>
-              Noisy
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Noisy</span>
             </label>
           </div>
         </div>
 
         <div className="form-group">
           <label>Sleeping schedule *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="sleepSchedule"
-                value="early-bird"
+                type="checkbox"
                 checked={formData.sleepSchedule === 'early-bird'}
-                onChange={(e) => handleInputChange('sleepSchedule', e.target.value)}
+                onChange={() => handleInputChange('sleepSchedule', 'early-bird')}
               />
-              <span className="radio-checkmark"></span>
-              Early bird
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Early bird</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="sleepSchedule"
-                value="night-owl"
+                type="checkbox"
                 checked={formData.sleepSchedule === 'night-owl'}
-                onChange={(e) => handleInputChange('sleepSchedule', e.target.value)}
+                onChange={() => handleInputChange('sleepSchedule', 'night-owl')}
               />
-              <span className="radio-checkmark"></span>
-              Night owl
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Night owl</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="sleepSchedule"
-                value="depends"
+                type="checkbox"
                 checked={formData.sleepSchedule === 'depends'}
-                onChange={(e) => handleInputChange('sleepSchedule', e.target.value)}
+                onChange={() => handleInputChange('sleepSchedule', 'depends')}
               />
-              <span className="radio-checkmark"></span>
-              Depends
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Depends</span>
             </label>
           </div>
         </div>
 
         <div className="form-group">
           <label>Visitors/friends over often? *</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className="checkbox-group modern-checkbox-group">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="visitorsOften"
-                value="yes"
+                type="checkbox"
                 checked={formData.visitorsOften === 'yes'}
-                onChange={(e) => handleInputChange('visitorsOften', e.target.value)}
+                onChange={() => handleInputChange('visitorsOften', 'yes')}
               />
-              <span className="radio-checkmark"></span>
-              Yes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Yes</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="visitorsOften"
-                value="no"
+                type="checkbox"
                 checked={formData.visitorsOften === 'no'}
-                onChange={(e) => handleInputChange('visitorsOften', e.target.value)}
+                onChange={() => handleInputChange('visitorsOften', 'no')}
               />
-              <span className="radio-checkmark"></span>
-              No
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">No</span>
             </label>
-            <label className="radio-label">
+            <label className="modern-checkbox">
               <input
-                type="radio"
-                name="visitorsOften"
-                value="sometimes"
+                type="checkbox"
                 checked={formData.visitorsOften === 'sometimes'}
-                onChange={(e) => handleInputChange('visitorsOften', e.target.value)}
+                onChange={() => handleInputChange('visitorsOften', 'sometimes')}
               />
-              <span className="radio-checkmark"></span>
-              Sometimes
+              <span className="modern-checkmark"></span>
+              <span className="checkbox-text">Sometimes</span>
             </label>
           </div>
         </div>
@@ -213,7 +189,7 @@ const StepFive: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
           onClick={onNext}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

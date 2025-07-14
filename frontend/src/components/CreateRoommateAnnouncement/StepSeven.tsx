@@ -40,21 +40,21 @@ const StepSeven: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack 
       <div className="form-fields">
         <div className="form-group">
           <label>Top 3 hobbies *</label>
-          <div className="checkbox-group">
+          <div className="checkbox-group modern-checkbox-group">
             {[
               'Reading', 'Gaming', 'Sports', 'Music', 'Cooking', 'Traveling', 
               'Photography', 'Art', 'Dancing', 'Hiking', 'Swimming', 'Cycling',
               'Watching movies', 'Netflix', 'Gym', 'Yoga', 'Meditation', 'Writing'
             ].map((hobby) => (
-              <label key={hobby} className="checkbox-label">
+              <label key={hobby} className="modern-checkbox">
                 <input
                   type="checkbox"
                   checked={formData.hobbies?.includes(hobby) || false}
                   onChange={() => handleHobbyChange(hobby)}
                   disabled={!formData.hobbies?.includes(hobby) && formData.hobbies?.length >= 3}
                 />
-                <span className="checkmark"></span>
-                {hobby}
+                <span className="modern-checkmark"></span>
+                <span className="checkbox-text">{hobby}</span>
               </label>
             ))}
           </div>
@@ -108,7 +108,7 @@ const StepSeven: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack 
           disabled={!canProceed}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

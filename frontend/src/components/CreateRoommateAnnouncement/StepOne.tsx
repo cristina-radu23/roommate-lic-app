@@ -79,16 +79,16 @@ const StepOne: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
 
         <div className="form-group">
           <label>Preferred Gender of Roommate *</label>
-          <div className="checkbox-group">
+          <div className="checkbox-group modern-checkbox-group">
             {['male', 'female'].map((gender) => (
-              <label key={gender} className="checkbox-label">
+              <label key={gender} className="modern-checkbox">
                 <input
                   type="checkbox"
                   checked={formData.preferredGender?.includes(gender) || false}
                   onChange={() => handlePreferredGenderChange(gender)}
                 />
-                <span className="checkmark"></span>
-                {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                <span className="modern-checkmark"></span>
+                <span className="checkbox-text">{gender.charAt(0).toUpperCase() + gender.slice(1)}</span>
               </label>
             ))}
           </div>
@@ -102,7 +102,7 @@ const StepOne: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack })
           disabled={!canProceed}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>
