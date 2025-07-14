@@ -108,7 +108,7 @@ const StepSeven: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack 
           disabled={!canProceed}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

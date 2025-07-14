@@ -213,7 +213,7 @@ const StepFive: React.FC<StepProps> = ({ formData, setFormData, onNext, onBack }
           onClick={onNext}
           className="btn btn-primary"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>
